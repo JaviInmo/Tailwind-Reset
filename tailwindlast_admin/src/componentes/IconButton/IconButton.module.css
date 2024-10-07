@@ -1,0 +1,13 @@
+.icon_button {
+    color: black;
+    background-color: white;
+    border-radius: 0.25rem;
+    padding: 0.25rem;
+    border: none;
+    height: min-content;
+
+    &:hover {
+        background-color: #d3d3d3; /* Gris claro */
+        color: black;
+    }
+}
