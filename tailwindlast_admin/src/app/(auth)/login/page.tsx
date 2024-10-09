@@ -34,7 +34,7 @@ export default function LoginPage() {
       return setError("root", { message: "Error al iniciar sesión" });
     }
 
-    router.push("/admin");
+    router.push("/src/admin");
   });
 
   return (

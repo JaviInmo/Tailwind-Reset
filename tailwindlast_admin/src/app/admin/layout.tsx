@@ -1,8 +1,8 @@
 import { PropsWithChildren } from "react";
 
-import { Header } from "./components/Header";
-import { NavBar } from "./components/NavBar/NavBar";
-import { NavBarProvider } from "./context/NavBar.context";
+import { Header } from "./layout/components/Header";
+import { NavBar } from "./layout/components/NavBar/NavBar";
+import { NavBarProvider } from "./layout/context/NavBar.context";
 
 export default function AdminLayout({ children }: PropsWithChildren) {
   return (
