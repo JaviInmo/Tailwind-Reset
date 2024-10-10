@@ -12,7 +12,7 @@
     "@auth/prisma-adapter": "^2.7.0",
     "@prisma/client": "5.20.0",
     "next": "13.5.7",
-    "next-auth": "^4.24.8",
+    "next-auth": "5.0.0-beta.19",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "xlsx-populate": "^1.21.0",

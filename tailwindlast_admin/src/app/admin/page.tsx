@@ -1,4 +1,4 @@
-import { getAuth } from "@/app/libs/auth";
+import { getAuth } from "@/libs/auth";
 
 export default async function Page() {
   await getAuth();

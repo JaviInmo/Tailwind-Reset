@@ -1,6 +1,6 @@
 "use server";
 
-import prisma from "@/app/libs/db";
+import prisma from "@/libs/db";
 
 type FormSchemaData = {
   name: string;
