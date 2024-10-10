@@ -1,7 +1,5 @@
 import { cx } from "@/util/cx";
 import { ComponentPropsWithRef } from "react";
-import { Button } from "react-bootstrap";
-import styles from "./IconButton.module.css";
 
 export function IconButton({
   children,
@@ -9,12 +7,14 @@ export function IconButton({
   ...props
 }: ComponentPropsWithRef<"button">) {
   return (
-    <Button
+    <button
       {...props}
-      variant={"outline-secondary"}
-      className={cx(className, styles.icon_button)}
+      className={cx(
+        "text-black bg-white rounded p-1 border-none h-min-content hover:bg-gray-300 hover:text-black",
+        className
+      )}
     >
       {children}
-    </Button>
+    </button>
   );
 }
