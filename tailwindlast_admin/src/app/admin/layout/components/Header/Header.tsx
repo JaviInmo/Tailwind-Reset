@@ -2,7 +2,7 @@
 
 import { ArrowDownNarrowWide, CircleUser, LogOut } from "lucide-react";
 
-import { IconButton } from "@/componentes/IconButton";
+import { IconButton } from "@/app/componentes/IconButton";
 
 import { useNavBar } from "../../context/NavBar.context";
 

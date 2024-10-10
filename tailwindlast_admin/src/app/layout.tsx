@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Providers } from "./providers";
 import localFont from "next/font/local";
 import "./globals.css";
+import MainLayout from "@/app/componentes/MainLayout";
 
 const inter = localFont({
   src: "./fonts/Inter-Medium.ttf",
@@ -23,7 +24,9 @@ export default function RootLayout({
     <html lang="en">
       <body className={`${inter.variable}  antialiased`}>
         {" "}
-        <Providers>{children}</Providers>
+        <MainLayout>
+          <Providers>{children}</Providers>
+        </MainLayout>
       </body>
     </html>
   );

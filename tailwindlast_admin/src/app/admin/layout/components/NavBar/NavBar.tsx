@@ -13,7 +13,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import React, { useRef, useState } from "react";
 
-import { IconButton } from "@/componentes/IconButton";
+import { IconButton } from "@/app/componentes/IconButton";
 import { useIsMobile } from "@/hooks/window/useIsMobile";
 import { cx } from "@/util/cx";
 
