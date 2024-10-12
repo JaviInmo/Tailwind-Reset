@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import { Providers } from "./providers";
 import localFont from "next/font/local";
 import "./globals.css";
-import MainLayout from "@/app/componentes/MainLayout";
 
 const inter = localFont({
   src: "./fonts/Inter-Medium.ttf",
@@ -17,14 +16,12 @@ export const metadata: Metadata = {
 
 export default function RootLayout({
   children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+}: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en">
       <body className={`${inter.variable} antialiased`}>
         <Providers>
-            <MainLayout>{children}</MainLayout>
+            {children}
         </Providers>
       </body>
     </html>
