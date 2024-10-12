@@ -25,11 +25,11 @@ export default function RootLayout({
     <html lang="en">
       <body className={`${inter.variable}  antialiased`}>
         {" "}
-        <MenuContextProvider>
-          <MainLayout>
-            <Providers>{children}</Providers>
-          </MainLayout>
-        </MenuContextProvider>
+        <Providers>
+          <MenuContextProvider>
+            <MainLayout>{children}</MainLayout>
+          </MenuContextProvider>
+        </Providers>
       </body>
     </html>
   );
