@@ -3,7 +3,6 @@ import { Providers } from "./providers";
 import localFont from "next/font/local";
 import "./globals.css";
 import MainLayout from "@/app/componentes/MainLayout";
-import MenuContextProvider from "./context/MenuContext";
 
 const inter = localFont({
   src: "./fonts/Inter-Medium.ttf",
@@ -23,12 +22,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${inter.variable}  antialiased`}>
-        {" "}
+      <body className={`${inter.variable} antialiased`}>
         <Providers>
-          <MenuContextProvider>
             <MainLayout>{children}</MainLayout>
-          </MenuContextProvider>
         </Providers>
       </body>
     </html>

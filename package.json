@@ -1,0 +1,41 @@
+{
+    "name": "tailwindlast_admin",
+    "version": "0.1.0",
+    "private": true,
+    "scripts": {
+        "dev": "concurrently \"pnpm run dev:*\"",
+        "dev:next": "next dev",
+        "dev:prisma": "prisma generate --watch",
+        "build": "next build",
+        "start": "next start",
+        "lint": "next lint"
+    },
+    "dependencies": {
+        "@auth/prisma-adapter": "^2.7.0",
+        "@prisma/client": "5.20.0",
+        "classnames": "^2.5.1",
+        "lucide-react": "^0.452.0",
+        "next": "14.2.15",
+        "next-auth": "5.0.0-beta.19",
+        "react": "^18.3.1",
+        "react-dom": "^18.3.1",
+        "react-hook-form": "^7.53.0",
+        "react-icons": "^5.3.0",
+        "xlsx-populate": "^1.21.0",
+        "zod": "^3.23.8"
+    },
+    "devDependencies": {
+        "@types/classnames": "^2.3.1",
+        "@types/node": "^20",
+        "@types/react": "^18",
+        "@types/react-dom": "^18",
+        "concurrently": "^9.0.1",
+        "eslint": "^8",
+        "eslint-config-next": "13.5.7",
+        "postcss": "^8",
+        "prettier": "^3.3.3",
+        "prisma": "^5.20.0",
+        "tailwindcss": "^3.4.1",
+        "typescript": "^5"
+    }
+}
