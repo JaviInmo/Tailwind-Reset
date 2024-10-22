@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
-import "./globals.css";
+import "../globals.css";
 import MainLayout from "@/app/componentes/MainLayout";
 
 const inter = localFont({
-  src: "./fonts/Inter-Medium.ttf",
+  src: "../fonts/Inter-Medium.ttf",
   variable: "--font-inter",
   weight: "100 900",
 });

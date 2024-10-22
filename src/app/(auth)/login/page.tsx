@@ -38,11 +38,11 @@ export default function LoginPage() {
   });
 
   return (
-    <div className="flex items-center justify-center min-h-screen px-4 py-12 sm:px-6 lg:px-8">
+    <div className=" flex items-center justify-center min-h-screen px-4 py-12 sm:px-6 lg:px-8 bg-slate-100">
       <div className="w-full max-w-md ">
         <div className="text-center mb-4">
           <h1 className="mb-3 text-2xl font-semibold">Inicio de Sesión</h1>
-          <p className="text-white">
+          <p className="text-black">
             Inserte el nombre de usuario y la contraseña.
           </p>
         </div>

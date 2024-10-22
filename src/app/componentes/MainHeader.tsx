@@ -10,7 +10,7 @@ const MainHeader = () => {
 
   return (
     <div className=" flex justify-between items-center px-2 py-2 h-9 w-full mb-0 gap-2 ">
-      <div>
+      <div className="flex items-center gap-2">
         <div onClick={toggle} className="lg:hidden">
           <FaBars className="cursor-pointer" />
         </div>
