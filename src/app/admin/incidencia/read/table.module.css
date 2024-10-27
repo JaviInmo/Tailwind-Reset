@@ -1,0 +1,10 @@
+.pageItemSecondary a {
+    color: var(--bs-secondary) !important;
+    background-color: transparent;
+    border: 1px solid var(--bs-secondary);
+}
+
+.pageItemSecondaryActive a {
+    background-color: var(--bs-secondary) !important;
+    border-color: var(--bs-secondary) !important;
+}

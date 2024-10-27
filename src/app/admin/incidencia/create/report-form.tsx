@@ -4,13 +4,9 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Prisma } from "@prisma/client";
 import { useEffect, useState } from "react";
-
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-
 import { registerAction } from "./form.action";
-
-
 
 const formSchema = z.object({
     fecha: z.string().date("Fecha es requerido"),
@@ -68,8 +64,8 @@ export function ReportForm({ incidentData, variableData, provinceData }: ReportF
     } = useForm<FormSchemaData>({
         resolver: zodResolver(formSchema),
         mode: "onTouched",
-        defaultValues:{
-            fecha: incidentData ? new Date(incidentData.date).toISOString().split("T")[0]: undefined,
+        defaultValues: {
+            fecha: incidentData ? new Date(incidentData.date).toISOString().split("T")[0] : undefined,
             amount: incidentData?.amount ?? undefined,
             categoria: incidentData?.categoryId ?? undefined,
             subcategoria: incidentData?.subcategoryId ?? undefined,
@@ -78,10 +74,10 @@ export function ReportForm({ incidentData, variableData, provinceData }: ReportF
             provincia: incidentData?.provinceId,
             municipio: incidentData?.municipalityId,
             description: incidentData?.description,
-        }
+        },
     });
-  
-    console.log('errors',errors);
+
+    console.log('errors', errors);
 
     async function onSubmit(data: FormSchemaData) {
         console.log("Datos enviados:", data);
@@ -109,225 +105,195 @@ export function ReportForm({ incidentData, variableData, provinceData }: ReportF
 
     const provinceId = watch("provincia");
     const variableId = watch("variable");
-
     const categoryId = watch("categoria");
     const subcategoryId = watch("subcategoria");
 
     const variableOptions = variableData.find((v) => v.id === +variableId);
-
     const municipalityOptions = provinceData.find((p) => p.id === provinceId)?.municipalities;
-
-    const subcategoriesOptions = variableOptions?.categories?.find(
-        (c) => c.id === +categoryId,
-    )?.subcategories;
-
-    const secondSubcategoriesOptions = subcategoriesOptions?.find(
-        (sc) => sc.id === +subcategoryId,
-    )?.secondSubcategories;
+    const subcategoriesOptions = variableOptions?.categories?.find((c) => c.id === +categoryId)?.subcategories;
+    const secondSubcategoriesOptions = subcategoriesOptions?.find((sc) => sc.id === +subcategoryId)?.secondSubcategories;
 
     return (
-        <div className=" flex h-full flex-col items-center justify-center py-2 ">
-        <div className="text-center text-">
-        <p className=" font-semibold"> Formulario de Incidencias</p>
-          
-           
-            <p className=" font-semibold" > Rellene los campos del formulario  para registrar la incidencia.</p>
-        </div>
-
- 
-        <form onSubmit={handleSubmit(onSubmit)} className=" w-full lg:w-8/12 h-full lg:h-auto flex flex-col gap-2 py-2 px-2 ">
-        <div className="mb-4">
-                <label className="block">Fecha:</label>
-                <input
-                    type="date"
-                    {...register("fecha")}
-                    className="w-full border border-gray-300 rounded p-2"
-                />
-                {errors.fecha && (
-                    <p className="text-red-600">{errors.fecha.message}</p>
-                )}
+        <div className="flex h-full flex-col items-center justify-center p-6  mt-4">
+            <div className="text-center">
+                <p className="font-semibold">Formulario de Incidencias</p>
+                <p className="font-semibold">Rellene los campos del formulario para registrar la incidencia.</p>
             </div>
 
-            <div className="flex gap-4 mb-4">
-                <div className="w-full">
-                    <label className="block">Provincia:</label>
-                    <select {...register("provincia")} className="w-full border  border-gray-300 rounded p-2 ">
-                        <option value="">Seleccionar provincia</option>
-                        {provinceData.map((opt) => (
-                            <option key={opt.id} value={opt.id}>
-                                {opt.name}
-                            </option>
-                        ))}
-                    </select>
-                    {errors.provincia && (<p className="text-red-600">{errors.provincia.message}</p>
+            <form onSubmit={handleSubmit(onSubmit)} className="w-full lg:w-8/12 h-full lg:h-auto flex flex-col gap-2 py-2 px-2 overflow-y-auto">
+                <div className="mb-4">
+                    <label className="block">Fecha:</label>
+                    <input
+                        type="date"
+                        {...register("fecha")}
+                        className="w-full border border-gray-300 rounded p-2"
+                    />
+                    {errors.fecha && (
+                        <p className="text-red-600">{errors.fecha.message}</p>
                     )}
                 </div>
-                <div className="w-full">
-                    <label className="block ">Municipio:</label>
-                    <select
-                        {...register("municipio")}
-                        disabled={!provinceId}
-                        className="w-full border border-gray-300 rounded p-2 disabled:bg-slate-300 text-black"
-                    >
-                        <option value="">Seleccionar municipio</option>
-                        {municipalityOptions?.map((opt) => (
-                            <option key={opt.id} value={opt.id}>
-                                {opt.name}
-                            </option>
-                        ))}
-                    </select>
-                    {errors.municipio && (
-                        <p className="text-red-600">{errors.municipio.message}</p>
+
+                <div className="flex gap-4 mb-4">
+                    <div className="w-full">
+                        <label className="block">Provincia:</label>
+                        <select {...register("provincia")} className="w-full border  border-gray-300 rounded p-2">
+                            <option value="">Seleccionar provincia</option>
+                            {provinceData.map((opt) => (
+                                <option key={opt.id} value={opt.id}>
+                                    {opt.name}
+                                </option>
+                            ))}
+                        </select>
+                        {errors.provincia && (<p className="text-red-600">{errors.provincia.message}</p>)}
+                    </div>
+
+                    <div className="w-full">
+                        <label className="block">Municipio:</label>
+                        <select
+                            {...register("municipio")}
+                            disabled={!provinceId}
+                            className="w-full border border-gray-300 rounded p-2 disabled:bg-slate-300 text-black"
+                        >
+                            <option value="">Seleccionar municipio</option>
+                            {municipalityOptions?.map((opt) => (
+                                <option key={opt.id} value={opt.id}>
+                                    {opt.name}
+                                </option>
+                            ))}
+                        </select>
+                        {errors.municipio && (
+                            <p className="text-red-600">{errors.municipio.message}</p>
+                        )}
+                    </div>
+                </div>
+
+                <div className="flex gap-4 mb-4">
+                    <div className="w-full">
+                        <label className="block">Variable:</label>
+                        <select {...register("variable")} className="w-full border border-gray-300 rounded p-2">
+                            <option value="">Seleccionar variable</option>
+                            {variableData.map((opt) => (
+                                <option key={opt.id} value={opt.id}>
+                                    {opt.name}
+                                </option>
+                            ))}
+                        </select>
+                        {errors.variable && (
+                            <p className="text-red-600">{errors.variable.message}</p>
+                        )}
+                    </div>
+
+                    <div className="w-full">
+                        <label className="block">Categoría:</label>
+                        <select {...register("categoria")} disabled={!variableId} className="w-full border border-gray-300 rounded p-2 disabled:bg-slate-300 text-black">
+                            <option value="">Seleccionar categoría</option>
+                            {variableOptions?.categories?.map((opt) => (
+                                <option key={opt.id} value={opt.id}>
+                                    {opt.name}
+                                </option>
+                            ))}
+                        </select>
+                        {errors.categoria && (
+                            <p className="text-red-600">{errors.categoria.message}</p>
+                        )}
+                    </div>
+                </div>
+
+                <div className="flex gap-4 mb-4">
+                    <div className="w-full">
+                        <label className="block">Subcategoría:</label>
+                        <select {...register("subcategoria")} disabled={!categoryId} className="w-full border border-gray-300 rounded p-2 disabled:bg-slate-300 text-black">
+                            <option value="">Seleccionar subcategoría</option>
+                            {subcategoriesOptions?.map((opt) => (
+                                <option key={opt.id} value={opt.id}>
+                                    {opt.name}
+                                </option>
+                            ))}
+                        </select>
+                        {errors.subcategoria && (
+                            <p className="text-red-600">{errors.subcategoria.message}</p>
+                        )}
+                    </div>
+
+                    <div className="w-full">
+                        <label className="block">Segunda Subcategoría:</label>
+                        <select
+                            {...register("segundasubcategoria")}
+                            disabled={!subcategoryId}
+                            className="w-full border border-gray-300 rounded p-2 disabled:bg-slate-300 text-black"
+                        >
+                            <option value="">Seleccionar segunda subcategoría</option>
+                            {secondSubcategoriesOptions?.map((opt) => (
+                                <option key={opt.id} value={opt.id}>
+                                    {opt.name}
+                                </option>
+                            ))}
+                        </select>
+                        {errors.segundasubcategoria && (
+                            <p className="text-red-600">{errors.segundasubcategoria.message}</p>
+                        )}
+                    </div>
+                </div>
+
+                <div className="mb-4">
+                    <label className="block">Toneladas:</label>
+                    <input
+                        type="number"
+                        step="0.01"
+                        {...register("amount")}
+                        className="w-full border border-gray-300 rounded p-2"
+                    />
+                    {errors.amount && (
+                        <p className="text-red-600">{errors.amount.message}</p>
                     )}
                 </div>
-               
-            </div>
-            <div className="flex gap-4 mb-4">
-                <div className="w-full">
-                    <label className="block ">Variable:</label>
-                    <select {...register("variable")} className="w-full border border-gray-300 rounded p-2">
-                        <option value="">Seleccionar variable</option>
-                        {variableData.map((opt) => (
-                            <option key={opt.id} value={opt.id}>
-                                {opt.name}
-                            </option>
-                        ))}
-                    </select>
-                    {errors.variable && (
-                        <p className="text-red-600">{errors.variable.message}</p>
+
+                <div className="mb-4">
+                    <label className="block">Descripción:</label>
+                    <textarea
+                        {...register("description")}
+                        className="w-full border border-gray-300 rounded p-2"
+                    ></textarea>
+                    {errors.description && (
+                        <p className="text-red-600">{errors.description.message}</p>
                     )}
                 </div>
-    
-                <div className="w-full">
-                    <label className="block">Categoría:</label>
-                    <select {...register("categoria")} disabled={!variableId} className="w-full border border-gray-300 rounded p-2 disabled:bg-slate-300 text-black">
-                        <option value="">Seleccionar categoría</option>
-                        {variableOptions?.categories?.map((opt) => (
-                            <option key={opt.id} value={opt.id}>
-                                {opt.name}
-                            </option>
-                        ))}
-                    </select>
-                    {errors.categoria && (
-                        <p className="text-red-600">{errors.categoria.message}</p>
-                    )}
-                </div>
-            </div>
-            <div className="flex gap-4 mb-4">
-                <div className="w-full">
-                    <label className="block">Subcategoría:</label>
-                    <select {...register("subcategoria")} disabled={!categoryId} className="w-full border border-gray-300 rounded p-2 disabled:bg-slate-300 text-black">
-                        <option value="">Seleccionar subcategoría</option>
-                        {subcategoriesOptions?.map((opt) => (
-                            <option key={opt.id} value={opt.id}>
-                                {opt.name}
-                            </option>
-                        ))}
-                    </select>
-                    {errors.subcategoria && (
-                        <p className="text-red-600">{errors.subcategoria.message}</p>
-                    )}
-                </div>
-    
-                <div className="w-full">
-                    <label className="block">Segunda Subcategoría:</label>
-                    <select
-                        {...register("segundasubcategoria")}
-                        disabled={!subcategoryId}
-                        className="w-full border border-gray-300 rounded p-2 disabled:bg-slate-300 text-black"
-                    >
-                        <option value="">Seleccionar segunda subcategoría</option>
-                        {secondSubcategoriesOptions?.map((opt) => (
-                            <option key={opt.id} value={opt.id}>
-                                {opt.name}
-                            </option>
-                        ))}
-                    </select>
-                    {errors.segundasubcategoria && (
-                        <p className="text-red-600">{errors.segundasubcategoria.message}</p>
-                    )}
-                </div>
-            </div>
-            <div className="w-full">
-                <label className="block">Medida:</label>
-                <input
-                    type="number"
-                    step="0.01"
-                    min="0.01"
-                    defaultValue="0.01"
-                    {...register("amount")}
-                    className="w-full border border-gray-300 rounded p-2"
-                />
-                {errors.amount && (
-                    <p className="text-red-600">{errors.amount.message}</p>
-                )}
-            </div>
-            <div className="w-full">
-                <label className="block">Descripción:</label>
-                <textarea
-                    {...register("description")}
-                    className="w-full border border-gray-300 rounded p-2"
-                    placeholder="Escriba una descripción breve del problema"
-                ></textarea>
-                {errors.description ? (
-                    <p className="text-red-600">{errors.description.message}</p>
-                ) : (
-                    <p className="text-gray-500">La descripción debe ser breve, y cumplir con los requisitos...</p>
-                )}
-            </div>
-    
+
+                <button
+                    type="submit"
+                    className="bg-slate-800 text-slate-100 border-slate-700 px-4 py-2 rounded hover:bg-slate-950 "
+                >
+                    Crear Incidencia
+                </button>
+            </form>
+
             
-    </form>
-  
-    </div>
-    
+            {showSuccessModal && (
+                <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
+                    <div className="bg-white rounded-lg shadow-lg w-11/12 max-w-md mx-auto p-4">
+                        <div className="flex justify-between items-center border-b pb-2">
+                            <h3 className="text-xl font-semibold">Incidencia Creada</h3>
+                            <button
+                                className="text-gray-500 hover:text-gray-700"
+                                onClick={handleCloseSuccessModal}
+                            >
+                                &times;
+                            </button>
+                        </div>
+                        <div className="py-4">
+                            <p>Incidencia creada con éxito.</p>
+                        </div>
+                        <div className="flex justify-end pt-2">
+                            <button
+                                className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+                                onClick={handleCloseSuccessModal}
+                            >
+                                Aceptar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+        </div>
     );
 }
-
-
-
-/* 
-
-
- 
-    
-                
-    
-    
-    
-            <div className="mb-4">
-                <label className="block">Descripción:</label>
-                <textarea
-                    {...register("description")}
-                    className="w-full border border-gray-300 rounded p-2"
-                    placeholder="Escriba una descripción breve del problema"
-                ></textarea>
-                {errors.description ? (
-                    <p className="text-red-600">{errors.description.message}</p>
-                ) : (
-                    <p className="text-gray-500">La descripción debe ser breve, y cumplir con los requisitos...</p>
-                )}
-            </div>
-    
-            <button
-                type="submit"
-                className="bg-slate-700 text-white font-bold py-2 px-4 rounded hover:bg-slate-600"
-            >
-                Submit
-            </button>    
-    
-           
-        </form>
-    
-        <div className={`modal ${showSuccessModal ? "block" : "hidden"}`}>
-            <div className="bg-white rounded-lg shadow-md p-4">
-                <h3 className="text-lg font-bold">Incidencia Creada</h3>
-                <p>Incidencia creada con éxito.</p>
-                <button
-                    onClick={handleCloseSuccessModal}
-                    className="bg-blue-500 text-white font-bold py-2 px-4 rounded hover:bg-blue-700"
-                >
-                    Aceptar
-                </button>
-            </div>
-        </div> */
