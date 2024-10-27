@@ -1,24 +1,30 @@
 "use client";
-import { createContext, useState, ReactNode } from "react";
 
-// Provide a default value, e.g., { open: false, toggle: () => {} }
-export const MenuContext = createContext({ open: false, toggle: () => {} });
+import { createContext, PropsWithChildren, ReactNode, useContext, useState } from "react";
 
-type MenuContextProviderProps = {
-  children: ReactNode;
+type MenuState = {
+    open: boolean;
+    onToggle: () => void;
 };
 
-const MenuContextProvider = ({ children }: MenuContextProviderProps) => {
-  const [open, setOpen] = useState(false);
-  const toggle = () => {
-    console.log("open");
-    setOpen((prev) => !prev);
-  };
-  return (
-    <MenuContext.Provider value={{ open, toggle }}>
-      {children}
-    </MenuContext.Provider>
-  );
-};
+export const MenuContext = createContext<MenuState | null>(null);
 
-export default MenuContextProvider;
+export function MenuContextProvider({ children }: PropsWithChildren) {
+    const [open, setOpen] = useState(false);
+
+    function onToggle() {
+        setOpen((prev) => !prev);
+    }
+
+    return <MenuContext.Provider value={{ open, onToggle }}>{children}</MenuContext.Provider>;
+}
+
+export function useMenuState() {
+    const value = useContext(MenuContext);
+
+    if (value === null) {
+        throw new Error("useMenuState needs to be used inside MenuContextProvider");
+    }
+
+    return value;
+}

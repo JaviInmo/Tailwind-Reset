@@ -8,7 +8,7 @@ import { handleDeleteIncidentAction } from "@/app/admin/incidencia/delete/delete
 import { CiSearch } from "react-icons/ci";
 import { FaRegEdit } from "react-icons/fa";
 import { RiDeleteBin7Line } from "react-icons/ri";
-
+import { cx } from "@/util/cx";
 
 interface Data {
     id: number;
@@ -38,7 +38,6 @@ const columns = [
     "Prov.",
     "Munic.",
     "Fecha",
-    "Acciones",
 ];
 
 export default function TablePage({ data }: TableProps) {
@@ -102,109 +101,193 @@ export default function TablePage({ data }: TableProps) {
     };
 
     return (
-        
-        <div className="relative w-full mt-4 flex flex-col  p-6 shadow-lg rounded-lg bg-white">
-                    <div className="flex justify-between items-center mb-4">
-                    <h3 className="font-semibold text-lg text-slate-800">Tabla de Incidencias</h3>
-                        <div className="relative flex items-center">
-                            <CiSearch className="absolute left-3 text-gray-500" size={20} />
-                            <input
-                            type="text"
-                            placeholder="Buscar..."
-                            className="input input-bordered input-primary mr-4 text-left pl-10 py-1 rounded border border-slate-400"
-                            onChange={(event) => setSearch(event.target.value)}
-                            />
-                        <Link href="/admin/incidencia/create" passHref>
-                        <button className="py-1 px-4 bg-slate-800 text-slate-100 border border-slate-700 rounded hover:bg-slate-950">
+        <div className="relative flex w-full flex-col gap-4 rounded-lg bg-white p-4 shadow-lg">
+            <div className="flex items-center justify-between">
+                <h3 className="text-lg font-semibold text-slate-800">Tabla de Incidencias</h3>
+                <div className="relative flex items-center gap-4">
+                    <CiSearch className="absolute left-3 text-gray-500" size={20} />
+                    <input
+                        type="text"
+                        placeholder="Buscar..."
+                        className="input input-bordered input-primary rounded border border-slate-400 py-1 pl-10 text-left"
+                        onChange={(event) => setSearch(event.target.value)}
+                    />
+                    <Link href="/admin/incidencia/create" passHref>
+                        <button className="rounded border border-slate-700 bg-slate-800 px-4 py-1 text-slate-100 hover:bg-slate-950">
                             Agregar Incidencia
                         </button>
-                        </Link>
-                    </div>
+                    </Link>
                 </div>
-            
+            </div>
 
-       
-            <div className="block m-4 p-4 w-full overflow-x-auto">
-                <table className=" w-full border border-gray-300 ">
-                    <thead className="bg-slate-800 text-white">
-                    <tr>
-                        {columns.map((column) => (
-                        <th
-                            key={column}
-                            className={`py-3 px-2 font-semibold text-sm ${
-                            column === "2° subcat" ? "whitespace-nowrap" : ""
-                            }`}
-                        >
-                            <div className="flex items-center justify-between">
-                            {column}
-                            {column !== "Acciones" && (
-                                <ArrowDownUp
-                                size={12}
-                                className="ml-2 cursor-pointer hover:scale-125 transition-transform"
-                                onClick={() => requestSort(column as keyof Data)}
-                                />
-                            )}
-                            </div>
-                        </th>
-                        ))}
-                    </tr>
+            <div className="block w-full overflow-x-auto">
+                <table className="w-full border border-gray-300">
+                    <thead className="relative text-white">
+                        <tr>
+                            {columns.map((column, index) => (
+                                <th
+                                    key={column}
+                                    className={cx(
+                                        `border-r-2 border-slate-400 bg-slate-800 p-2.5 text-sm font-semibold`,
+                                        column === "2° subcat" && "whitespace-nowrap",
+                                        index === columns.length - 1 && "border-r-0",
+                                    )}
+                                >
+                                    <div className="flex items-center justify-between">
+                                        {column}
+                                        {column !== "Acciones" && (
+                                            <ArrowDownUp
+                                                size={12}
+                                                className="ml-2 cursor-pointer transition-transform hover:scale-125"
+                                                onClick={() => requestSort(column as keyof Data)}
+                                            />
+                                        )}
+                                    </div>
+                                </th>
+                            ))}
+                            <th
+                                className={
+                                    "sticky right-0 bg-slate-800 p-2.5 text-sm font-semibold"
+                                }
+                                style={{ boxShadow: "2px 0 0 #f1f5f9 inset" }}
+                            >
+                                <div className="flex items-center justify-between">Acciones</div>
+                            </th>
+                        </tr>
                     </thead>
                     <tbody className="text-slate-700">
-                    {currentItems.map((row, index) => (
-                        <tr key={row.id} className={`${index % 2 === 0 ? "bg-slate-100" : "bg-white"}`}>
-                        <td className="text-sm py-2 px-2">{row.id}</td>
-                        <td className="text-sm py-2 px-2">{row.variable}</td>
-                        <td className="text-sm py-2 px-2">{row.categoria}</td>
-                        <td className="text-sm py-2 px-2">{row.subcategoria}</td>
-                        <td className="text-sm py-2 px-2">{row.segundasubcategoria}</td>
-                        <td className="text-sm py-2 px-2">{row.amount}</td>
-                        <td className="text-sm py-2 px-2">{row.descripcion}</td>
-                        <td className="text-sm py-2 px-2">{row.provincia}</td>
-                        <td className="text-sm py-2 px-2">{row.municipio}</td>
-                        <td className="text-sm py-2 px-2">{row.fecha}</td>
-                        <td className="text-sm py-2 px-2 ">
-                            <div className="flex gap-2 items-center justify-start">
-                            <Link href={`/admin/incidencia/edit/${row.id}`}>
-                                <button className="w-full flex items-center justify-center">
-                                <FaRegEdit className="text-lg hover:scale-110 transition-transform" />
-                                </button>
-                            </Link>
-                            <button className="w-full flex items-center justify-center" onClick={() => handleDelete(row.id)}>
-                                <RiDeleteBin7Line className="text-lg hover:scale-110 transition-transform" />
-                            </button>
-                            </div>
-                        </td>
-                        </tr>
-                    ))}
+                        {currentItems.map((row, index) => (
+                            <tr
+                                key={row.id}
+                                className={cx(
+                                    "h-14",
+                                    index % 2 === 0 ? "bg-slate-100" : "bg-white",
+                                )}
+                            >
+                                <td
+                                    className={cx(
+                                        "max-w-40 truncate border-r-2 px-2 py-2 text-sm",
+                                        index % 2 === 0 ? "border-white" : "border-slate-100",
+                                    )}
+                                >
+                                    {row.id}
+                                </td>
+                                <td
+                                    className={cx(
+                                        "max-w-40 truncate border-r-2 px-2 py-2 text-sm",
+                                        index % 2 === 0 ? "border-white" : "border-slate-100",
+                                    )}
+                                >
+                                    {row.variable}
+                                </td>
+                                <td
+                                    className={cx(
+                                        "max-w-40 truncate border-r-2 px-2 py-2 text-sm",
+                                        index % 2 === 0 ? "border-white" : "border-slate-100",
+                                    )}
+                                >
+                                    {row.categoria}
+                                </td>
+                                <td
+                                    className={cx(
+                                        "max-w-40 truncate border-r-2 px-2 py-2 text-sm",
+                                        index % 2 === 0 ? "border-white" : "border-slate-100",
+                                    )}
+                                >
+                                    {row.subcategoria}
+                                </td>
+                                <td
+                                    className={cx(
+                                        "max-w-40 truncate border-r-2 px-2 py-2 text-sm",
+                                        index % 2 === 0 ? "border-white" : "border-slate-100",
+                                    )}
+                                >
+                                    {row.segundasubcategoria}
+                                </td>
+                                <td
+                                    className={cx(
+                                        "max-w-40 truncate border-r-2 px-2 py-2 text-sm",
+                                        index % 2 === 0 ? "border-white" : "border-slate-100",
+                                    )}
+                                >
+                                    {row.amount}
+                                </td>
+                                <td
+                                    className={cx(
+                                        "max-w-40 truncate border-r-2 px-2 py-2 text-sm",
+                                        index % 2 === 0 ? "border-white" : "border-slate-100",
+                                    )}
+                                >
+                                    {row.descripcion}
+                                </td>
+                                <td
+                                    className={cx(
+                                        "max-w-40 truncate border-r-2 px-2 py-2 text-sm",
+                                        index % 2 === 0 ? "border-white" : "border-slate-100",
+                                    )}
+                                >
+                                    {row.provincia}
+                                </td>
+                                <td
+                                    className={cx(
+                                        "max-w-40 truncate border-r-2 px-2 py-2 text-sm",
+                                        index % 2 === 0 ? "border-white" : "border-slate-100",
+                                    )}
+                                >
+                                    {row.municipio}
+                                </td>
+                                <td className={cx("max-w-40 truncate px-2 py-2 text-sm")}>
+                                    {row.fecha}
+                                </td>
+                                <td
+                                    className={cx(
+                                        "sticky right-0 max-w-40 truncate p-3 text-sm",
+                                        index % 2 === 0 ? "bg-slate-100" : "bg-white",
+                                    )}
+                                    style={{
+                                        boxShadow: `2px 0 0 ${index % 2 === 0 ? "white" : "#f1f5f9"} inset`,
+                                    }}
+                                >
+                                    <div className="flex items-center justify-start gap-2">
+                                        <Link href={`/admin/incidencia/edit/${row.id}`}>
+                                            <button className="flex w-full items-center justify-center">
+                                                <FaRegEdit className="text-lg transition-transform hover:scale-110" />
+                                            </button>
+                                        </Link>
+                                        <button
+                                            className="flex w-full items-center justify-center"
+                                            onClick={() => handleDelete(row.id)}
+                                        >
+                                            <RiDeleteBin7Line className="text-lg transition-transform hover:scale-110" />
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        ))}
                     </tbody>
                 </table>
-                
             </div>
-            <div className="flex justify-end mt-4">
-          <div className="btn-group gap-4">
-            {Array.from({ length: totalPages }).map((_, i) => (
-              <button key={i + 1} className={`btn ${currentPage === i + 1 ? "btn-active" : ""}`} onClick={() => setCurrentPage(i + 1)}>
-                {i + 1}
-              </button>
-            ))}
-          </div>
+            <div className="flex justify-end">
+                <div className="btn-group gap-4">
+                    {Array.from({ length: totalPages }).map((_, i) => (
+                        <button
+                            key={i + 1}
+                            className={`btn ${currentPage === i + 1 ? "btn-active" : ""}`}
+                            onClick={() => setCurrentPage(i + 1)}
+                        >
+                            {i + 1}
+                        </button>
+                    ))}
+                </div>
+            </div>
+
+            {deleteModal.show && deleteModal.id !== null && (
+                <DeleteModal
+                    id={deleteModal.id}
+                    onCancel={() => setDeleteModal({ show: false, id: null })}
+                    onConfirm={() => confirmDelete(deleteModal.id as number)}
+                />
+            )}
         </div>
-      
-       
-        {deleteModal.show && deleteModal.id !== null && (
-          <DeleteModal
-            id={deleteModal.id}
-            onCancel={() => setDeleteModal({ show: false, id: null })}
-            onConfirm={() => confirmDelete(deleteModal.id as number)}
-          />
-        )}
-      </div>
-        
-      
-        
-       
-      
-        
-     
     );
 }
