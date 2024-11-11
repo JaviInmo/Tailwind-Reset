@@ -27,9 +27,9 @@ export function MainLayout({ children }: PropsWithChildren) {
                     overflow: "hidden",
                 }}
             >
-                <ul className="py-2 px-2 mr-4">
-                    <li className="flex justify-start items-center hover:bg-slate-700 hover:underline p-2 mb-6">
-                        <AiOutlineHome className="mr-2 font-bold text-xl" />
+                <ul className="py-2 pr-6">
+                    <li className="flex justify-start items-center hover:bg-slate-700 hover:underline p-2 pb-6">
+                        <AiOutlineHome className="pr-2 font-bold text-3xl" />
                         <Link className="flex-1 font-bold text-xl" href="/">
                             Home
                         </Link>
@@ -39,28 +39,28 @@ export function MainLayout({ children }: PropsWithChildren) {
                         />
                     </li>
                     <li className="flex justify-start items-center hover:bg-slate-700 hover:underline p-2">
-                        <RxDashboard className="mr-2" />
+                        <RxDashboard className="pr-2 text-2xl" />
                         <Link href="/">Dashboard</Link>
                     </li>
                     <li className="flex justify-start items-center hover:bg-slate-700 hover:underline p-2">
-                        <VscGraphLine className="mr-2" />
+                        <VscGraphLine className="pr-2 text-2xl" />
                         <Link href="/">Gráficas</Link>
                     </li>
                     <li className="flex justify-start items-center hover:bg-slate-700 hover:underline p-2">
-                        <BsFileText className="mr-2" />
+                        <BsFileText className="pr-2 text-2xl" />
                         <Link href="/admin/incidencia/create">Formulario</Link>
                     </li>
                     <li className="flex justify-start items-center hover:bg-slate-700 hover:underline p-2">
-                        <GoTable className="mr-2" />
+                        <GoTable className="pr-2 text-2xl" />
                         <Link href="/admin/incidencia/read">Tablas</Link>
                     </li>
                     <li className="flex justify-start items-center hover:bg-slate-700 hover:underline p-2">
-                        <VscVariableGroup className="mr-2" />
+                        <VscVariableGroup className="pr-2 text-2xl" />
                         <h3 className="flex-1">Variables</h3>
                         <FaAngleRight />
                     </li>
                     <li className="flex justify-start items-center hover:bg-slate-700 hover:underline p-2">
-                        <RiAdminLine className="mr-2" />
+                        <RiAdminLine className="pr-2 text-2xl" />
                         <h3 className="flex-1">Admin</h3>
                         <FaAngleRight />
                     </li>

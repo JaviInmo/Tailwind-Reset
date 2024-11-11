@@ -6,30 +6,27 @@ interface DeleteModalProps {
 
 const DeleteModal: React.FC<DeleteModalProps> = ({ id, onCancel, onConfirm }) => {
     return (
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg w-96">
-                <div className="flex justify-between items-center border-b p-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+            <div className="w-96 rounded-lg border-2 border-slate-500 bg-slate-100 shadow-lg">
+                <div className="flex items-center justify-between border-b-2 p-4">
                     <h2 className="text-lg font-medium">Confirmar Eliminación</h2>
-                    <button
-                        onClick={onCancel}
-                        className="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 focus:outline-none"
-                    >
+                    <button onClick={onCancel} className="text-xl text-black focus:outline-none">
                         &times;
                     </button>
                 </div>
-                <div className="p-4">
+                <div className="border-b-2 p-4">
                     ¿Estás seguro de que deseas eliminar la incidencia con ID: {id}?
                 </div>
                 <div className="flex justify-end space-x-2 border-t p-4">
                     <button
                         onClick={onCancel}
-                        className="px-4 py-2 bg-gray-300 text-gray-700 rounded hover:bg-gray-400 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600"
+                        className="rounded bg-slate-600 px-4 py-2 text-white hover:bg-gray-400"
                     >
                         Cancelar
                     </button>
                     <button
                         onClick={onConfirm}
-                        className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+                        className="rounded bg-red-600 px-4 py-2 text-white hover:bg-red-700"
                     >
                         Eliminar
                     </button>

@@ -114,14 +114,14 @@ export function ReportForm({ incidentData, variableData, provinceData }: ReportF
     const secondSubcategoriesOptions = subcategoriesOptions?.find((sc) => sc.id === +subcategoryId)?.secondSubcategories;
 
     return (
-        <div className="flex h-full flex-col items-center justify-center p-6  mt-4">
+        <div className="flex h-full flex-col items-center justify-center p-6  pt-4 " >
             <div className="text-center">
                 <p className="font-semibold">Formulario de Incidencias</p>
                 <p className="font-semibold">Rellene los campos del formulario para registrar la incidencia.</p>
             </div>
 
             <form onSubmit={handleSubmit(onSubmit)} className="w-full lg:w-8/12 h-full lg:h-auto flex flex-col gap-2 py-2 px-2 overflow-y-auto">
-                <div className="mb-4">
+                <div className="pb-4">
                     <label className="block">Fecha:</label>
                     <input
                         type="date"
@@ -133,7 +133,7 @@ export function ReportForm({ incidentData, variableData, provinceData }: ReportF
                     )}
                 </div>
 
-                <div className="flex gap-4 mb-4">
+                <div className="flex gap-4 pb-4">
                     <div className="w-full">
                         <label className="block">Provincia:</label>
                         <select {...register("provincia")} className="w-full border  border-gray-300 rounded p-2">
@@ -167,7 +167,7 @@ export function ReportForm({ incidentData, variableData, provinceData }: ReportF
                     </div>
                 </div>
 
-                <div className="flex gap-4 mb-4">
+                <div className="flex gap-4 pb-4">
                     <div className="w-full">
                         <label className="block">Variable:</label>
                         <select {...register("variable")} className="w-full border border-gray-300 rounded p-2">
@@ -199,7 +199,7 @@ export function ReportForm({ incidentData, variableData, provinceData }: ReportF
                     </div>
                 </div>
 
-                <div className="flex gap-4 mb-4">
+                <div className="flex gap-4 pb-4">
                     <div className="w-full">
                         <label className="block">Subcategoría:</label>
                         <select {...register("subcategoria")} disabled={!categoryId} className="w-full border border-gray-300 rounded p-2 disabled:bg-slate-300 text-black">
@@ -235,7 +235,7 @@ export function ReportForm({ incidentData, variableData, provinceData }: ReportF
                     </div>
                 </div>
 
-                <div className="mb-4">
+                <div className="pb-4">
                     <label className="block">Toneladas:</label>
                     <input
                         type="number"
@@ -248,7 +248,7 @@ export function ReportForm({ incidentData, variableData, provinceData }: ReportF
                     )}
                 </div>
 
-                <div className="mb-4">
+                <div className="pb-4">
                     <label className="block">Descripción:</label>
                     <textarea
                         {...register("description")}
