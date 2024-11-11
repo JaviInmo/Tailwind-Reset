@@ -127,12 +127,23 @@ export default function TablePage({ data }: TableProps) {
                         className="input input-bordered input-primary rounded border border-slate-400 py-1 pl-10 text-left"
                         onChange={(event) => setSearch(event.target.value)}
                     />
-                    <button
-                        className="relative rounded border border-slate-700 bg-slate-800 px-4 py-1 text-slate-100 hover:bg-slate-950"
-                        onClick={() => setFilterOpen(!filterOpen)}
-                    >
-                        Filtro
-                    </button>
+                    <div className="relative">
+                        <button
+                            className="relative rounded border border-slate-700 bg-slate-800 px-4 py-1 text-slate-100 hover:bg-slate-950"
+                            onClick={() => setFilterOpen(!filterOpen)}
+                        >
+                            Filtro
+                        </button>
+                        {filterOpen && (
+                            <div className="absolute left-0 mt-2">
+                                <ColumnVisibilityFilter
+                                    columns={columns}
+                                    visibleColumns={visibleColumns}
+                                    toggleColumnVisibility={toggleColumnVisibility}
+                                />
+                            </div>
+                        )}
+                    </div>
                     <Link href="/admin/incidencia/create" passHref>
                         <button className="rounded border border-slate-700 bg-slate-800 px-4 py-1 text-slate-100 hover:bg-slate-950">
                             Agregar Incidencia
@@ -140,14 +151,6 @@ export default function TablePage({ data }: TableProps) {
                     </Link>
                 </div>
             </div>
-
-            {filterOpen && (
-                <ColumnVisibilityFilter
-                    columns={columns}
-                    toggleColumnVisibility={toggleColumnVisibility}
-                    visibleColumns={visibleColumns}
-                />
-            )}
 
             <div className="block w-full overflow-x-auto">
                 <table className="w-full border border-gray-300">
@@ -255,10 +258,11 @@ export default function TablePage({ data }: TableProps) {
                     ))}
                 </div>
             </div>
-            {deleteModal.show && (
+            {deleteModal.show && deleteModal.id !== null && (
                 <DeleteModal
+                    id={deleteModal.id}
                     show={deleteModal.show}
-                    onClose={() => setDeleteModal({ show: false, id: null })}
+                    onCancel={() => setDeleteModal({ show: false, id: null })}
                     onConfirm={() => deleteModal.id && confirmDelete(deleteModal.id)}
                 />
             )}
