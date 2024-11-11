@@ -17,7 +17,7 @@ export default function ColumnVisibilityFilter({
     toggleColumnVisibility,
 }: ColumnVisibilityFilterProps) {
     return (
-        <div className="duration-600 absolute left-0 z-10 w-52 origin-top scale-y-100 transform rounded-lg bg-white p-4 pt-2 shadow-lg transition-transform">
+        <div className="duration-600 absolute left-0 z-10 w-52 origin-top scale-y-100 transform rounded-lg bg-white p-4 pt-2 shadow-xl transition-transform">
             <h4 className="mb-2 text-sm font-semibold">Seleccionar columnas</h4>
             <ul className="space-y-1">
                 {columns.map(({ label, key }) => (

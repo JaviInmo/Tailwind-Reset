@@ -116,7 +116,7 @@ export default function TablePage({ data }: TableProps) {
     };
 
     return (
-        <div className="relative flex w-full flex-col gap-4 rounded-lg bg-white p-4 shadow-lg">
+        <div className="relative flex w-full flex-col gap-4 rounded-lg bg-white p-4 shadow-xl">
             <div className="flex items-center justify-between">
                 <h3 className="text-lg font-semibold text-slate-800">Tabla de Incidencias</h3>
                 <div className="relative flex items-center gap-4">
