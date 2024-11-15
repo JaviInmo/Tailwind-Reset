@@ -3,9 +3,9 @@
 import { ArrowDownUp } from "lucide-react";
 import Link from "next/link";
 import { useMemo, useState } from "react";
-import DeleteModal from "@/app/admin/incidencia/delete/page";
-import { handleDeleteIncidentAction } from "@/app/admin/incidencia/delete/delete.action";
-import ColumnVisibilityFilter from "@/app/admin/incidencia/read/ColumnVisibilityFilter.tsx";
+import DeleteModal from "@/app/admin/incident/delete/page";
+import { handleDeleteIncidentAction } from "@/app/admin/incident/delete/delete.action";
+import ColumnVisibilityFilter from "@/app/admin/incident/read/ColumnVisibilityFilter.tsx";
 import { CiSearch } from "react-icons/ci";
 import { FaRegEdit } from "react-icons/fa";
 import { RiDeleteBin7Line } from "react-icons/ri";

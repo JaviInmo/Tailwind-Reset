@@ -1,4 +1,4 @@
-import { ReportForm } from "@/app/admin/incidencia/create/report-form";
+import { ReportForm } from "@/app/admin/incident/create/report-form";
 import { getAuth } from "@/libs/auth";
 import prisma from "@/libs/db";
 
