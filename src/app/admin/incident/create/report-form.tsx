@@ -15,13 +15,6 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
-import { Form, FormField } from "@/components/ui/form";
-import { FormItem } from "@/components/ui/form";
-import { FormLabel } from "@/components/ui/form";
-import { FormControl } from "@/components/ui/form";
-import { FormMessage } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 
 const formSchema = z.object({
     fecha: z.string().date("Fecha es requerido"),
@@ -113,20 +106,27 @@ export function ReportForm({ incidentData, variableData, provinceData }: ReportF
     const handleCloseSuccessModal = () => {
         setShowSuccessModal(false);
     };
+    const watchedProvince = watch("provincia");
 
-    const provinceId = watch("provincia");
+    /*  const provinceId = watch("provincia"); */
     const variableId = watch("variable");
     const categoryId = watch("categoria");
     const subcategoryId = watch("subcategoria");
 
     const variableOptions = variableData.find((v) => v.id === +variableId);
-    const municipalityOptions = provinceData.find((p) => p.id === provinceId)?.municipalities;
+    const municipalityOptions = provinceData.find((p) => p.id === watchedProvince)?.municipalities;
     const subcategoriesOptions = variableOptions?.categories?.find(
         (c) => c.id === +categoryId,
     )?.subcategories;
     const secondSubcategoriesOptions = subcategoriesOptions?.find(
         (sc) => sc.id === +subcategoryId,
     )?.secondSubcategories;
+
+    const [provinceId, setProvinceId] = useState("");
+
+    useEffect(() => {
+        setProvinceId(watchedProvince);
+    }, [watchedProvince]);
 
     return (
         <div className="flex h-full flex-col items-center justify-center p-4 shadow-lg">
@@ -152,42 +152,59 @@ export function ReportForm({ incidentData, variableData, provinceData }: ReportF
                 </div>
 
                 <div className="flex gap-4 pb-4">
+                    {" "}
                     <div className="w-full">
-                        <label className="block">Provincia:</label>
-                        <select
-                            {...register("provincia")}
-                            className="w-full rounded border border-gray-300 p-2"
-                        >
-                            <option value="">Seleccionar provincia</option>
-                            {provinceData.map((opt) => (
-                                <option key={opt.id} value={opt.id}>
-                                    {opt.name}
-                                </option>
-                            ))}
-                        </select>
+                        {" "}
+                        <label className="block">Provincia:</label>{" "}
+                        <Select {...register("provincia")}>
+                            {" "}
+                            <SelectTrigger className="w-full rounded border border-gray-300 bg-white p-2">
+                                {" "}
+                                <SelectValue placeholder="Seleccionar provincia" />{" "}
+                            </SelectTrigger>{" "}
+                            <SelectContent>
+                                {" "}
+                                <SelectGroup>
+                                    {" "}
+                                    {provinceData.map((opt) => (
+                                        <SelectItem key={opt.id} value={opt.id}>
+                                            {" "}
+                                            {opt.name}{" "}
+                                        </SelectItem>
+                                    ))}{" "}
+                                </SelectGroup>{" "}
+                            </SelectContent>{" "}
+                        </Select>{" "}
                         {errors.provincia && (
                             <p className="text-red-600">{errors.provincia.message}</p>
-                        )}
-                    </div>
-
+                        )}{" "}
+                    </div>{" "}
                     <div className="w-full">
-                        <label className="block">Municipio:</label>
-                        <select
-                            {...register("municipio")}
-                            disabled={!provinceId}
-                            className="w-full rounded border border-gray-300 p-2 text-black disabled:bg-slate-300"
-                        >
-                            <option value="">Seleccionar municipio</option>
-                            {municipalityOptions?.map((opt) => (
-                                <option key={opt.id} value={opt.id}>
-                                    {opt.name}
-                                </option>
-                            ))}
-                        </select>
+                        {" "}
+                        <label className="block">Municipio:</label>{" "}
+                        <Select {...register("municipio")} disabled={!provinceId}>
+                            {" "}
+                            <SelectTrigger className="w-full rounded border border-gray-300 p-2 disabled:bg-slate-300">
+                                {" "}
+                                <SelectValue placeholder="Seleccionar Municipio" />{" "}
+                            </SelectTrigger>{" "}
+                            <SelectContent>
+                                {" "}
+                                <SelectGroup>
+                                    {" "}
+                                    {municipalityOptions?.map((opt) => (
+                                        <SelectItem key={opt.id} value={opt.id}>
+                                            {" "}
+                                            {opt.name}{" "}
+                                        </SelectItem>
+                                    ))}{" "}
+                                </SelectGroup>{" "}
+                            </SelectContent>{" "}
+                        </Select>{" "}
                         {errors.municipio && (
                             <p className="text-red-600">{errors.municipio.message}</p>
-                        )}
-                    </div>
+                        )}{" "}
+                    </div>{" "}
                 </div>
 
                 <div className="flex gap-4 pb-4">
