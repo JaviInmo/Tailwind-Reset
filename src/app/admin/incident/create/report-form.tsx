@@ -3,7 +3,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Prisma } from "@prisma/client";
 import { useEffect, useState } from "react";
-import { useForm } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
 import { z } from "zod";
 import { registerAction } from "./form.action";
 import {
@@ -63,6 +63,7 @@ export function ReportForm({ incidentData, variableData, provinceData }: ReportF
         watch,
         setError,
         reset,
+        control,
         formState: { errors },
     } = useForm<FormSchemaData>({
         resolver: zodResolver(formSchema),
@@ -124,6 +125,8 @@ export function ReportForm({ incidentData, variableData, provinceData }: ReportF
 
     const [provinceId, setProvinceId] = useState("");
 
+    console.log('watchedProvince',watchedProvince);
+
     useEffect(() => {
         setProvinceId(watchedProvince);
     }, [watchedProvince]);
@@ -152,59 +155,63 @@ export function ReportForm({ incidentData, variableData, provinceData }: ReportF
                 </div>
 
                 <div className="flex gap-4 pb-4">
-                    {" "}
+                    
                     <div className="w-full">
-                        {" "}
-                        <label className="block">Provincia:</label>{" "}
-                        <Select {...register("provincia")}>
-                            {" "}
-                            <SelectTrigger className="w-full rounded border border-gray-300 bg-white p-2">
-                                {" "}
-                                <SelectValue placeholder="Seleccionar provincia" />{" "}
-                            </SelectTrigger>{" "}
-                            <SelectContent>
-                                {" "}
-                                <SelectGroup>
-                                    {" "}
-                                    {provinceData.map((opt) => (
-                                        <SelectItem key={opt.id} value={opt.id}>
-                                            {" "}
-                                            {opt.name}{" "}
-                                        </SelectItem>
-                                    ))}{" "}
-                                </SelectGroup>{" "}
-                            </SelectContent>{" "}
-                        </Select>{" "}
+                        
+                        <label className="block">Provincia:</label>
+                        <Controller
+                            control={control}
+                            name="provincia"
+                            render={({ field: { onChange, value } }) => (
+                                <Select {...register("provincia")} 
+                                onValueChange={onChange} 
+                                value={value}
+                                >
+                                    <SelectTrigger className="w-full rounded border border-gray-300 bg-white p-2">
+                                        <SelectValue placeholder="Seleccionar provincia" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectGroup>
+                                            {provinceData.map((opt) => (
+                                                <SelectItem key={opt.id} value={opt.id}>
+                                                    {opt.name}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectGroup>
+                                    </SelectContent>
+                                </Select>
+                            )}
+                        />
                         {errors.provincia && (
                             <p className="text-red-600">{errors.provincia.message}</p>
-                        )}{" "}
-                    </div>{" "}
+                        )}
+                    </div>
                     <div className="w-full">
-                        {" "}
-                        <label className="block">Municipio:</label>{" "}
+                        
+                        <label className="block">Municipio:</label>
                         <Select {...register("municipio")} disabled={!provinceId}>
-                            {" "}
+                            
                             <SelectTrigger className="w-full rounded border border-gray-300 p-2 disabled:bg-slate-300">
-                                {" "}
-                                <SelectValue placeholder="Seleccionar Municipio" />{" "}
-                            </SelectTrigger>{" "}
+                                
+                                <SelectValue placeholder="Seleccionar Municipio" />
+                            </SelectTrigger>
                             <SelectContent>
-                                {" "}
+                                
                                 <SelectGroup>
-                                    {" "}
+                                    
                                     {municipalityOptions?.map((opt) => (
                                         <SelectItem key={opt.id} value={opt.id}>
-                                            {" "}
-                                            {opt.name}{" "}
+                                            
+                                            {opt.name}
                                         </SelectItem>
-                                    ))}{" "}
-                                </SelectGroup>{" "}
-                            </SelectContent>{" "}
-                        </Select>{" "}
+                                    ))}
+                                </SelectGroup>
+                            </SelectContent>
+                        </Select>
                         {errors.municipio && (
                             <p className="text-red-600">{errors.municipio.message}</p>
-                        )}{" "}
-                    </div>{" "}
+                        )}
+                    </div>
                 </div>
 
                 <div className="flex gap-4 pb-4">
