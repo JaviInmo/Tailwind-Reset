@@ -10,6 +10,18 @@ import { CiSearch } from "react-icons/ci";
 import { FaRegEdit } from "react-icons/fa";
 import { RiDeleteBin7Line } from "react-icons/ri";
 import { cx } from "@/util/cx";
+import {
+    Table,
+    TableBody,
+    TableCaption,
+    TableCell,
+    TableFooter,
+    TableHead,
+    TableHeader,
+    TableRow,
+} from "@/components/ui/table";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 
 interface Data {
     id: number;
@@ -121,19 +133,19 @@ export default function TablePage({ data }: TableProps) {
                 <h3 className="text-lg font-semibold text-slate-800">Tabla de Incidencias</h3>
                 <div className="relative flex items-center gap-4">
                     <CiSearch className="absolute left-3 text-gray-500" size={20} />
-                    <input
+                    <Input
                         type="text"
                         placeholder="Buscar..."
                         className="input input-bordered input-primary rounded border border-slate-400 py-1 pl-10 text-left"
                         onChange={(event) => setSearch(event.target.value)}
                     />
                     <div className="relative">
-                        <button
+                        <Button
                             className="relative rounded border border-slate-700 bg-slate-800 px-4 py-1 text-slate-100 hover:bg-slate-950"
                             onClick={() => setFilterOpen(!filterOpen)}
                         >
                             Filtro
-                        </button>
+                        </Button>
                         {filterOpen && (
                             <div className="absolute left-0 mt-2">
                                 <ColumnVisibilityFilter
@@ -145,29 +157,29 @@ export default function TablePage({ data }: TableProps) {
                         )}
                     </div>
                     <Link href="/admin/incidencia/create" passHref>
-                        <button className="rounded border border-slate-700 bg-slate-800 px-4 py-1 text-slate-100 hover:bg-slate-950">
+                        <Button className="rounded border border-slate-700 bg-slate-800 px-4 py-1 text-slate-100 hover:bg-slate-950">
                             Agregar Incidencia
-                        </button>
+                        </Button>
                     </Link>
                 </div>
             </div>
 
             <div className="block w-full overflow-x-auto">
-                <table className="w-full border border-gray-300">
-                    <thead className="relative text-white">
-                        <tr>
+                <Table className="w-full border border-gray-300">
+                    <TableHeader className="relative text-white">
+                        <TableRow>
                             {columns.map(
                                 ({ label, key }, index) =>
                                     visibleColumns[key] && (
-                                        <th
+                                        <TableHead
                                             key={label}
                                             className={cx(
-                                                `border-r-2 border-slate-400 bg-slate-800 p-2.5 text-sm font-semibold`,
+                                                `border-r-2 border-slate-400 bg-slate-800 p-2.5 text-sm font-semibold text-white`,
                                                 label === "2° subcat" && "whitespace-nowrap",
                                                 index === columns.length - 1 && "border-r-0",
                                             )}
                                         >
-                                            <div className="flex items-center justify-between">
+                                            <div className="flex items-center justify-between text-white">
                                                 {label}
                                                 {label !== "Acciones" && (
                                                     <ArrowDownUp
@@ -177,20 +189,20 @@ export default function TablePage({ data }: TableProps) {
                                                     />
                                                 )}
                                             </div>
-                                        </th>
+                                        </TableHead>
                                     ),
                             )}
-                            <th
-                                className="sticky right-0 bg-slate-800 p-2.5 text-sm font-semibold"
+                            <TableHead
+                                className="sticky right-0 bg-slate-800 p-2.5 text-sm font-semibold text-white"
                                 style={{ boxShadow: "2px 0 0 #f1f5f9 inset" }}
                             >
                                 Acciones
-                            </th>
-                        </tr>
-                    </thead>
-                    <tbody className="text-slate-700">
+                            </TableHead>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody className="text-slate-700">
                         {currentItems.map((row, index) => (
-                            <tr
+                            <TableRow
                                 key={row.id}
                                 className={cx(
                                     "h-14",
@@ -200,7 +212,7 @@ export default function TablePage({ data }: TableProps) {
                                 {columns.map(
                                     ({ key }) =>
                                         visibleColumns[key] && (
-                                            <td
+                                            <TableCell
                                                 key={key}
                                                 className={cx(
                                                     "max-w-40 truncate border-r-2 px-2 py-2 text-sm",
@@ -210,10 +222,10 @@ export default function TablePage({ data }: TableProps) {
                                                 )}
                                             >
                                                 {row[key]}
-                                            </td>
+                                            </TableCell>
                                         ),
                                 )}
-                                <td
+                                <TableCell
                                     className={cx(
                                         "sticky right-0 max-w-40 truncate p-3 text-sm",
                                         index % 2 === 0 ? "bg-slate-100" : "bg-white",
@@ -235,11 +247,11 @@ export default function TablePage({ data }: TableProps) {
                                             <RiDeleteBin7Line className="text-lg transition-transform hover:scale-110" />
                                         </button>
                                     </div>
-                                </td>
-                            </tr>
+                                </TableCell>
+                            </TableRow>
                         ))}
-                    </tbody>
-                </table>
+                    </TableBody>
+                </Table>
             </div>
             <div className="flex justify-end">
                 <div className="btn-group gap-2">
@@ -248,7 +260,7 @@ export default function TablePage({ data }: TableProps) {
                             key={i + 1}
                             className={`border border-gray-400 px-2 py-0 shadow-md ${
                                 currentPage === i + 1 ?
-                                    "border-slate-950 bg-slate-800 text-white"
+                                    "border-slate-950 bg-slate-600 text-white"
                                 :   "bg-white text-gray-700"
                             }`}
                             onClick={() => setCurrentPage(i + 1)}
