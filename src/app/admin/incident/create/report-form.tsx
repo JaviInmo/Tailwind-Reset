@@ -15,6 +15,10 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Button } from "@/components/ui/button";
 
 const formSchema = z.object({
     fecha: z.string().date("Fecha es requerido"),
@@ -125,7 +129,7 @@ export function ReportForm({ incidentData, variableData, provinceData }: ReportF
 
     const [provinceId, setProvinceId] = useState("");
 
-    console.log('watchedProvince',watchedProvince);
+    console.log("watchedProvince", watchedProvince);
 
     useEffect(() => {
         setProvinceId(watchedProvince);
@@ -145,27 +149,26 @@ export function ReportForm({ incidentData, variableData, provinceData }: ReportF
                 className="flex h-full w-full flex-col gap-2 overflow-y-auto px-2 py-2 lg:h-auto lg:w-8/12"
             >
                 <div className="pb-4">
-                    <label className="block">Fecha:</label>
-                    <input
+                    <Label className="block pb-2">Fecha:</Label>
+                    <Input
                         type="date"
                         {...register("fecha")}
-                        className="w-full rounded border border-gray-300 p-2"
+                        className="w-full rounded border border-gray-300 bg-white p-2"
                     />
                     {errors.fecha && <p className="text-red-600">{errors.fecha.message}</p>}
                 </div>
 
                 <div className="flex gap-4 pb-4">
-                    
                     <div className="w-full">
-                        
-                        <label className="block">Provincia:</label>
+                        <Label className="block pb-2">Provincia:</Label>
                         <Controller
                             control={control}
                             name="provincia"
                             render={({ field: { onChange, value } }) => (
-                                <Select {...register("provincia")} 
-                                onValueChange={onChange} 
-                                value={value}
+                                <Select
+                                    {...register("provincia")}
+                                    onValueChange={onChange}
+                                    value={value}
                                 >
                                     <SelectTrigger className="w-full rounded border border-gray-300 bg-white p-2">
                                         <SelectValue placeholder="Seleccionar provincia" />
@@ -187,27 +190,32 @@ export function ReportForm({ incidentData, variableData, provinceData }: ReportF
                         )}
                     </div>
                     <div className="w-full">
-                        
-                        <label className="block">Municipio:</label>
-                        <Select {...register("municipio")} disabled={!provinceId}>
-                            
-                            <SelectTrigger className="w-full rounded border border-gray-300 p-2 disabled:bg-slate-300">
-                                
-                                <SelectValue placeholder="Seleccionar Municipio" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                
-                                <SelectGroup>
-                                    
-                                    {municipalityOptions?.map((opt) => (
-                                        <SelectItem key={opt.id} value={opt.id}>
-                                            
-                                            {opt.name}
-                                        </SelectItem>
-                                    ))}
-                                </SelectGroup>
-                            </SelectContent>
-                        </Select>
+                        <Label className="block pb-2">Municipio:</Label>
+                        <Controller
+                            control={control}
+                            name="municipio"
+                            render={({ field: { onChange, value } }) => (
+                                <Select
+                                    {...register("municipio")}
+                                    onValueChange={onChange}
+                                    value={value}
+                                    disabled={!provinceId}
+                                >
+                                    <SelectTrigger className="w-full rounded border border-gray-300 bg-white p-2 disabled:bg-slate-300">
+                                        <SelectValue placeholder="Seleccionar Municipio" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectGroup>
+                                            {municipalityOptions?.map((opt) => (
+                                                <SelectItem key={opt.id} value={opt.id}>
+                                                    {opt.name}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectGroup>
+                                    </SelectContent>
+                                </Select>
+                            )}
+                        />
                         {errors.municipio && (
                             <p className="text-red-600">{errors.municipio.message}</p>
                         )}
@@ -216,37 +224,64 @@ export function ReportForm({ incidentData, variableData, provinceData }: ReportF
 
                 <div className="flex gap-4 pb-4">
                     <div className="w-full">
-                        <label className="block">Variable:</label>
-                        <select
-                            {...register("variable")}
-                            className="w-full rounded border border-gray-300 p-2"
-                        >
-                            <option value="">Seleccionar variable</option>
-                            {variableData.map((opt) => (
-                                <option key={opt.id} value={opt.id}>
-                                    {opt.name}
-                                </option>
-                            ))}
-                        </select>
+                        <Label className="block pb-2">Variable:</Label>
+                        <Controller
+                            control={control}
+                            name="variable"
+                            render={({ field: { onChange, value } }) => (
+                                <Select
+                                    {...register("variable")}
+                                    onValueChange={onChange}
+                                    value={value ? value.toString() : ""}
+                                >
+                                    <SelectTrigger className="w-full rounded border border-gray-300 bg-white p-2">
+                                        <SelectValue placeholder="Seleccionar variable" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectGroup>
+                                            {variableData.map((opt) => (
+                                                <SelectItem key={opt.id} value={opt.id.toString()}>
+                                                    {opt.name}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectGroup>
+                                    </SelectContent>
+                                </Select>
+                            )}
+                        />
+
                         {errors.variable && (
                             <p className="text-red-600">{errors.variable.message}</p>
                         )}
                     </div>
 
                     <div className="w-full">
-                        <label className="block">Categoría:</label>
-                        <select
-                            {...register("categoria")}
-                            disabled={!variableId}
-                            className="w-full rounded border border-gray-300 p-2 text-black disabled:bg-slate-300"
-                        >
-                            <option value="">Seleccionar categoría</option>
-                            {variableOptions?.categories?.map((opt) => (
-                                <option key={opt.id} value={opt.id}>
-                                    {opt.name}
-                                </option>
-                            ))}
-                        </select>
+                        <Label className="block pb-2">Categoría:</Label>
+                        <Controller
+                            control={control}
+                            name="categoria"
+                            render={({ field: { onChange, value } }) => (
+                                <Select
+                                    {...register("categoria")}
+                                    onValueChange={onChange}
+                                    value={value ? value.toString() : ""}
+                                    disabled={!variableId}
+                                >
+                                    <SelectTrigger className="w-full rounded border border-gray-300 bg-white p-2 text-black disabled:bg-slate-300">
+                                        <SelectValue placeholder="Seleccionar categoría" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectGroup>
+                                            {variableOptions?.categories?.map((opt) => (
+                                                <SelectItem key={opt.id} value={opt.id.toString()}>
+                                                    {opt.name}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectGroup>
+                                    </SelectContent>
+                                </Select>
+                            )}
+                        />
                         {errors.categoria && (
                             <p className="text-red-600">{errors.categoria.message}</p>
                         )}
@@ -255,38 +290,65 @@ export function ReportForm({ incidentData, variableData, provinceData }: ReportF
 
                 <div className="flex gap-4 pb-4">
                     <div className="w-full">
-                        <label className="block">Subcategoría:</label>
-                        <select
-                            {...register("subcategoria")}
-                            disabled={!categoryId}
-                            className="w-full rounded border border-gray-300 p-2 text-black disabled:bg-slate-300"
-                        >
-                            <option value="">Seleccionar subcategoría</option>
-                            {subcategoriesOptions?.map((opt) => (
-                                <option key={opt.id} value={opt.id}>
-                                    {opt.name}
-                                </option>
-                            ))}
-                        </select>
+                        <Label className="block pb-2">Subcategoría:</Label>
+                        <Controller
+                            control={control}
+                            name="subcategoria"
+                            render={({ field: { onChange, value } }) => (
+                                <Select
+                                    {...register("subcategoria")}
+                                    onValueChange={onChange}
+                                    value={value ? value.toString() : ""}
+                                    disabled={!categoryId}
+                                >
+                                    <SelectTrigger className="w-full rounded border border-gray-300 bg-white p-2 text-black disabled:bg-slate-300">
+                                        <SelectValue placeholder="Seleccionar subcategoría" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectGroup>
+                                            {subcategoriesOptions?.map((opt) => (
+                                                <SelectItem key={opt.id} value={opt.id.toString()}>
+                                                    {opt.name}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectGroup>
+                                    </SelectContent>
+                                </Select>
+                            )}
+                        />
                         {errors.subcategoria && (
                             <p className="text-red-600">{errors.subcategoria.message}</p>
                         )}
                     </div>
 
                     <div className="w-full">
-                        <label className="block">Segunda Subcategoría:</label>
-                        <select
-                            {...register("segundasubcategoria")}
-                            disabled={!subcategoryId}
-                            className="w-full rounded border border-gray-300 p-2 text-black disabled:bg-slate-300"
-                        >
-                            <option value="">Seleccionar segunda subcategoría</option>
-                            {secondSubcategoriesOptions?.map((opt) => (
-                                <option key={opt.id} value={opt.id}>
-                                    {opt.name}
-                                </option>
-                            ))}
-                        </select>
+                        <Label className="block pb-2">Segunda Subcategoría:</Label>
+                        <Controller
+                            control={control}
+                            name="segundasubcategoria"
+                            render={({ field: { onChange, value } }) => (
+                                <Select
+                                    {...register("segundasubcategoria")}
+                                    onValueChange={onChange}
+                                    value={value ? value.toString() : ""}
+                                    disabled={!categoryId}
+                                >
+                                    <SelectTrigger className="w-full rounded border border-gray-300 bg-white p-2 text-black disabled:bg-slate-300">
+                                        <SelectValue placeholder="Seleccionar segundasubcategoría" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectGroup>
+                                            {secondSubcategoriesOptions?.map((opt) => (
+                                                <SelectItem key={opt.id} value={opt.id.toString()}>
+                                                    {opt.name}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectGroup>
+                                    </SelectContent>
+                                </Select>
+                            )}
+                        />
+
                         {errors.segundasubcategoria && (
                             <p className="text-red-600">{errors.segundasubcategoria.message}</p>
                         )}
@@ -294,33 +356,33 @@ export function ReportForm({ incidentData, variableData, provinceData }: ReportF
                 </div>
 
                 <div className="pb-4">
-                    <label className="block">Toneladas:</label>
-                    <input
+                    <Label className="block pb-2">Toneladas:</Label>
+                    <Input
                         type="number"
                         step="0.01"
                         {...register("amount")}
-                        className="w-full rounded border border-gray-300 p-2"
+                        className="w-full rounded border border-gray-300 bg-white p-2"
                     />
                     {errors.amount && <p className="text-red-600">{errors.amount.message}</p>}
                 </div>
 
                 <div className="pb-4">
-                    <label className="block">Descripción:</label>
-                    <textarea
+                    <Label className="block pb-2">Descripción:</Label>
+                    <Textarea
                         {...register("description")}
-                        className="w-full rounded border border-gray-300 p-2"
-                    ></textarea>
+                        className="w-full rounded border border-gray-300 bg-white p-2"
+                    ></Textarea>
                     {errors.description && (
                         <p className="text-red-600">{errors.description.message}</p>
                     )}
                 </div>
 
-                <button
+                <Button
                     type="submit"
                     className="rounded border-slate-700 bg-slate-800 px-4 py-2 text-slate-100 hover:bg-slate-950"
                 >
                     Crear Incidencia
-                </button>
+                </Button>
             </form>
 
             {showSuccessModal && (
@@ -339,12 +401,12 @@ export function ReportForm({ incidentData, variableData, provinceData }: ReportF
                             <p>Incidencia creada con éxito.</p>
                         </div>
                         <div className="flex justify-end pt-2">
-                            <button
+                            <Button
                                 className="rounded bg-blue-500 px-4 py-2 text-white hover:bg-blue-600"
                                 onClick={handleCloseSuccessModal}
                             >
                                 Aceptar
-                            </button>
+                            </Button>
                         </div>
                     </div>
                 </div>
