@@ -11,10 +11,6 @@ const MainHeader = () => {
     return (
         <div className="mb-0 flex max-h-16 w-full items-center justify-between gap-2 px-2 py-2">
             <div className="flex items-center gap-2">
-                <div onClick={onToggle} className="lg:hidden">
-                    <FaBars className="cursor-pointer" />
-                </div>
-
                 <div>MainHeaderBrand</div>
             </div>
             <div className="flex items-center justify-between gap-2 px-2 py-2">

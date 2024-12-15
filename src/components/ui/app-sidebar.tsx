@@ -90,7 +90,7 @@ const extra = [
 
 export function AppSidebar() {
     return (
-        <Sidebar>
+        <Sidebar className="shadow-left-3 shadow-2xl">
             <SidebarContent>
                 <SidebarGroup>
                     <SidebarGroupLabel>Application</SidebarGroupLabel>
@@ -126,36 +126,6 @@ export function AppSidebar() {
                         </SidebarMenu>
                     </SidebarGroupContent>
                 </SidebarGroup>
-
-                {/*  <SidebarGroup>
-                    <SidebarGroupContent>
-                        <SidebarMenu>
-                            <Collapsible defaultOpen={false} className="group/collapsible">
-                                <SidebarMenuItem>
-                                    <CollapsibleTrigger asChild>
-                                        <SidebarMenuButton>
-                                            <span>Otros</span>
-                                        </SidebarMenuButton>
-                                    </CollapsibleTrigger>
-
-                                    <CollapsibleContent>
-                                        <SidebarMenuSub>
-                                            {extra.map((item) => (
-                                                <SidebarMenuSubItem key={item.title}>
-                                                    <SidebarMenuSubButton asChild>
-                                                        <Link href={item.url}>
-                                                            <span>{item.title}</span>
-                                                        </Link>
-                                                    </SidebarMenuSubButton>
-                                                </SidebarMenuSubItem>
-                                            ))}
-                                        </SidebarMenuSub>
-                                    </CollapsibleContent>
-                                </SidebarMenuItem>
-                            </Collapsible>
-                        </SidebarMenu>
-                    </SidebarGroupContent>
-                </SidebarGroup> */}
             </SidebarContent>
         </Sidebar>
     );
