@@ -5,9 +5,23 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 import DeleteModal from "@/app/admin/incident/delete/page";
 import { handleDeleteIncidentAction } from "@/app/admin/incident/delete/delete.action";
+import ColumnVisibilityFilter from "@/app/admin/incident/read/ColumnVisibilityFilter.tsx";
 import { CiSearch } from "react-icons/ci";
 import { FaRegEdit } from "react-icons/fa";
 import { RiDeleteBin7Line } from "react-icons/ri";
+import { cx } from "@/util/cx";
+import {
+    Table,
+    TableBody,
+    TableCaption,
+    TableCell,
+    TableFooter,
+    TableHead,
+    TableHeader,
+    TableRow,
+} from "@/components/ui/table";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 
 interface Data {
     id: number;
@@ -26,21 +40,30 @@ interface TableProps {
     data: Data[];
 }
 
-const columns = [
-    "Id",
-    "Var",
-    "Cat",
-    "Subcat",
-    "2° subcat",
-    "Cant.",
-    "Desc.",
-    "Prov.",
-    "Munic.",
-    "Fecha",
-    "Acciones",
+const columns: { label: string; key: keyof Data }[] = [
+    { label: "Id", key: "id" },
+    { label: "Var", key: "variable" },
+    { label: "Cat", key: "categoria" },
+    { label: "Subcat", key: "subcategoria" },
+    { label: "2° subcat", key: "segundasubcategoria" },
+    { label: "Cant.", key: "amount" },
+    { label: "Desc.", key: "descripcion" },
+    { label: "Prov.", key: "provincia" },
+    { label: "Munic.", key: "municipio" },
+    { label: "Fecha", key: "fecha" },
 ];
 
+const initialVisibleColumns = columns.reduce(
+    (acc, { key }) => {
+        acc[key] = true;
+        return acc;
+    },
+    {} as Record<string, boolean>,
+);
+
 export default function TablePage({ data }: TableProps) {
+    const [visibleColumns, setVisibleColumns] = useState(initialVisibleColumns);
+    const [filterOpen, setFilterOpen] = useState(false);
     const [search, setSearch] = useState("");
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 5;
@@ -50,6 +73,10 @@ export default function TablePage({ data }: TableProps) {
         show: false,
         id: null,
     });
+
+    const toggleColumnVisibility = (key: string) => {
+        setVisibleColumns((prev) => ({ ...prev, [key]: !prev[key] }));
+    };
 
     const filteredData = useMemo(
         () =>
@@ -80,9 +107,9 @@ export default function TablePage({ data }: TableProps) {
 
     const totalPages = Math.ceil(filteredData.length / itemsPerPage);
 
-    const requestSort = (column: keyof Data) => {
-        const direction = sortColumn === column && sortDirection === "asc" ? "desc" : "asc";
-        setSortColumn(column);
+    const requestSort = (columnKey: keyof Data) => {
+        const direction = sortColumn === columnKey && sortDirection === "asc" ? "desc" : "asc";
+        setSortColumn(columnKey);
         setSortDirection(direction);
     };
 
@@ -101,67 +128,112 @@ export default function TablePage({ data }: TableProps) {
     };
 
     return (
-        <div className="relative mt-4 flex w-full flex-col rounded-lg bg-white p-6 shadow-lg">
-            <div className="mb-4 flex items-center justify-between">
+        <div className="relative flex w-full flex-col gap-4 rounded-lg bg-white p-4 shadow-xl">
+            <div className="flex items-center justify-between">
                 <h3 className="text-lg font-semibold text-slate-800">Tabla de Incidencias</h3>
-                <div className="relative flex items-center">
+                <div className="relative flex items-center gap-4">
                     <CiSearch className="absolute left-3 text-gray-500" size={20} />
-                    <input
+                    <Input
                         type="text"
                         placeholder="Buscar..."
-                        className="input input-bordered input-primary mr-4 rounded border border-slate-400 py-1 pl-10 text-left"
+                        className="input input-bordered input-primary rounded border border-slate-400 py-1 pl-10 text-left"
                         onChange={(event) => setSearch(event.target.value)}
                     />
+                    <div className="relative">
+                        <Button
+                            className="relative rounded border border-slate-700 bg-slate-800 px-4 py-1 text-slate-100 hover:bg-slate-950"
+                            onClick={() => setFilterOpen(!filterOpen)}
+                        >
+                            Filtro
+                        </Button>
+                        {filterOpen && (
+                            <div className="absolute left-0 mt-2">
+                                <ColumnVisibilityFilter
+                                    columns={columns}
+                                    visibleColumns={visibleColumns}
+                                    toggleColumnVisibility={toggleColumnVisibility}
+                                />
+                            </div>
+                        )}
+                    </div>
                     <Link href="/admin/incidencia/create" passHref>
-                        <button className="rounded border border-slate-700 bg-slate-800 px-4 py-1 text-slate-100 hover:bg-slate-950">
+                        <Button className="rounded border border-slate-700 bg-slate-800 px-4 py-1 text-slate-100 hover:bg-slate-950">
                             Agregar Incidencia
-                        </button>
+                        </Button>
                     </Link>
                 </div>
             </div>
 
-            <div className="m-4 block w-full overflow-x-auto p-4">
-                <table className="w-full border border-gray-300">
-                    <thead className="bg-slate-800 text-white">
-                        <tr>
-                            {columns.map((column) => (
-                                <th
-                                    key={column}
-                                    className={`px-2 py-3 text-sm font-semibold ${
-                                        column === "2° subcat" ? "whitespace-nowrap" : ""
-                                    }`}
-                                >
-                                    <div className="flex items-center justify-between">
-                                        {column}
-                                        {column !== "Acciones" && (
-                                            <ArrowDownUp
-                                                size={12}
-                                                className="ml-2 cursor-pointer transition-transform hover:scale-125"
-                                                onClick={() => requestSort(column as keyof Data)}
-                                            />
-                                        )}
-                                    </div>
-                                </th>
-                            ))}
-                        </tr>
-                    </thead>
-                    <tbody className="text-slate-700">
-                        {currentItems.map((row, index) => (
-                            <tr
-                                key={row.id}
-                                className={`${index % 2 === 0 ? "bg-slate-100" : "bg-white"}`}
+            <div className="block w-full overflow-x-auto">
+                <Table className="w-full border border-gray-300">
+                    <TableHeader className="relative text-white">
+                        <TableRow>
+                            {columns.map(
+                                ({ label, key }, index) =>
+                                    visibleColumns[key] && (
+                                        <TableHead
+                                            key={label}
+                                            className={cx(
+                                                `border-r-2 border-slate-400 bg-slate-800 p-2.5 text-sm font-semibold text-white`,
+                                                label === "2° subcat" && "whitespace-nowrap",
+                                                index === columns.length - 1 && "border-r-0",
+                                            )}
+                                        >
+                                            <div className="flex items-center justify-between text-white">
+                                                {label}
+                                                {label !== "Acciones" && (
+                                                    <ArrowDownUp
+                                                        size={12}
+                                                        className="ml-2 cursor-pointer transition-transform hover:scale-125"
+                                                        onClick={() => requestSort(key)}
+                                                    />
+                                                )}
+                                            </div>
+                                        </TableHead>
+                                    ),
+                            )}
+                            <TableHead
+                                className="sticky right-0 bg-slate-800 p-2.5 text-sm font-semibold text-white"
+                                style={{ boxShadow: "2px 0 0 #f1f5f9 inset" }}
                             >
-                                <td className="px-2 py-2 text-sm">{row.id}</td>
-                                <td className="px-2 py-2 text-sm">{row.variable}</td>
-                                <td className="px-2 py-2 text-sm">{row.categoria}</td>
-                                <td className="px-2 py-2 text-sm">{row.subcategoria}</td>
-                                <td className="px-2 py-2 text-sm">{row.segundasubcategoria}</td>
-                                <td className="px-2 py-2 text-sm">{row.amount}</td>
-                                <td className="px-2 py-2 text-sm">{row.descripcion}</td>
-                                <td className="px-2 py-2 text-sm">{row.provincia}</td>
-                                <td className="px-2 py-2 text-sm">{row.municipio}</td>
-                                <td className="px-2 py-2 text-sm">{row.fecha}</td>
-                                <td className="px-2 py-2 text-sm">
+                                Acciones
+                            </TableHead>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody className="text-slate-700">
+                        {currentItems.map((row, index) => (
+                            <TableRow
+                                key={row.id}
+                                className={cx(
+                                    "h-14",
+                                    index % 2 === 0 ? "bg-slate-100" : "bg-white",
+                                )}
+                            >
+                                {columns.map(
+                                    ({ key }) =>
+                                        visibleColumns[key] && (
+                                            <TableCell
+                                                key={key}
+                                                className={cx(
+                                                    "max-w-40 truncate border-r-2 px-2 py-2 text-sm",
+                                                    index % 2 === 0 ?
+                                                        "border-white"
+                                                    :   "border-slate-100",
+                                                )}
+                                            >
+                                                {row[key]}
+                                            </TableCell>
+                                        ),
+                                )}
+                                <TableCell
+                                    className={cx(
+                                        "sticky right-0 max-w-40 truncate p-3 text-sm",
+                                        index % 2 === 0 ? "bg-slate-100" : "bg-white",
+                                    )}
+                                    style={{
+                                        boxShadow: `2px 0 0 ${index % 2 === 0 ? "white" : "#f1f5f9"} inset`,
+                                    }}
+                                >
                                     <div className="flex items-center justify-start gap-2">
                                         <Link href={`/admin/incidencia/edit/${row.id}`}>
                                             <button className="flex w-full items-center justify-center">
@@ -175,18 +247,22 @@ export default function TablePage({ data }: TableProps) {
                                             <RiDeleteBin7Line className="text-lg transition-transform hover:scale-110" />
                                         </button>
                                     </div>
-                                </td>
-                            </tr>
+                                </TableCell>
+                            </TableRow>
                         ))}
-                    </tbody>
-                </table>
+                    </TableBody>
+                </Table>
             </div>
-            <div className="mt-4 flex justify-end">
-                <div className="btn-group gap-4">
+            <div className="flex justify-end">
+                <div className="btn-group gap-2">
                     {Array.from({ length: totalPages }).map((_, i) => (
                         <button
                             key={i + 1}
-                            className={`btn ${currentPage === i + 1 ? "btn-active" : ""}`}
+                            className={`border border-gray-400 px-2 py-0 shadow-md ${
+                                currentPage === i + 1 ?
+                                    "border-slate-950 bg-slate-600 text-white"
+                                :   "bg-white text-gray-700"
+                            }`}
                             onClick={() => setCurrentPage(i + 1)}
                         >
                             {i + 1}
@@ -194,13 +270,12 @@ export default function TablePage({ data }: TableProps) {
                     ))}
                 </div>
             </div>
-
             {deleteModal.show && deleteModal.id !== null && (
                 <DeleteModal
                     id={deleteModal.id}
-                    show={deleteModal.show} // Agregar esta línea
+                    show={deleteModal.show}
                     onCancel={() => setDeleteModal({ show: false, id: null })}
-                    onConfirm={() => confirmDelete(deleteModal.id as number)}
+                    onConfirm={() => deleteModal.id && confirmDelete(deleteModal.id)}
                 />
             )}
         </div>

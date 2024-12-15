@@ -63,7 +63,7 @@ const items = [
 const extra = [
     {
         title: "Variables",
-        url: "/",
+        url: "/admin/incident/vars/var",
         icon: Variable,
     },
     {
