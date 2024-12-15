@@ -68,7 +68,7 @@ const extra = [
     },
     {
         title: "Categorías",
-        url: "#",
+        url: "/admin/incident/vars/cat",
         icon: Tag,
     },
     {

@@ -1,4 +1,12 @@
-import { Button, Modal } from "react-bootstrap";
+import { Button } from "@/components/ui/button";
+import {
+    Dialog,
+    DialogContent,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+    DialogDescription,
+} from "@/components/ui/dialog";
 
 interface DeleteModalProps {
     id: number;
@@ -8,26 +16,30 @@ interface DeleteModalProps {
 
 const DeleteModal: React.FC<DeleteModalProps> = ({ id, onCancel, onConfirm }) => {
     return (
-        <Modal show onHide={onCancel}>
-            <Modal.Header closeButton>
-                <Modal.Title>Confirmar Eliminación</Modal.Title>
-            </Modal.Header>
-            <Modal.Body>¿Estás seguro de que deseas eliminar la Categoría con ID: {id}?</Modal.Body>
-            <Modal.Footer>
-                <Button variant="secondary" onClick={onCancel}>
-                    Cancelar
-                </Button>
-                <Button
-                    variant="danger"
-                    onClick={() => {
-                        onConfirm();
-                        onCancel();
-                    }}
-                >
-                    Eliminar
-                </Button>
-            </Modal.Footer>
-        </Modal>
+        <Dialog open onOpenChange={onCancel}>
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>Confirmar Eliminación</DialogTitle>
+                    <DialogDescription>
+                        ¿Estás seguro de que deseas eliminar la Categoría con ID: <b>{id}</b>?
+                    </DialogDescription>
+                </DialogHeader>
+                <DialogFooter>
+                    <Button variant="secondary" onClick={onCancel}>
+                        Cancelar
+                    </Button>
+                    <Button
+                        variant="destructive"
+                        onClick={() => {
+                            onConfirm();
+                            onCancel();
+                        }}
+                    >
+                        Eliminar
+                    </Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
     );
 };
 

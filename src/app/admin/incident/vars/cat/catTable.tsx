@@ -1,23 +1,34 @@
 "use client";
 
-import { ArrowDownUp } from "lucide-react";
+import { SetStateAction, useMemo, useState } from "react";
 import Link from "next/link";
-import { useState } from "react";
-import { Button, Col, Row } from "react-bootstrap";
-import Form from "react-bootstrap/Form";
-import Pagination from "react-bootstrap/Pagination";
-import Table from "react-bootstrap/Table";
-
-import DeleteModal from "@/app/admin/variables/createCateg/deletecat/page";
-
-import { handleDeleteCategoryAction } from "./deletecat/delete.action";
-
-import styles from "./cattable.module.css";
+import { ArrowDownUp } from "lucide-react";
+import { RiDeleteBin7Line } from "react-icons/ri";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
+} from "@/components/ui/table";
+import {
+    Pagination,
+    PaginationContent,
+    PaginationItem,
+    PaginationLink,
+    PaginationPrevious,
+    PaginationNext,
+} from "@/components/ui/pagination";
+import DeleteModal from "@/app/admin/incident/vars/cat/delete/page";
+import { handleDeleteCategoryAction } from "./delete/delete.action";
 
 interface Data {
     id: number;
     name: string;
-    variable: string; // Nueva columna para la variable
+    variable: string;
 }
 
 interface TableProps {
@@ -35,135 +46,142 @@ export default function TablePage({ data }: TableProps) {
         id: null,
     });
 
-    const filteredData = data.filter((row) =>
-        Object.values(row).some((value) =>
-            String(value).toLowerCase().includes(search.toLowerCase()),
-        ),
+    // Filtrado
+    const filteredData = useMemo(
+        () =>
+            data.filter((row) =>
+                Object.values(row).some((value) =>
+                    String(value).toLowerCase().includes(search.toLowerCase()),
+                ),
+            ),
+        [data, search],
     );
 
-    if (sortColumn !== null) {
-        filteredData.sort((a, b) => {
-            if (a[sortColumn] < b[sortColumn]) {
-                return sortDirection === "asc" ? -1 : 1;
-            }
-            if (a[sortColumn] > b[sortColumn]) {
-                return sortDirection === "asc" ? 1 : -1;
-            }
+    // Ordenamiento
+    const sortedData = useMemo(() => {
+        if (sortColumn === null) return filteredData;
+        return filteredData.slice().sort((a, b) => {
+            if (a[sortColumn]! < b[sortColumn]!) return sortDirection === "asc" ? -1 : 1;
+            if (a[sortColumn]! > b[sortColumn]!) return sortDirection === "asc" ? 1 : -1;
             return 0;
         });
-    }
+    }, [filteredData, sortColumn, sortDirection]);
 
+    // Paginación
     const lastItem = currentPage * itemsPerPage;
     const firstItem = lastItem - itemsPerPage;
-    const currentItems = filteredData.slice(firstItem, lastItem);
+    const currentItems = sortedData.slice(firstItem, lastItem);
+    const totalPages = Math.ceil(filteredData.length / itemsPerPage);
 
-    const pages = [];
-    for (let number = 1; number <= Math.ceil(filteredData.length / itemsPerPage); number++) {
-        pages.push(
-            <Pagination.Item
-                key={number}
-                active={number === currentPage}
-                onClick={() => setCurrentPage(number)}
-                className={`${styles.pageItemSecondary} ${number === currentPage ? styles.pageItemSecondaryActive : ""}`}
-            >
-                {number}
-            </Pagination.Item>,
-        );
-    }
-
-    const requestSort = (column: keyof Data) => {
-        const direction = sortColumn === column && sortDirection === "asc" ? "desc" : "asc";
-        setSortColumn(column);
+    // Ordenar columna
+    const requestSort = (columnKey: keyof Data) => {
+        const direction = sortColumn === columnKey && sortDirection === "asc" ? "desc" : "asc";
+        setSortColumn(columnKey);
         setSortDirection(direction);
     };
 
-    const handleDelete = (id: number) => {
-        setDeleteModal({ show: true, id });
-    };
+    const handleDelete = (id: number) => setDeleteModal({ show: true, id });
 
     const confirmDelete = async (id: number) => {
-        const result = await handleDeleteCategoryAction(id);
+        await handleDeleteCategoryAction(id);
         setDeleteModal({ show: false, id: null });
     };
 
     return (
-        <div className="container">
-            <Row style={{ marginBottom: "1rem" }}>
-                <Col md={6} className="align-bottom">
-                    <h4>Tabla de Categorías</h4>
-                </Col>
-                <Col md={4}>
-                    <Form.Control
+        <div className="flex flex-col gap-4 rounded-lg bg-white p-4 shadow-md">
+            {/* Encabezado */}
+            <div className="flex items-center justify-between">
+                <h3 className="text-lg font-semibold text-slate-800">Tabla de Categorías</h3>
+                <div className="flex gap-2">
+                    <Input
                         type="text"
                         placeholder="Buscar..."
-                        onChange={(event) => setSearch(event.target.value)}
+                        onChange={(e) => setSearch(e.target.value)}
+                        className="w-56"
                     />
-                </Col>
-                <Col md={2}>
-                    <Link href="/admin/variables/createCateg/createcat" passHref>
-                        <Button type="submit" variant="primary">
-                            Agregar Nueva
-                        </Button>
+                    <Link href="/admin/incident/vars/cat/create">
+                        <Button className="bg-slate-800 text-white">Agregar Nueva</Button>
                     </Link>
-                </Col>
-            </Row>
-            <Table striped bordered hover>
-                <thead>
-                    <tr>
-                        {["id", "name", "variable", "acciones"].map((column) => (
-                            <th key={column}>
-                                <div
-                                    style={{
-                                        display: "flex",
-                                        alignItems: "center",
-                                        justifyContent: "space-between",
-                                    }}
-                                >
-                                    {column.charAt(0).toUpperCase() + column.slice(1)}
-                                    {column !== "acciones" && (
-                                        <ArrowDownUp
-                                            size={12}
-                                            style={{ cursor: "pointer" }}
-                                            onClick={() => requestSort(column as keyof Data)}
-                                        />
-                                    )}
-                                </div>
-                            </th>
-                        ))}
-                    </tr>
-                </thead>
-                <tbody>
-                    {currentItems.map((row) => (
-                        <tr key={row.id}>
-                            <td>{row.id}</td>
-                            <td>{row.name}</td>
-                            <td>{row.variable}</td> {/* Nueva celda para la variable */}
-                            <td>
-                                {/*  <Link href={`/admin/edit/${row.id}`}>
-                                    <Button
-                                        variant="warning"
-                                        size="sm"
-                                        style={{ marginRight: "0.5rem" }}
-                                    >
-                                        Editar
-                                    </Button>
-                                </Link> */}
-                                <Button
-                                    variant="danger"
-                                    size="sm"
-                                    onClick={() => handleDelete(row.id)}
-                                >
-                                    Eliminar
-                                </Button>
-                            </td>
-                        </tr>
-                    ))}
-                </tbody>
-            </Table>
-            <div style={{ display: "flex", justifyContent: "flex-end" }}>
-                <Pagination>{pages}</Pagination>
+                </div>
             </div>
 
+            {/* Tabla */}
+            <div className="overflow-auto">
+                <Table>
+                    <TableHeader>
+                        <TableRow>
+                            {["id", "name", "variable", "acciones"].map((column) => (
+                                <TableHead key={column} className="text-slate-700">
+                                    <div className="flex items-center justify-between">
+                                        {column.charAt(0).toUpperCase() + column.slice(1)}
+                                        {column !== "acciones" && (
+                                            <ArrowDownUp
+                                                size={16}
+                                                className="cursor-pointer"
+                                                onClick={() => requestSort(column as keyof Data)}
+                                            />
+                                        )}
+                                    </div>
+                                </TableHead>
+                            ))}
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                        {currentItems.map((row) => (
+                            <TableRow key={row.id}>
+                                <TableCell>{row.id}</TableCell>
+                                <TableCell>{row.name}</TableCell>
+                                <TableCell>{row.variable}</TableCell>
+                                <TableCell>
+                                    <Button
+                                        variant="destructive"
+                                        size="sm"
+                                        onClick={() => handleDelete(row.id)}
+                                        className="flex items-center gap-1"
+                                    >
+                                        <RiDeleteBin7Line size={14} />
+                                        Eliminar
+                                    </Button>
+                                </TableCell>
+                            </TableRow>
+                        ))}
+                    </TableBody>
+                </Table>
+            </div>
+
+            {/* Paginación */}
+            <div className="flex justify-end">
+                <Pagination>
+                    <PaginationContent>
+                        <PaginationItem>
+                            <PaginationPrevious
+                                onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                            />
+                        </PaginationItem>
+
+                        {Array.from({ length: totalPages }, (_, index) => (
+                            <PaginationItem key={index}>
+                                <PaginationLink
+                                    isActive={currentPage === index + 1}
+                                    onClick={() => setCurrentPage(index + 1)}
+                                >
+                                    {index + 1}
+                                </PaginationLink>
+                            </PaginationItem>
+                        ))}
+
+                        <PaginationItem>
+                            <PaginationNext
+                                onClick={() =>
+                                    setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+                                }
+                            />
+                        </PaginationItem>
+                    </PaginationContent>
+                </Pagination>
+            </div>
+
+            {/* Modal de eliminación */}
             {deleteModal.show && deleteModal.id !== null && (
                 <DeleteModal
                     id={deleteModal.id}
