@@ -28,12 +28,13 @@ export function MainLayout({ children }: PropsWithChildren) {
         <SidebarProvider>
             <div className="relative flex min-h-screen w-full bg-slate-100">
                 <div
-                    className={`flex h-screen flex-1 flex-col overflow-x-hidden transition-all duration-500 ease-in-out`}
+                    className={`flex h-screen flex-1 flex-col md:flex-row overflow-x-hidden transition-all duration-500 ease-in-out`}
                 >
                     <div
-                        className={`absolute left-0 top-0 border-r-0 border-slate-700 bg-slate-800 pl-2 text-slate-100 shadow-lg`}
+                        className={`absolute md:relative left-0 top-0 border-r-0 border-slate-700 bg-slate-800 pl-2 text-slate-100 shadow-lg`}
                         style={{
                             width: "12rem",
+                            minWidth: '12rem',
                             overflow: "hidden",
                         }}
                     >
