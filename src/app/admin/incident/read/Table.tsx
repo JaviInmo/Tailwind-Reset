@@ -235,7 +235,7 @@ export default function TablePage({ data }: TableProps) {
                                     }}
                                 >
                                     <div className="flex items-center justify-start gap-2">
-                                        <Link href={`/admin/incidencia/edit/${row.id}`}>
+                                        <Link href={`/admin/incident/edit/${row.id}`}>
                                             <button className="flex w-full items-center justify-center">
                                                 <FaRegEdit className="text-lg transition-transform hover:scale-110" />
                                             </button>
