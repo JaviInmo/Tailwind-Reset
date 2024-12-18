@@ -73,7 +73,7 @@ const extra = [
     },
     {
         title: "Subcategorías",
-        url: "#",
+        url: "/admin/incident/vars/subcat",
         icon: Layers,
     },
     {

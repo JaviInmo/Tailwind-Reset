@@ -1,16 +1,16 @@
 import { getAuth } from "@/libs/auth";
 import prisma from "@/libs/db";
 
-import TablePage from "./catTable";
+import TablePage from "./subcatTable";
 
-export default async function CatPage() {
+export default async function SubCatPage() {
     await getAuth();
 
-    const categorias = await prisma.category.findMany({
+    const subcategorias = await prisma.subcategory.findMany({
         select: {
             id: true,
             name: true,
-            variable: {
+            category: {
                 select: {
                     id: true,
                     name: true,
@@ -19,16 +19,16 @@ export default async function CatPage() {
         },
     });
 
-    const categoriasConVariable = categorias.map((categoria) => ({
-        id: categoria.id,
-        name: categoria.name,
-        variable: categoria.variable.name,
+    const subCategoriasConVariable = subcategorias.map((subcategoria) => ({
+        id: subcategoria.id,
+        name: subcategoria.name,
+        categoria: subcategoria.category.name,
     }));
 
     return (
         <div className="container">
             {/* <VariableForm /> */}
-            <TablePage data={categoriasConVariable} />
+            <TablePage data={subCategoriasConVariable} />
         </div>
     );
 }

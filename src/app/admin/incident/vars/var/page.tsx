@@ -6,7 +6,6 @@ import TablePage from "./VarTable";
 export default async function VarPage() {
     await getAuth();
 
-    // Obtener las variables desde la base de datos
     const variables = await prisma.variable.findMany({
         select: {
             id: true,
@@ -14,7 +13,6 @@ export default async function VarPage() {
         },
     });
 
-    // Simplemente pasa los datos a la tabla y no hace la gestión de estado aquí
     return (
         <div className="container">
             {/* <VariableForm /> */}
