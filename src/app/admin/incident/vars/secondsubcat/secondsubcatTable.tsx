@@ -22,13 +22,13 @@ import {
     PaginationPrevious,
     PaginationNext,
 } from "@/components/ui/pagination";
-import DeleteModal from "@/app/admin/incident/vars/subcat/delete/page";
-import { handleDeleteSubCategoryAction } from "@/app/admin/incident/vars/subcat/delete/delete.action";
+import DeleteModal from "@/app/admin/incident/vars/secondsubcat/delete/page";
+import { handleDeleteSecondSubCategoryAction } from "@/app/admin/incident/vars/secondsubcat/delete/delete.action";
 
 interface Data {
     id: number;
     name: string;
-    categoria: string;
+    subcategoria: string;
 }
 
 interface TableProps {
@@ -46,6 +46,7 @@ export default function TablePage({ data }: TableProps) {
         id: null,
     });
 
+    // Filtrado
     const filteredData = useMemo(
         () =>
             data.filter((row) =>
@@ -56,31 +57,33 @@ export default function TablePage({ data }: TableProps) {
         [data, search],
     );
 
+    // Ordenamiento
     const sortedData = useMemo(() => {
-        if (!sortColumn) return filteredData;
-        return filteredData.sort((a, b) => {
+        if (sortColumn === null) return filteredData;
+        return filteredData.slice().sort((a, b) => {
             if (a[sortColumn]! < b[sortColumn]!) return sortDirection === "asc" ? -1 : 1;
             if (a[sortColumn]! > b[sortColumn]!) return sortDirection === "asc" ? 1 : -1;
             return 0;
         });
     }, [filteredData, sortColumn, sortDirection]);
 
+    // Paginación
     const lastItem = currentPage * itemsPerPage;
     const firstItem = lastItem - itemsPerPage;
     const currentItems = sortedData.slice(firstItem, lastItem);
-
     const totalPages = Math.ceil(filteredData.length / itemsPerPage);
 
-    const requestSort = (column: keyof Data) => {
-        const direction = sortColumn === column && sortDirection === "asc" ? "desc" : "asc";
-        setSortColumn(column);
+    // Ordenar columna
+    const requestSort = (columnKey: keyof Data) => {
+        const direction = sortColumn === columnKey && sortDirection === "asc" ? "desc" : "asc";
+        setSortColumn(columnKey);
         setSortDirection(direction);
     };
 
     const handleDelete = (id: number) => setDeleteModal({ show: true, id });
 
     const confirmDelete = async (id: number) => {
-        await handleDeleteSubCategoryAction(id);
+        await handleDeleteSecondSubCategoryAction(id);
         setDeleteModal({ show: false, id: null });
     };
 
@@ -88,7 +91,9 @@ export default function TablePage({ data }: TableProps) {
         <div className="flex flex-col gap-4 rounded-lg bg-white p-4 shadow-md">
             {/* Encabezado */}
             <div className="flex items-center justify-between">
-                <h3 className="text-lg font-semibold text-slate-800">Tabla de Subcategorías</h3>
+                <h3 className="text-lg font-semibold text-slate-800">
+                    Tabla de Segundas Subcategorías
+                </h3>
                 <div className="flex gap-2">
                     <Input
                         type="text"
@@ -96,7 +101,7 @@ export default function TablePage({ data }: TableProps) {
                         onChange={(e) => setSearch(e.target.value)}
                         className="w-56"
                     />
-                    <Link href="/admin/incident/vars/subcat/create">
+                    <Link href="/admin/incident/vars/secondsubcat/create">
                         <Button className="bg-slate-800 text-white">Agregar Nueva</Button>
                     </Link>
                 </div>
@@ -107,10 +112,14 @@ export default function TablePage({ data }: TableProps) {
                 <Table>
                     <TableHeader>
                         <TableRow>
-                            {["id", "name", "categoria", "acciones"].map((column) => (
+                            {["id", "name", "subcategoria", "acciones"].map((column) => (
                                 <TableHead key={column} className="text-slate-700">
                                     <div className="flex items-center justify-between">
-                                        {column.charAt(0).toUpperCase() + column.slice(1)}
+                                        {column === "id" ?
+                                            "ID"
+                                        : column === "name" ?
+                                            "Nombre de la Segunda Subcategoría"
+                                        :   column.charAt(0).toUpperCase() + column.slice(1)}
                                         {column !== "acciones" && (
                                             <ArrowDownUp
                                                 size={16}
@@ -128,7 +137,7 @@ export default function TablePage({ data }: TableProps) {
                             <TableRow key={row.id}>
                                 <TableCell>{row.id}</TableCell>
                                 <TableCell>{row.name}</TableCell>
-                                <TableCell>{row.categoria}</TableCell>
+                                <TableCell>{row.subcategoria}</TableCell>
                                 <TableCell>
                                     <Button
                                         variant="destructive"
@@ -155,6 +164,7 @@ export default function TablePage({ data }: TableProps) {
                                 onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
                             />
                         </PaginationItem>
+
                         {Array.from({ length: totalPages }, (_, index) => (
                             <PaginationItem key={index}>
                                 <PaginationLink
@@ -165,6 +175,7 @@ export default function TablePage({ data }: TableProps) {
                                 </PaginationLink>
                             </PaginationItem>
                         ))}
+
                         <PaginationItem>
                             <PaginationNext
                                 onClick={() =>

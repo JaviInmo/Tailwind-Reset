@@ -78,7 +78,7 @@ const extra = [
     },
     {
         title: "2da Subcategoría",
-        url: "/admin/incident/create",
+        url: "/admin/incident/vars/secondsubcat",
         icon: FolderTree,
     },
     {
