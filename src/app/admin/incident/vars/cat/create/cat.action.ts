@@ -19,7 +19,7 @@ export async function registerAction(data: FormSchemaData) {
             },
         });
 
-        revalidatePath("/admin/variables/createCateg");
+        revalidatePath("/admin/incident/vars/cat/create");
 
         return { success: true, category };
     } catch (error) {

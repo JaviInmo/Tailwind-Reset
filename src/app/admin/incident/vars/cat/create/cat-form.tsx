@@ -128,99 +128,108 @@ export function CatForm() {
     const handleConfirmSuccessModal = () => {
         setShowSuccessModal(false);
         form.reset();
-        router.push("/admin/variables/createCateg");
+        router.push("/admin/incident/vars/cat");
     };
 
     return (
-        <div className="flex flex-col items-center gap-6 py-8">
+        
+        <div className="flex justify-center gap-6 py-8">
             {/* Encabezado */}
-            <div className="text-center">
-                <h1 className="text-2xl font-semibold">Registro de Categorías</h1>
-                <p className="text-sm text-gray-500">
-                    Seleccione una variable y rellene el campo del formulario para registrar las
-                    categorías.
-                </p>
+            <div className="w-7/12 bg-white space-y-6 py-8 rounded-sm">            
+                <div className="text-center">
+                    <h1 className="text-2xl font-semibold">Registro de Categorías</h1>
+                    <p className="text-sm text-gray-500">
+                        Seleccione una variable y rellene el campo del formulario para registrar las
+                        categorías.
+                    </p>
+                </div>
+
+                <div className="flex justify-center">
+                    {/* Formulario */}
+                    <Form {...form}>
+                        <form onSubmit={form.handleSubmit(onSubmit)} className="w-full max-w-lg space-y-6">
+                            {/* Select de Variables */}
+                            <FormField
+                                control={form.control}
+                                name="variable"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Variable:</FormLabel>
+                                        <Select
+                                            onValueChange={(value) => {
+                                                field.onChange(value); // Actualiza el estado en React Hook Form
+                                                handleVariableChange(value); // Actualiza el estado local si es necesario
+                                            }}
+                                            value={field.value}> {/* Asegura que el valor sea controlado */}
+                                            
+                                            <FormControl>
+                                                <SelectTrigger>
+                                                    <SelectValue placeholder="Seleccione una variable" />
+                                                </SelectTrigger>
+                                            </FormControl>
+                                            <SelectContent>
+                                                {variables.map((variable) => (
+                                                    <SelectItem key={variable.id} value={variable.name}>
+                                                        {variable.name}
+                                                    </SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+
+
+                            {/* Input de Categorías */}
+                            <FormField
+                                control={form.control}
+                                name="categories"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>
+                                            Nombre de las Categorías (separadas por comas):
+                                        </FormLabel>
+                                        <FormControl>
+                                            <Input
+                                                placeholder="Introduzca las categorías separadas por comas"
+                                                {...field}
+                                            />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+
+                            {/* Botón de envío */}
+                            <Button type="submit" className="w-full">
+                                Registrar
+                            </Button>
+                        </form>
+                    </Form>
+                </div>
+
+                {/* Card de categorías */}
+{/*                 {categories.length > 0 && (
+                    <Card className="w-full max-w-lg">
+                        <CardHeader>
+                            <CardTitle>Categorías de la Variable Seleccionada</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="flex flex-wrap gap-2">
+                                {categories.map((cat) => (
+                                    <div
+                                        key={cat.id}
+                                        className="rounded-md bg-gray-200 px-3 py-1 text-sm text-gray-700"
+                                    >
+                                        {cat.name}
+                                    </div>
+                                ))}
+                            </div>
+                        </CardContent>
+                    </Card>
+                )} */}
             </div>
-
-            {/* Formulario */}
-            <Form {...form}>
-                <form onSubmit={form.handleSubmit(onSubmit)} className="w-full max-w-lg space-y-6">
-                    {/* Select de Variables */}
-                    <FormField
-                        control={form.control}
-                        name="variable"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Variable:</FormLabel>
-                                <Select
-                                    onValueChange={(value) => handleVariableChange(value)}
-                                    defaultValue={field.value}
-                                >
-                                    <FormControl>
-                                        <SelectTrigger>
-                                            <SelectValue placeholder="Seleccione una variable" />
-                                        </SelectTrigger>
-                                    </FormControl>
-                                    <SelectContent>
-                                        {variables.map((variable) => (
-                                            <SelectItem key={variable.id} value={variable.name}>
-                                                {variable.name}
-                                            </SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-
-                    {/* Input de Categorías */}
-                    <FormField
-                        control={form.control}
-                        name="categories"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>
-                                    Nombre de las Categorías (separadas por comas):
-                                </FormLabel>
-                                <FormControl>
-                                    <Input
-                                        placeholder="Introduzca las categorías separadas por comas"
-                                        {...field}
-                                    />
-                                </FormControl>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-
-                    {/* Botón de envío */}
-                    <Button type="submit" className="w-full">
-                        Registrar
-                    </Button>
-                </form>
-            </Form>
-
-            {/* Card de categorías */}
-            {categories.length > 0 && (
-                <Card className="w-full max-w-lg">
-                    <CardHeader>
-                        <CardTitle>Categorías de la Variable Seleccionada</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="flex flex-wrap gap-2">
-                            {categories.map((cat) => (
-                                <div
-                                    key={cat.id}
-                                    className="rounded-md bg-gray-200 px-3 py-1 text-sm text-gray-700"
-                                >
-                                    {cat.name}
-                                </div>
-                            ))}
-                        </div>
-                    </CardContent>
-                </Card>
-            )}
 
             {/* Modal de éxito */}
             <Dialog open={showSuccessModal} onOpenChange={handleCloseSuccessModal}>

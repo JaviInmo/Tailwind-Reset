@@ -156,7 +156,7 @@ export default function TablePage({ data }: TableProps) {
                             </div>
                         )}
                     </div>
-                    <Link href="/admin/incidencia/create" passHref>
+                    <Link href="/admin/incident/create" passHref>
                         <Button className="rounded border border-slate-700 bg-slate-800 px-4 py-1 text-slate-100 hover:bg-slate-950">
                             Agregar Incidencia
                         </Button>
@@ -275,7 +275,7 @@ export default function TablePage({ data }: TableProps) {
                     id={deleteModal.id}
                     show={deleteModal.show}
                     onCancel={() => setDeleteModal({ show: false, id: null })}
-                    onConfirm={() => deleteModal.id && confirmDelete(deleteModal.id)}
+                    onConfirm={async () => { if (deleteModal.id) await confirmDelete(deleteModal.id); }}
                 />
             )}
         </div>

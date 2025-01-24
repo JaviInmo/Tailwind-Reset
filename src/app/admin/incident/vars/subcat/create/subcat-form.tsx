@@ -127,7 +127,7 @@ export function SubCatForm() {
     const handleConfirmSuccessModal = () => {
         setShowSuccessModal(false);
         form.reset();
-        router.push("/admin/variables/createSubCat");
+        router.push("/admin/incident/vars/subcat/create");
     };
 
     return (
@@ -146,32 +146,35 @@ export function SubCatForm() {
                 <form onSubmit={form.handleSubmit(onSubmit)} className="w-full max-w-lg space-y-6">
                     {/* Select de Categorías */}
                     <FormField
-                        control={form.control}
-                        name="category"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Categoría:</FormLabel>
-                                <Select
-                                    onValueChange={(value) => handleCategoryChange(value)}
-                                    defaultValue={field.value}
-                                >
-                                    <FormControl>
-                                        <SelectTrigger>
-                                            <SelectValue placeholder="Seleccione una categoría" />
-                                        </SelectTrigger>
-                                    </FormControl>
-                                    <SelectContent>
-                                        {categories.map((category) => (
-                                            <SelectItem key={category.id} value={category.name}>
-                                                {category.name}
-                                            </SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
+    control={form.control}
+    name="category"
+    render={({ field }) => (
+        <FormItem>
+            <FormLabel>Categoría:</FormLabel>
+            <Select
+                onValueChange={(value) => {
+                    field.onChange(value); // Actualiza el valor en React Hook Form
+                    handleCategoryChange(value); // Actualiza el estado local
+                }}
+                value={field.value} // Vincula el valor seleccionado
+            >
+                <FormControl>
+                    <SelectTrigger>
+                        <SelectValue placeholder="Seleccione una categoría" />
+                    </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                    {categories.map((category) => (
+                        <SelectItem key={category.id} value={category.name}>
+                            {category.name}
+                        </SelectItem>
+                    ))}
+                </SelectContent>
+            </Select>
+            <FormMessage />
+        </FormItem>
+    )}
+/>
 
                     {/* Input de Subcategorías */}
                     <FormField

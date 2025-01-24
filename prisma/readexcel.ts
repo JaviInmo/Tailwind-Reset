@@ -36,9 +36,11 @@ export async function readExcelColumn(): Promise<PrinvicieExcel[]> {
       const municipios = value
         .slice(1)
         .filter((municipio) => municipio !== provincia);
-
+        
+        console.log("Datos enviados:" );
       return [...prev, { provincia, municipios }];
     }, []);
+    
   } catch (error) {
     console.error("Error reading Excel file:", error);
     throw error;

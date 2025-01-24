@@ -86,7 +86,7 @@ export function VariableForm() {
     const handleConfirmSuccessModal = () => {
         setShowSuccessModal(false);
         form.reset();
-        router.push("/admin/variables/createVars"); // Redirige a la ruta especificada
+        router.push("/admin/incident/vars/var/create"); // Redirige a la ruta especificada
     };
 
     return (
