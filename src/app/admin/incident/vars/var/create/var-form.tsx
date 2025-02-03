@@ -40,6 +40,7 @@ export function VariableForm() {
     const [showSuccessModal, setShowSuccessModal] = useState(false);
     const [initialCount, setInitialCount] = useState<number | null>(null);
     const router = useRouter();
+    const [globalError, setGlobalError] = useState<string | null>(null);
 
     const form = useForm<FormSchemaData>({
         resolver: zodResolver(formSchema),
@@ -59,17 +60,28 @@ export function VariableForm() {
         const namesArray = data.names.split(",").map((name) => name.trim());
         let allSuccess = true;
 
+        // Limpiamos el error global antes de intentar registrar las variables
+        setGlobalError(null);
+    
         for (const name of namesArray) {
-            const response = await registerAction({ name });
-            if (!response.success) {
-                form.setError("root", { message: `Variable "${name}" ya registrada` });
+            try {
+                const response = await registerAction({ name });
+
+                // Verificamos si hubo error en la respuesta
+                if (!response.success) {
+                    form.setError("names", { message: response.error });
+                    allSuccess = false;
+                    break; // Salimos del bucle si hay un error
+                }
+            } catch (error) {
+                form.setError("names", { message: `Error al registrar: ${error}` });
                 allSuccess = false;
             }
         }
-
+    
         if (allSuccess) {
             const newCount = await countVariables();
-
+    
             if (initialCount !== null && newCount > initialCount) {
                 setShowSuccessModal(true);
             } else {
@@ -78,59 +90,64 @@ export function VariableForm() {
         }
     }
 
-    const handleCloseSuccessModal = () => {
-        setShowSuccessModal(false);
-        form.reset();
-    };
+   
 
-    const handleConfirmSuccessModal = () => {
+  const handleCloseSuccessModal = () => {
         setShowSuccessModal(false);
-        form.reset();
-        router.push("/admin/incident/vars/var/create"); // Redirige a la ruta especificada
+        form.reset({
+            names: "",
+
+        });
+       
+        setGlobalError(null);
     };
 
     return (
-        <div className="flex w-full flex-col items-center gap-4 py-4">
-            <div className="text-center">
-                <h1 className="hidden text-2xl font-semibold sm:block">Registro de Variable</h1>
-                <h2 className="block text-xl font-semibold sm:hidden">Registro de Variable</h2>
-                <p className="hidden text-lg text-muted-foreground sm:block">
-                    Rellene el campo del formulario a continuación para registrar la variable.
-                </p>
-                <p className="block text-sm text-muted-foreground sm:hidden">
-                    Rellene el campo del formulario a continuación para registrar la variable.
-                </p>
+        <div className="flex justify-center py-2">
+            <div className="w-7/12 bg-white space-y-7 py-8 rounded-sm">
+                <div className="text-center">
+                    <h1 className=" text-2xl font-semibold ">Registro de Variable</h1>
+                   
+                    <p className=" text-sm text-gray-500">
+                        Rellene el campo del formulario a continuación para registrar la variable.
+                    </p>
+                   
+                </div>
+                <div className="flex justify-center">
+                    <Form {...form}>
+                        <form
+                            onSubmit={form.handleSubmit(onSubmit)}
+                            className="w-full max-w-lg space-y-6"
+                        >
+                            <FormField
+                                control={form.control}
+                                name="names"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>
+                                            Nombre de las Variables (separadas por comas):
+                                        </FormLabel>
+                                        <FormControl>
+                                            <Input
+                                                placeholder="Introduzca los nombres de las variables separados por comas"
+                                                {...field}
+                                            />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                            {/* Mostrar error global */}
+                            {globalError && (
+                                <div className="text-red-500 text-sm text-center">{globalError}</div>
+                            )}
+                            <Button type="submit" className="w-full">
+                                Registrar
+                            </Button>
+                        </form>
+                    </Form>
+                </div>
             </div>
-
-            <Form {...form}>
-                <form
-                    onSubmit={form.handleSubmit(onSubmit)}
-                    className="flex w-full max-w-lg flex-col gap-4"
-                >
-                    <FormField
-                        control={form.control}
-                        name="names"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>
-                                    Nombre de las Variables (separadas por comas):
-                                </FormLabel>
-                                <FormControl>
-                                    <Input
-                                        placeholder="Introduzca los nombres de las variables separados por comas"
-                                        {...field}
-                                    />
-                                </FormControl>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-
-                    <Button type="submit" className="w-full">
-                        Submit
-                    </Button>
-                </form>
-            </Form>
 
             {/* Modal de Éxito */}
             <Dialog open={showSuccessModal} onOpenChange={handleCloseSuccessModal}>
@@ -140,7 +157,7 @@ export function VariableForm() {
                         <DialogDescription>Variable creada con éxito.</DialogDescription>
                     </DialogHeader>
                     <DialogFooter>
-                        <Button onClick={handleConfirmSuccessModal}>Aceptar</Button>
+                        <Button onClick={handleCloseSuccessModal}>Aceptar</Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>

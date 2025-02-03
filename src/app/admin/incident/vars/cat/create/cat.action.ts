@@ -1,7 +1,6 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-
 import prisma from "@/libs/db";
 
 type FormSchemaData = {
@@ -12,6 +11,19 @@ type FormSchemaData = {
 // Registra una nueva categoría
 export async function registerAction(data: FormSchemaData) {
     try {
+        // Verificar si ya existe una categoría con el mismo nombre para la misma variable
+        const existingCategory = await prisma.category.findFirst({
+            where: {
+                name: data.name,
+                variableId: data.variableId,
+            },
+        });
+
+        if (existingCategory) {
+            return { success: false, error: "La categoría ya existe para esta variable." };
+        }
+
+        // Crear la categoría si no existe
         const category = await prisma.category.create({
             data: {
                 name: data.name,

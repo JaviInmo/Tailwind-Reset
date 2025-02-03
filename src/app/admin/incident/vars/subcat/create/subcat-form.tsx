@@ -43,13 +43,14 @@ const formSchema = z.object({
 
 type FormSchemaData = z.infer<typeof formSchema>;
 
-export function SubCatForm() {
+export default function SubCatForm() {
     const [showSuccessModal, setShowSuccessModal] = useState(false);
     const [initialCount, setInitialCount] = useState<number | null>(null);
     const [categories, setCategories] = useState<{ id: number; name: string }[]>([]);
     const [selectedCategoryId, setSelectedCategoryId] = useState<number | null>(null);
     const [subcategories, setSubcategories] = useState<{ id: number; name: string }[]>([]);
     const router = useRouter();
+    const [globalError, setGlobalError] = useState<string | null>(null);
 
     const form = useForm<FormSchemaData>({
         resolver: zodResolver(formSchema),
@@ -93,24 +94,26 @@ export function SubCatForm() {
             form.setError("category", { message: "Debe seleccionar una categoría válida" });
             return;
         }
-
+    
         const subcategoriesArray = data.subcategories.split(",").map((name) => name.trim());
         let allSuccess = true;
-
+        let errorMessage = "";
+    
         for (const subcategory of subcategoriesArray) {
             const response = await registerAction({
                 categoryId: selectedCategoryId,
                 name: subcategory,
             });
+    
             if (!response.success) {
-                form.setError("root", { message: `Subcategoría "${subcategory}" ya registrada` });
+                const errorMessage = response.error ?? "Error desconocido"; // Asegura que siempre haya un string
+                form.setError("subcategories", { message: errorMessage });
                 allSuccess = false;
             }
-        }
-
+            
         if (allSuccess) {
             const newCount = await countSubCats();
-
+    
             if (initialCount !== null && newCount > initialCount) {
                 setShowSuccessModal(true);
             } else {
@@ -118,109 +121,106 @@ export function SubCatForm() {
             }
         }
     };
+    
 
     const handleCloseSuccessModal = () => {
         setShowSuccessModal(false);
-        form.reset();
-    };
-
-    const handleConfirmSuccessModal = () => {
-        setShowSuccessModal(false);
-        form.reset();
-        router.push("/admin/incident/vars/subcat/create");
+        form.reset({
+            category: "",
+            subcategories: "",
+        });
+        setSelectedCategoryId(null);
+        setGlobalError(null);
     };
 
     return (
-        <div className="flex flex-col items-center gap-6 py-8">
-            {/* Encabezado */}
-            <div className="text-center">
-                <h1 className="text-2xl font-semibold">Registro de Subcategorías</h1>
-                <p className="text-sm text-gray-500">
-                    Seleccione una categoría y rellene el campo del formulario para registrar las
-                    subcategorías.
-                </p>
-            </div>
-
-            {/* Formulario */}
-            <Form {...form}>
-                <form onSubmit={form.handleSubmit(onSubmit)} className="w-full max-w-lg space-y-6">
-                    {/* Select de Categorías */}
-                    <FormField
-    control={form.control}
-    name="category"
-    render={({ field }) => (
-        <FormItem>
-            <FormLabel>Categoría:</FormLabel>
-            <Select
-                onValueChange={(value) => {
-                    field.onChange(value); // Actualiza el valor en React Hook Form
-                    handleCategoryChange(value); // Actualiza el estado local
-                }}
-                value={field.value} // Vincula el valor seleccionado
-            >
-                <FormControl>
-                    <SelectTrigger>
-                        <SelectValue placeholder="Seleccione una categoría" />
-                    </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                    {categories.map((category) => (
-                        <SelectItem key={category.id} value={category.name}>
-                            {category.name}
-                        </SelectItem>
-                    ))}
-                </SelectContent>
-            </Select>
-            <FormMessage />
-        </FormItem>
-    )}
-/>
-
-                    {/* Input de Subcategorías */}
-                    <FormField
-                        control={form.control}
-                        name="subcategories"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>
-                                    Nombre de las Subcategorías (separadas por comas):
-                                </FormLabel>
-                                <FormControl>
-                                    <Input
-                                        placeholder="Introduzca los nombres de las subcategorías separados por comas"
-                                        {...field}
-                                    />
-                                </FormControl>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-
-                    {/* Botón de envío */}
-                    <Button type="submit" className="w-full">
-                        Registrar
-                    </Button>
-                </form>
-            </Form>
-
-            {/* Card de subcategorías */}
-            {subcategories.length > 0 && (
-                <div className="w-full max-w-lg rounded-md bg-white p-4 shadow-md">
-                    <h3 className="text-lg font-medium">
-                        Subcategorías de la Categoría Seleccionada
-                    </h3>
-                    <div className="mt-4 flex flex-wrap gap-2">
-                        {subcategories.map((subCat) => (
-                            <div
-                                key={subCat.id}
-                                className="rounded-md bg-gray-200 px-3 py-1 text-sm text-gray-700"
-                            >
-                                {subCat.name}
-                            </div>
-                        ))}
-                    </div>
+        <div className="flex justify-center py-2">
+            <div className="w-7/12 space-y-7 rounded-sm bg-white py-8">
+                {/* Encabezado */}
+                <div className="text-center">
+                    <h1 className="text-2xl font-semibold">Registro de Subcategorías</h1>
+                    <p className="text-sm text-gray-500">
+                        Seleccione una categoría y rellene el campo del formulario para registrar
+                        las subcategorías.
+                    </p>
                 </div>
-            )}
+
+                {/* Formulario */}
+                <div className="flex justify-center">
+                    <Form {...form}>
+                        <form
+                            onSubmit={form.handleSubmit(onSubmit)}
+                            className="w-full max-w-lg space-y-6"
+                        >
+                            {/* Select de Categorías */}
+                            <FormField
+                                control={form.control}
+                                name="category"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Categoría:</FormLabel>
+                                        <Select
+                                            onValueChange={(value) => {
+                                                field.onChange(value); // Actualiza el valor en React Hook Form
+                                                handleCategoryChange(value); // Actualiza el estado local
+                                            }}
+                                            value={field.value} // Vincula el valor seleccionado
+                                        >
+                                            <FormControl>
+                                                <SelectTrigger>
+                                                    <SelectValue placeholder="Seleccione una categoría" />
+                                                </SelectTrigger>
+                                            </FormControl>
+                                            <SelectContent>
+                                                {categories.map((category) => (
+                                                    <SelectItem
+                                                        key={category.id}
+                                                        value={category.name}
+                                                    >
+                                                        {category.name}
+                                                    </SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+
+                            {/* Input de Subcategorías */}
+                            <FormField
+                                control={form.control}
+                                name="subcategories"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>
+                                            Nombre de las Subcategorías (separadas por comas):
+                                        </FormLabel>
+                                        <FormControl>
+                                            <Input
+                                                placeholder="Introduzca los nombres de las subcategorías separados por comas"
+                                                {...field}
+                                            />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                            {/* Mostrar error global */}
+                            {globalError && (
+                                <div className="text-center text-sm text-red-500">
+                                    {globalError}
+                                </div>
+                            )}
+
+                            {/* Botón de envío */}
+                            <Button type="submit" className="w-full">
+                                Registrar
+                            </Button>
+                        </form>
+                    </Form>
+                </div>
+            </div>
 
             {/* Modal de éxito */}
             <Dialog open={showSuccessModal} onOpenChange={handleCloseSuccessModal}>
@@ -230,10 +230,12 @@ export function SubCatForm() {
                     </DialogHeader>
                     <div>Subcategorías creadas con éxito.</div>
                     <DialogFooter>
-                        <Button onClick={handleConfirmSuccessModal}>Aceptar</Button>
+                        <Button onClick={handleCloseSuccessModal}>Aceptar</Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
         </div>
     );
 }
+}
+

@@ -24,6 +24,8 @@ import {
 } from "@/components/ui/pagination";
 import DeleteModal from "@/app/admin/incident/vars/var/delete/page";
 import { handleDeleteVariableAction } from "@/app/admin/incident/vars/var/delete/delete.action";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { VariableForm } from "./create/var-form";
 
 interface Data {
     id: number;
@@ -40,6 +42,7 @@ export default function TablePage({ data }: TableProps) {
     const itemsPerPage = 10;
     const [sortColumn, setSortColumn] = useState<keyof Data | null>(null);
     const [sortDirection, setSortDirection] = useState<"asc" | "desc" | null>(null);
+    const [showCreateModal, setShowCreateModal] = useState(false); // Estado para mostrar el modal del formulario
     const [deleteModal, setDeleteModal] = useState<{ show: boolean; id: number | null }>({
         show: false,
         id: null,
@@ -55,14 +58,16 @@ export default function TablePage({ data }: TableProps) {
         [data, search],
     );
 
-    const sortedData = useMemo(() => {
-        if (sortColumn === null) return filteredData;
-        return filteredData.slice().sort((a, b) => {
-            if (a[sortColumn]! < b[sortColumn]!) return sortDirection === "asc" ? -1 : 1;
-            if (a[sortColumn]! > b[sortColumn]!) return sortDirection === "asc" ? 1 : -1;
-            return 0;
-        });
-    }, [filteredData, sortColumn, sortDirection]);
+  // Ordenamiento
+  const sortedData = useMemo(() => {
+    if (!sortColumn) return filteredData;
+    return filteredData.slice().sort((a, b) => {
+        if (a[sortColumn]! < b[sortColumn]!) return sortDirection === "asc" ? -1 : 1;
+        if (a[sortColumn]! > b[sortColumn]!) return sortDirection === "asc" ? 1 : -1;
+        return 0;
+    });
+}, [filteredData, sortColumn, sortDirection]);
+
 
     const lastItem = currentPage * itemsPerPage;
     const firstItem = lastItem - itemsPerPage;
@@ -94,16 +99,19 @@ export default function TablePage({ data }: TableProps) {
                         onChange={(e) => setSearch(e.target.value)}
                         className="w-56"
                     />
-                    <Link href="/admin/incident/vars/var/create">
-                        <Button className="bg-slate-800 text-white">Agregar Nueva</Button>
-                    </Link>
+                    <Button
+                        className="bg-slate-800 text-white"
+                        onClick={() => setShowCreateModal(true)} // Muestra el modal al hacer clic
+                    >
+                        Agregar Nueva
+                    </Button>
                 </div>
             </div>
 
             {/* Tabla */}
-            <div className="overflow-auto">
+            <div className="overflow-y-auto max-h-[calc(100vh-200px)] sm:max-h-[calc(80vh)] md:max-h-[500px] border border-slate-300 rounded-lg">
                 <Table>
-                    <TableHeader>
+                    <TableHeader className="sticky top-0 bg-white shadow-md z-10">
                         <TableRow>
                             {["id", "name", "acciones"].map((column) => (
                                 <TableHead key={column} className="text-slate-700">
@@ -122,9 +130,10 @@ export default function TablePage({ data }: TableProps) {
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        {currentItems.map((row) => (
+                    {currentItems.map((row, index) => (
                             <TableRow key={row.id}>
-                                <TableCell>{row.id}</TableCell>
+                                {/* Número de fila basado en el índice y la página actual */}
+            <TableCell>{firstItem + index + 1}</TableCell>
                                 <TableCell>{row.name}</TableCell>
                                 <TableCell>
                                     <Button
@@ -174,6 +183,16 @@ export default function TablePage({ data }: TableProps) {
                     </PaginationContent>
                 </Pagination>
             </div>
+
+  {/* Modal de creación */}
+  <Dialog open={showCreateModal} onOpenChange={setShowCreateModal}>
+                <DialogContent>
+                    
+                    <VariableForm />
+                    
+                </DialogContent>
+            </Dialog>
+
 
             {/* Modal de eliminación */}
             {deleteModal.show && deleteModal.id !== null && (

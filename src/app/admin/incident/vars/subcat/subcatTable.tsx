@@ -24,6 +24,8 @@ import {
 } from "@/components/ui/pagination";
 import DeleteModal from "@/app/admin/incident/vars/subcat/delete/page";
 import { handleDeleteSubCategoryAction } from "@/app/admin/incident/vars/subcat/delete/delete.action";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
+import SubCatForm from "./create/subcat-form";
 
 interface Data {
     id: number;
@@ -36,6 +38,7 @@ interface TableProps {
 }
 
 export default function TablePage({ data }: TableProps) {
+    const [showCreateModal, setShowCreateModal] = useState(false); // Estado para mostrar el modal del formulario
     const [search, setSearch] = useState("");
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 10;
@@ -96,16 +99,19 @@ export default function TablePage({ data }: TableProps) {
                         onChange={(e) => setSearch(e.target.value)}
                         className="w-56"
                     />
-                    <Link href="/admin/incident/vars/subcat/create">
-                        <Button className="bg-slate-800 text-white">Agregar Nueva</Button>
-                    </Link>
+                     <Button
+                        className="bg-slate-800 text-white"
+                        onClick={() => setShowCreateModal(true)} // Muestra el modal al hacer clic
+                    >
+                        Agregar Nueva
+                    </Button>
                 </div>
             </div>
 
             {/* Tabla */}
-            <div className="overflow-auto">
+            <div className="max-h-[calc(100vh-200px)] overflow-y-auto rounded-lg border border-slate-300 sm:max-h-[calc(80vh)] md:max-h-[500px]">
                 <Table>
-                    <TableHeader>
+                    <TableHeader className="sticky top-0 z-10 bg-white shadow-md">
                         <TableRow>
                             {["id", "name", "categoria", "acciones"].map((column) => (
                                 <TableHead key={column} className="text-slate-700">
@@ -124,9 +130,10 @@ export default function TablePage({ data }: TableProps) {
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        {currentItems.map((row) => (
+                    {currentItems.map((row, index) => (
                             <TableRow key={row.id}>
-                                <TableCell>{row.id}</TableCell>
+                                {/* Número de fila basado en el índice y la página actual */}
+                                <TableCell>{firstItem + index + 1}</TableCell>
                                 <TableCell>{row.name}</TableCell>
                                 <TableCell>{row.categoria}</TableCell>
                                 <TableCell>
@@ -175,6 +182,13 @@ export default function TablePage({ data }: TableProps) {
                     </PaginationContent>
                 </Pagination>
             </div>
+
+             {/* Modal de creación */}
+             <Dialog open={showCreateModal} onOpenChange={setShowCreateModal}>
+                <DialogContent>
+                    <SubCatForm />
+                </DialogContent>
+            </Dialog>
 
             {/* Modal de eliminación */}
             {deleteModal.show && deleteModal.id !== null && (

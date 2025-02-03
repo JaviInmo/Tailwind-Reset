@@ -6,12 +6,9 @@ import { useEffect, useState } from "react";
 import { useForm, SubmitHandler } from "react-hook-form";
 import { z } from "zod";
 
-import { countCats } from "../readcat.action";
-import { fetchCategoriesByVariable, fetchVariables, registerAction } from "./cat.action";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { fetchVariables, registerAction } from "./cat.action";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import {
     Select,
     SelectContent,
@@ -46,10 +43,9 @@ type FormSchemaData = z.infer<typeof formSchema>;
 
 export function CatForm() {
     const [showSuccessModal, setShowSuccessModal] = useState(false);
-    const [initialCount, setInitialCount] = useState<number | null>(null);
     const [variables, setVariables] = useState<{ id: number; name: string }[]>([]);
     const [selectedVariableId, setSelectedVariableId] = useState<number | null>(null);
-    const [categories, setCategories] = useState<{ id: number; name: string }[]>([]);
+    const [globalError, setGlobalError] = useState<string | null>(null);
     const router = useRouter();
 
     const form = useForm<FormSchemaData>({
@@ -61,26 +57,10 @@ export function CatForm() {
         const fetchData = async () => {
             const vars = await fetchVariables();
             setVariables(vars);
-
-            const count = await countCats();
-            setInitialCount(count);
         };
 
         fetchData();
     }, []);
-
-    useEffect(() => {
-        if (selectedVariableId) {
-            const fetchCategories = async () => {
-                const cats = await fetchCategoriesByVariable(selectedVariableId);
-                setCategories(cats);
-            };
-
-            fetchCategories();
-        } else {
-            setCategories([]);
-        }
-    }, [selectedVariableId]);
 
     const handleVariableChange = (value: string) => {
         const selectedVariable = variables.find((v) => v.name === value);
@@ -95,6 +75,8 @@ export function CatForm() {
             return;
         }
 
+        setGlobalError(null);
+
         const categoriesArray = data.categories.split(",").map((name) => name.trim());
         let allSuccess = true;
 
@@ -103,39 +85,32 @@ export function CatForm() {
                 variableId: selectedVariableId,
                 name: category,
             });
+
             if (!response.success) {
-                form.setError("root", { message: `Categoría "${category}" ya registrada` });
+                setGlobalError(response.error || `Error al registrar la categoría "${category}"`);
                 allSuccess = false;
+                break;
             }
         }
 
         if (allSuccess) {
-            const newCount = await countCats();
-
-            if (initialCount !== null && newCount > initialCount) {
-                setShowSuccessModal(true);
-            } else {
-                console.error("Error al actualizar la tabla después de la inserción");
-            }
+            setShowSuccessModal(true);
         }
     };
 
     const handleCloseSuccessModal = () => {
         setShowSuccessModal(false);
-        form.reset();
-    };
-
-    const handleConfirmSuccessModal = () => {
-        setShowSuccessModal(false);
-        form.reset();
-        router.push("/admin/incident/vars/cat");
+        form.reset({
+            variable: "",
+            categories: "",
+        });
+        setSelectedVariableId(null);
+        setGlobalError(null);
     };
 
     return (
-        
-        <div className="flex justify-center gap-6 py-8">
-            {/* Encabezado */}
-            <div className="w-7/12 bg-white space-y-6 py-8 rounded-sm">            
+        <div className="flex justify-center py-2">
+            <div className="w-7/12 space-y-7 rounded-sm bg-white py-8">
                 <div className="text-center">
                     <h1 className="text-2xl font-semibold">Registro de Categorías</h1>
                     <p className="text-sm text-gray-500">
@@ -145,9 +120,11 @@ export function CatForm() {
                 </div>
 
                 <div className="flex justify-center">
-                    {/* Formulario */}
                     <Form {...form}>
-                        <form onSubmit={form.handleSubmit(onSubmit)} className="w-full max-w-lg space-y-6">
+                        <form
+                            onSubmit={form.handleSubmit(onSubmit)}
+                            className="w-full max-w-lg space-y-6"
+                        >
                             {/* Select de Variables */}
                             <FormField
                                 control={form.control}
@@ -157,11 +134,11 @@ export function CatForm() {
                                         <FormLabel>Variable:</FormLabel>
                                         <Select
                                             onValueChange={(value) => {
-                                                field.onChange(value); // Actualiza el estado en React Hook Form
-                                                handleVariableChange(value); // Actualiza el estado local si es necesario
+                                                field.onChange(value);
+                                                handleVariableChange(value);
                                             }}
-                                            value={field.value}> {/* Asegura que el valor sea controlado */}
-                                            
+                                            value={field.value}
+                                        >
                                             <FormControl>
                                                 <SelectTrigger>
                                                     <SelectValue placeholder="Seleccione una variable" />
@@ -169,7 +146,10 @@ export function CatForm() {
                                             </FormControl>
                                             <SelectContent>
                                                 {variables.map((variable) => (
-                                                    <SelectItem key={variable.id} value={variable.name}>
+                                                    <SelectItem
+                                                        key={variable.id}
+                                                        value={variable.name}
+                                                    >
                                                         {variable.name}
                                                     </SelectItem>
                                                 ))}
@@ -179,7 +159,6 @@ export function CatForm() {
                                     </FormItem>
                                 )}
                             />
-
 
                             {/* Input de Categorías */}
                             <FormField
@@ -201,37 +180,21 @@ export function CatForm() {
                                 )}
                             />
 
-                            {/* Botón de envío */}
+                            {/* Mostrar error global */}
+                            {globalError && (
+                                <div className="text-center text-sm text-red-500">
+                                    {globalError}
+                                </div>
+                            )}
+
                             <Button type="submit" className="w-full">
                                 Registrar
                             </Button>
                         </form>
                     </Form>
                 </div>
-
-                {/* Card de categorías */}
-{/*                 {categories.length > 0 && (
-                    <Card className="w-full max-w-lg">
-                        <CardHeader>
-                            <CardTitle>Categorías de la Variable Seleccionada</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="flex flex-wrap gap-2">
-                                {categories.map((cat) => (
-                                    <div
-                                        key={cat.id}
-                                        className="rounded-md bg-gray-200 px-3 py-1 text-sm text-gray-700"
-                                    >
-                                        {cat.name}
-                                    </div>
-                                ))}
-                            </div>
-                        </CardContent>
-                    </Card>
-                )} */}
             </div>
 
-            {/* Modal de éxito */}
             <Dialog open={showSuccessModal} onOpenChange={handleCloseSuccessModal}>
                 <DialogContent>
                     <DialogHeader>
@@ -239,7 +202,7 @@ export function CatForm() {
                     </DialogHeader>
                     <div>Categorías creadas con éxito.</div>
                     <DialogFooter>
-                        <Button onClick={handleConfirmSuccessModal}>Aceptar</Button>
+                        <Button onClick={handleCloseSuccessModal}>Aceptar</Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>

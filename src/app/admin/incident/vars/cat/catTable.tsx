@@ -1,7 +1,6 @@
 "use client";
 
-import { SetStateAction, useMemo, useState } from "react";
-import Link from "next/link";
+import { useState, useMemo } from "react";
 import { ArrowDownUp } from "lucide-react";
 import { RiDeleteBin7Line } from "react-icons/ri";
 import { Button } from "@/components/ui/button";
@@ -15,6 +14,13 @@ import {
     TableRow,
 } from "@/components/ui/table";
 import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+    DialogFooter,
+} from "@/components/ui/dialog";
+import {
     Pagination,
     PaginationContent,
     PaginationItem,
@@ -23,6 +29,7 @@ import {
     PaginationNext,
 } from "@/components/ui/pagination";
 import DeleteModal from "@/app/admin/incident/vars/cat/delete/page";
+import { CatForm } from "@/app/admin/incident/vars/cat/create/cat-form"; // Importa el formulario
 import { handleDeleteCategoryAction } from "./delete/delete.action";
 
 interface Data {
@@ -38,13 +45,15 @@ interface TableProps {
 export default function TablePage({ data }: TableProps) {
     const [search, setSearch] = useState("");
     const [currentPage, setCurrentPage] = useState(1);
-    const itemsPerPage = 10;
-    const [sortColumn, setSortColumn] = useState<keyof Data | null>(null);
-    const [sortDirection, setSortDirection] = useState<"asc" | "desc" | null>(null);
+    const [showCreateModal, setShowCreateModal] = useState(false); // Estado para mostrar el modal del formulario
     const [deleteModal, setDeleteModal] = useState<{ show: boolean; id: number | null }>({
         show: false,
         id: null,
     });
+    const itemsPerPage = 10;
+
+    const [sortColumn, setSortColumn] = useState<keyof Data | null>(null);
+    const [sortDirection, setSortDirection] = useState<"asc" | "desc" | null>(null);
 
     // Filtrado
     const filteredData = useMemo(
@@ -59,7 +68,7 @@ export default function TablePage({ data }: TableProps) {
 
     // Ordenamiento
     const sortedData = useMemo(() => {
-        if (sortColumn === null) return filteredData;
+        if (!sortColumn) return filteredData;
         return filteredData.slice().sort((a, b) => {
             if (a[sortColumn]! < b[sortColumn]!) return sortDirection === "asc" ? -1 : 1;
             if (a[sortColumn]! > b[sortColumn]!) return sortDirection === "asc" ? 1 : -1;
@@ -73,7 +82,6 @@ export default function TablePage({ data }: TableProps) {
     const currentItems = sortedData.slice(firstItem, lastItem);
     const totalPages = Math.ceil(filteredData.length / itemsPerPage);
 
-    // Ordenar columna
     const requestSort = (columnKey: keyof Data) => {
         const direction = sortColumn === columnKey && sortDirection === "asc" ? "desc" : "asc";
         setSortColumn(columnKey);
@@ -99,16 +107,20 @@ export default function TablePage({ data }: TableProps) {
                         onChange={(e) => setSearch(e.target.value)}
                         className="w-56"
                     />
-                    <Link href="/admin/incident/vars/cat/create">
-                        <Button className="bg-slate-800 text-white">Agregar Nueva</Button>
-                    </Link>
+                    <Button
+                        className="bg-slate-800 text-white"
+                        onClick={() => setShowCreateModal(true)} // Muestra el modal al hacer clic
+                    >
+                        Agregar Nueva
+                    </Button>
                 </div>
             </div>
 
             {/* Tabla */}
-            <div className="overflow-auto">
+
+            <div className="max-h-[calc(100vh-200px)] overflow-y-auto rounded-lg border border-slate-300 sm:max-h-[calc(80vh)] md:max-h-[500px]">
                 <Table>
-                    <TableHeader>
+                    <TableHeader className="sticky top-0 z-10 bg-white shadow-md">
                         <TableRow>
                             {["id", "name", "variable", "acciones"].map((column) => (
                                 <TableHead key={column} className="text-slate-700">
@@ -126,10 +138,12 @@ export default function TablePage({ data }: TableProps) {
                             ))}
                         </TableRow>
                     </TableHeader>
+
                     <TableBody>
-                        {currentItems.map((row) => (
+                        {currentItems.map((row, index) => (
                             <TableRow key={row.id}>
-                                <TableCell>{row.id}</TableCell>
+                                {/* Número de fila basado en el índice y la página actual */}
+                                <TableCell>{firstItem + index + 1}</TableCell>
                                 <TableCell>{row.name}</TableCell>
                                 <TableCell>{row.variable}</TableCell>
                                 <TableCell>
@@ -180,6 +194,13 @@ export default function TablePage({ data }: TableProps) {
                     </PaginationContent>
                 </Pagination>
             </div>
+
+            {/* Modal de creación */}
+            <Dialog open={showCreateModal} onOpenChange={setShowCreateModal}>
+                <DialogContent>
+                    <CatForm />
+                </DialogContent>
+            </Dialog>
 
             {/* Modal de eliminación */}
             {deleteModal.show && deleteModal.id !== null && (
