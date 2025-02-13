@@ -43,7 +43,7 @@ const formSchema = z.object({
 
 type FormSchemaData = z.infer<typeof formSchema>;
 
-export default function SubCatForm() {
+export  function SubCatForm() {
     const [showSuccessModal, setShowSuccessModal] = useState(false);
     const [initialCount, setInitialCount] = useState<number | null>(null);
     const [categories, setCategories] = useState<{ id: number; name: string }[]>([]);
