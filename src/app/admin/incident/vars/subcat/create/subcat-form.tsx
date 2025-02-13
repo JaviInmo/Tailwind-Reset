@@ -132,11 +132,17 @@ export function SubCatForm() {
             <div className="w-7/12 space-y-7 rounded-sm bg-white py-8">
                 <div className="text-center">
                     <h1 className="text-2xl font-semibold">Registro de Subcategorías</h1>
-                    <p className="text-sm text-gray-500">Seleccione una categoría y rellene el campo del formulario para registrar las subcategorías.</p>
+                    <p className="text-sm text-gray-500">
+                        Seleccione una categoría y rellene el campo del formulario para registrar
+                        las subcategorías.
+                    </p>
                 </div>
                 <div className="flex justify-center">
                     <Form {...form}>
-                        <form onSubmit={form.handleSubmit(onSubmit)} className="w-full max-w-lg space-y-6">
+                        <form
+                            onSubmit={form.handleSubmit(onSubmit)}
+                            className="w-full max-w-lg space-y-6"
+                        >
                             <FormField
                                 control={form.control}
                                 name="category"
@@ -157,7 +163,12 @@ export function SubCatForm() {
                                             </FormControl>
                                             <SelectContent>
                                                 {categories.map((category) => (
-                                                    <SelectItem key={category.id} value={category.name}>{category.name}</SelectItem>
+                                                    <SelectItem
+                                                        key={category.id}
+                                                        value={category.name}
+                                                    >
+                                                        {category.name}
+                                                    </SelectItem>
                                                 ))}
                                             </SelectContent>
                                         </Select>
@@ -165,7 +176,26 @@ export function SubCatForm() {
                                     </FormItem>
                                 )}
                             />
-                            <Button type="submit" className="w-full">Registrar</Button>
+                            {/* Input de SubCategorías */}
+                            <FormField
+                                control={form.control}
+                                name="subcategories"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Subcategorías:</FormLabel>
+                                        <Input
+                                            {...field}
+                                            placeholder="Escriba las subcategorías separadas por coma"
+                                            type="text"
+                                        />
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+
+                            <Button type="submit" className="w-full">
+                                Registrar
+                            </Button>
                         </form>
                     </Form>
                 </div>

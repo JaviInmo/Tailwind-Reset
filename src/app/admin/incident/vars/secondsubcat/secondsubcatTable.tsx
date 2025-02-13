@@ -50,7 +50,6 @@ export default function TablePage({ data }: TableProps) {
         id: null,
     });
 
-    // Filtrado
     const filteredData = useMemo(
         () =>
             data.filter((row) =>
@@ -61,26 +60,24 @@ export default function TablePage({ data }: TableProps) {
         [data, search],
     );
 
-    // Ordenamiento
     const sortedData = useMemo(() => {
-        if (sortColumn === null) return filteredData;
-        return filteredData.slice().sort((a, b) => {
+        if (!sortColumn) return filteredData;
+        return filteredData.sort((a, b) => {
             if (a[sortColumn]! < b[sortColumn]!) return sortDirection === "asc" ? -1 : 1;
             if (a[sortColumn]! > b[sortColumn]!) return sortDirection === "asc" ? 1 : -1;
             return 0;
         });
     }, [filteredData, sortColumn, sortDirection]);
 
-    // Paginación
     const lastItem = currentPage * itemsPerPage;
     const firstItem = lastItem - itemsPerPage;
     const currentItems = sortedData.slice(firstItem, lastItem);
+
     const totalPages = Math.ceil(filteredData.length / itemsPerPage);
 
-    // Ordenar columna
-    const requestSort = (columnKey: keyof Data) => {
-        const direction = sortColumn === columnKey && sortDirection === "asc" ? "desc" : "asc";
-        setSortColumn(columnKey);
+    const requestSort = (column: keyof Data) => {
+        const direction = sortColumn === column && sortDirection === "asc" ? "desc" : "asc";
+        setSortColumn(column);
         setSortDirection(direction);
     };
 
@@ -105,9 +102,12 @@ export default function TablePage({ data }: TableProps) {
                         onChange={(e) => setSearch(e.target.value)}
                         className="w-56"
                     />
-                    <Link href="/admin/incident/vars/secondsubcat/create">
-                        <Button className="bg-slate-800 text-white">Agregar Nueva</Button>
-                    </Link>
+                    <Button
+                        className="bg-slate-800 text-white"
+                        onClick={() => setShowCreateModal(true)} // Muestra el modal al hacer clic
+                    >
+                        Agregar Nueva
+                    </Button>
                 </div>
             </div>
 
@@ -137,9 +137,9 @@ export default function TablePage({ data }: TableProps) {
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        {currentItems.map((row) => (
+                        {currentItems.map((row, index) => (
                             <TableRow key={row.id}>
-                                <TableCell>{row.id}</TableCell>
+                                 <TableCell>{firstItem + index + 1}</TableCell>
                                 <TableCell>{row.name}</TableCell>
                                 <TableCell>{row.subcategoria}</TableCell>
                                 <TableCell>

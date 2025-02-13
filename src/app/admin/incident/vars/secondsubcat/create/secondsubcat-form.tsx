@@ -143,7 +143,8 @@ export function SecondSubCatForm() {
     };
 
     return (
-        <div className="flex flex-col items-center gap-6 py-8">
+        <div className="flex justify-center py-2">
+             <div className="w-7/12 space-y-7 rounded-sm bg-white py-8">
             {/* Encabezado */}
             <div className="text-center">
                 <h1 className="text-2xl font-semibold">Registro de Segundas Subcategorías</h1>
@@ -154,8 +155,11 @@ export function SecondSubCatForm() {
             </div>
 
             {/* Formulario */}
+            <div className="flex justify-center">
             <Form {...form}>
-                <form onSubmit={form.handleSubmit(onSubmit)} className="w-full max-w-lg space-y-6">
+                <form
+                 onSubmit={form.handleSubmit(onSubmit)} 
+                 className="w-full max-w-lg space-y-6">
                     {/* Select de Subcategorías */}
                     <FormField
                         control={form.control}
@@ -218,7 +222,7 @@ export function SecondSubCatForm() {
                 </form>
             </Form>
 
-            {/* Card de segundas subcategorías */}
+           {/*   Card de segundas subcategorías
             {secondSubcategories.length > 0 && (
                 <Card className="w-full max-w-lg">
                     <CardHeader>
@@ -239,7 +243,9 @@ export function SecondSubCatForm() {
                         </div>
                     </CardContent>
                 </Card>
-            )}
+            )} */}
+            </div>
+            </div>
 
             {/* Modal de éxito */}
             <Dialog open={showSuccessModal} onOpenChange={handleCloseSuccessModal}>
