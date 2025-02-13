@@ -24,6 +24,9 @@ import {
 } from "@/components/ui/pagination";
 import DeleteModal from "@/app/admin/incident/vars/secondsubcat/delete/page";
 import { handleDeleteSecondSubCategoryAction } from "@/app/admin/incident/vars/secondsubcat/delete/delete.action";
+import { SecondSubCatForm } from "./create/secondsubcat-form";
+import { DialogContent } from "@/components/ui/dialog";
+import { Dialog } from "@radix-ui/react-dialog";
 
 interface Data {
     id: number;
@@ -36,6 +39,7 @@ interface TableProps {
 }
 
 export default function TablePage({ data }: TableProps) {
+    const [showCreateModal, setShowCreateModal] = useState(false); // Estado para mostrar el modal del formulario
     const [search, setSearch] = useState("");
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 10;
@@ -108,9 +112,9 @@ export default function TablePage({ data }: TableProps) {
             </div>
 
             {/* Tabla */}
-            <div className="overflow-auto">
+            <div className="max-h-[calc(100vh-200px)] overflow-y-auto rounded-lg border border-slate-300 sm:max-h-[calc(80vh)] md:max-h-[500px]">
                 <Table>
-                    <TableHeader>
+                    <TableHeader className="sticky top-0 z-10 bg-white shadow-md">
                         <TableRow>
                             {["id", "name", "subcategoria", "acciones"].map((column) => (
                                 <TableHead key={column} className="text-slate-700">
@@ -118,7 +122,7 @@ export default function TablePage({ data }: TableProps) {
                                         {column === "id" ?
                                             "ID"
                                         : column === "name" ?
-                                            "Nombre de la Segunda Subcategoría"
+                                            "Name"
                                         :   column.charAt(0).toUpperCase() + column.slice(1)}
                                         {column !== "acciones" && (
                                             <ArrowDownUp
@@ -186,6 +190,13 @@ export default function TablePage({ data }: TableProps) {
                     </PaginationContent>
                 </Pagination>
             </div>
+
+              {/* Modal de creación */}
+              <Dialog open={showCreateModal} onOpenChange={setShowCreateModal}>
+                <DialogContent>
+                    <SecondSubCatForm />
+                </DialogContent>
+            </Dialog>
 
             {/* Modal de eliminación */}
             {deleteModal.show && deleteModal.id !== null && (

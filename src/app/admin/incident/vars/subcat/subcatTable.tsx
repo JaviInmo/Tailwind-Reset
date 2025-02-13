@@ -25,11 +25,10 @@ import {
 import DeleteModal from "@/app/admin/incident/vars/subcat/delete/page";
 import { handleDeleteSubCategoryAction } from "@/app/admin/incident/vars/subcat/delete/delete.action";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
-import SubCatForm from "./create/subcat-form";
+import {SubCatForm} from "./create/subcat-form";
 
 interface Data {
-    id: number;
-    name: string;
+    id: number;    name: string;
     categoria: string;
 }
 

@@ -12,6 +12,21 @@ type FormSchemaData = {
 // Registra una nueva segunda subcategoría
 export async function registerAction(data: FormSchemaData) {
     try {
+        const existingSecondSubcategory = await prisma.secondSubcategory.findFirst({
+            where:{
+               name: data.name,
+            subcategoryId: data.subcategoryId,
+            },
+        });
+
+        if (existingSecondSubcategory){
+            return {success:false, error:"La segunda subcategoría ya existe para esta subcategoría."};  // Cambiado de categoría a subcategoría
+        }
+            
+
+
+
+        //crear segunda subcategoria sino existe
         const secondSubcategory = await prisma.secondSubcategory.create({
             data: {
                 name: data.name,
@@ -19,7 +34,7 @@ export async function registerAction(data: FormSchemaData) {
             },
         });
 
-        revalidatePath("/admin/variables/createSecondSubCat");
+        revalidatePath("/admin/incident/vars/secondsubcat/create");
 
         return { success: true, secondSubcategory };
     } catch (error) {

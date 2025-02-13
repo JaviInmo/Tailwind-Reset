@@ -158,36 +158,38 @@ export function SecondSubCatForm() {
                 <form onSubmit={form.handleSubmit(onSubmit)} className="w-full max-w-lg space-y-6">
                     {/* Select de Subcategorías */}
                     <FormField
-    control={form.control}
-    name="subcategory"
-    render={({ field }) => (
-        <FormItem>
-            <FormLabel>Subcategoría:</FormLabel>
-            <Select
-                onValueChange={(value) => {
-                    handleSubcategoryChange(value); // Actualizar el estado del ID seleccionado
-                    field.onChange(value); // Actualizar el valor del formulario
-                }}
-                value={field.value} // Asegurar que el valor del formulario se mantenga sincronizado
-            >
-                <FormControl>
-                    <SelectTrigger>
-                        <SelectValue placeholder="Seleccione una subcategoría" />
-                    </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                    {subcategories.map((subcategory) => (
-                        <SelectItem key={subcategory.id} value={subcategory.name}>
-                            {subcategory.name}
-                        </SelectItem>
-                    ))}
-                </SelectContent>
-            </Select>
-            <FormMessage />
-        </FormItem>
-    )}
-/>
-
+                        control={form.control}
+                        name="subcategory"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Subcategoría:</FormLabel>
+                                <Select
+                                    onValueChange={(value) => {
+                                        handleSubcategoryChange(value); // Actualizar el estado del ID seleccionado
+                                        field.onChange(value); // Actualizar el valor del formulario
+                                    }}
+                                    value={field.value} // Asegurar que el valor del formulario se mantenga sincronizado
+                                >
+                                    <FormControl>
+                                        <SelectTrigger>
+                                            <SelectValue placeholder="Seleccione una subcategoría" />
+                                        </SelectTrigger>
+                                    </FormControl>
+                                    <SelectContent>
+                                        {subcategories.map((subcategory) => (
+                                            <SelectItem
+                                                key={subcategory.id}
+                                                value={subcategory.name}
+                                            >
+                                                {subcategory.name}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
 
                     {/* Input de Segundas Subcategorías */}
                     <FormField
