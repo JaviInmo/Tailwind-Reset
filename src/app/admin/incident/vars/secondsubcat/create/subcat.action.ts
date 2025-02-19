@@ -49,6 +49,45 @@ export async function registerAction(data: FormSchemaData) {
     }
 }
 
+
+export async function updateSecondSubCategoryAction(id: number, name: string) {
+    try {
+        const existingSecondSubcategory = await prisma.secondSubcategory.findFirst({
+            where: {
+                name,
+                NOT: {
+                    id,
+                },
+            },
+        });
+
+        if (existingSecondSubcategory) {
+            return { success: false, error: "La segunda subcategoría ya existe." };
+        }
+
+        const secondSubcategory = await prisma.secondSubcategory.update({
+            where: {
+                id,
+            },
+            data: {
+                name,
+            },
+        });
+
+        revalidatePath("/admin/incident/vars/secondsubcat/create");
+
+        return { success: true, secondSubcategory };
+    } catch (error) {
+        let errorMessage = "An unexpected error occurred";
+
+        if (error instanceof Error) {
+            errorMessage = error.message;
+        }
+
+        console.error("Error al actualizar la segunda subcategoría:", error);
+        return { success: false, error: errorMessage };
+    }
+}
 // Obtiene todas las subcategorías disponibles
 export async function fetchSubCategories() {
     return await prisma.subcategory.findMany({

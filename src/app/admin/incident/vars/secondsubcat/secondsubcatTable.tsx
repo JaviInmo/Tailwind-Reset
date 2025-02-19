@@ -1,9 +1,9 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import Link from "next/link";
 import { ArrowDownUp } from "lucide-react";
 import { RiDeleteBin7Line } from "react-icons/ri";
+import { FaRegEdit } from "react-icons/fa"; // Icono para editar
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -25,13 +25,13 @@ import {
 import DeleteModal from "@/app/admin/incident/vars/secondsubcat/delete/page";
 import { handleDeleteSecondSubCategoryAction } from "@/app/admin/incident/vars/secondsubcat/delete/delete.action";
 import { SecondSubCatForm } from "./create/secondsubcat-form";
-import { DialogContent } from "@/components/ui/dialog";
-import { Dialog } from "@radix-ui/react-dialog";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 
 interface Data {
     id: number;
     name: string;
     subcategoria: string;
+    subcategoriaId: number; // Se agrega para disponer del id de la subcategoría padre en el formulario de edición
 }
 
 interface TableProps {
@@ -39,7 +39,7 @@ interface TableProps {
 }
 
 export default function TablePage({ data }: TableProps) {
-    const [showCreateModal, setShowCreateModal] = useState(false); // Estado para mostrar el modal del formulario
+    const [showCreateModal, setShowCreateModal] = useState(false);
     const [search, setSearch] = useState("");
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 10;
@@ -50,14 +50,18 @@ export default function TablePage({ data }: TableProps) {
         id: null,
     });
 
+    // Estado para el modal de edición y la segunda subcategoría seleccionada
+    const [showEditModal, setShowEditModal] = useState(false);
+    const [selectedSecondSubcat, setSelectedSecondSubcat] = useState<Data | null>(null);
+
     const filteredData = useMemo(
         () =>
             data.filter((row) =>
                 Object.values(row).some((value) =>
-                    String(value).toLowerCase().includes(search.toLowerCase()),
-                ),
+                    String(value).toLowerCase().includes(search.toLowerCase())
+                )
             ),
-        [data, search],
+        [data, search]
     );
 
     const sortedData = useMemo(() => {
@@ -72,7 +76,6 @@ export default function TablePage({ data }: TableProps) {
     const lastItem = currentPage * itemsPerPage;
     const firstItem = lastItem - itemsPerPage;
     const currentItems = sortedData.slice(firstItem, lastItem);
-
     const totalPages = Math.ceil(filteredData.length / itemsPerPage);
 
     const requestSort = (column: keyof Data) => {
@@ -86,6 +89,11 @@ export default function TablePage({ data }: TableProps) {
     const confirmDelete = async (id: number) => {
         await handleDeleteSecondSubCategoryAction(id);
         setDeleteModal({ show: false, id: null });
+    };
+
+    const handleEdit = (subcat: Data) => {
+        setSelectedSecondSubcat(subcat);
+        setShowEditModal(true);
     };
 
     return (
@@ -104,7 +112,7 @@ export default function TablePage({ data }: TableProps) {
                     />
                     <Button
                         className="bg-slate-800 text-white"
-                        onClick={() => setShowCreateModal(true)} // Muestra el modal al hacer clic
+                        onClick={() => setShowCreateModal(true)}
                     >
                         Agregar Nueva
                     </Button>
@@ -119,11 +127,11 @@ export default function TablePage({ data }: TableProps) {
                             {["id", "name", "subcategoria", "acciones"].map((column) => (
                                 <TableHead key={column} className="text-slate-700">
                                     <div className="flex items-center justify-between">
-                                        {column === "id" ?
-                                            "ID"
-                                        : column === "name" ?
-                                            "Name"
-                                        :   column.charAt(0).toUpperCase() + column.slice(1)}
+                                        {column === "id"
+                                            ? "ID"
+                                            : column === "name"
+                                            ? "Name"
+                                            : column.charAt(0).toUpperCase() + column.slice(1)}
                                         {column !== "acciones" && (
                                             <ArrowDownUp
                                                 size={16}
@@ -139,19 +147,32 @@ export default function TablePage({ data }: TableProps) {
                     <TableBody>
                         {currentItems.map((row, index) => (
                             <TableRow key={row.id}>
-                                 <TableCell>{firstItem + index + 1}</TableCell>
+                                <TableCell>{firstItem + index + 1}</TableCell>
                                 <TableCell>{row.name}</TableCell>
                                 <TableCell>{row.subcategoria}</TableCell>
                                 <TableCell>
-                                    <Button
-                                        variant="destructive"
-                                        size="sm"
-                                        onClick={() => handleDelete(row.id)}
-                                        className="flex items-center gap-1"
-                                    >
-                                        <RiDeleteBin7Line size={14} />
-                                        Eliminar
-                                    </Button>
+                                    <div className="flex items-center justify-start gap-2">
+                                       
+                                        <Button
+                                            variant="destructive"
+                                            size="sm"
+                                            onClick={() => handleDelete(row.id)}
+                                            className="flex items-center gap-1"
+                                        >
+                                            <RiDeleteBin7Line size={14} />
+                                            Eliminar
+                                        </Button>
+
+                                        <Button
+                                            variant="default"
+                                            size="sm"
+                                            onClick={() => handleEdit(row)}
+                                            className="flex items-center gap-1 bg-green-700 text-white hover:bg-green-800"
+                                        >
+                                            <FaRegEdit size={14} />
+                                            Editar
+                                        </Button>
+                                    </div>
                                 </TableCell>
                             </TableRow>
                         ))}
@@ -168,7 +189,6 @@ export default function TablePage({ data }: TableProps) {
                                 onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
                             />
                         </PaginationItem>
-
                         {Array.from({ length: totalPages }, (_, index) => (
                             <PaginationItem key={index}>
                                 <PaginationLink
@@ -179,22 +199,35 @@ export default function TablePage({ data }: TableProps) {
                                 </PaginationLink>
                             </PaginationItem>
                         ))}
-
                         <PaginationItem>
                             <PaginationNext
-                                onClick={() =>
-                                    setCurrentPage((prev) => Math.min(prev + 1, totalPages))
-                                }
+                                onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
                             />
                         </PaginationItem>
                     </PaginationContent>
                 </Pagination>
             </div>
 
-              {/* Modal de creación */}
-              <Dialog open={showCreateModal} onOpenChange={setShowCreateModal}>
+            {/* Modal de creación */}
+            <Dialog open={showCreateModal} onOpenChange={setShowCreateModal}>
                 <DialogContent>
                     <SecondSubCatForm />
+                </DialogContent>
+            </Dialog>
+
+            {/* Modal de edición */}
+            <Dialog open={showEditModal} onOpenChange={setShowEditModal}>
+                <DialogContent>
+                    {selectedSecondSubcat && (
+                        <SecondSubCatForm
+                            secondSubcategoryData={{
+                                id: selectedSecondSubcat.id,
+                                name: selectedSecondSubcat.name,
+                                subcategoryId: selectedSecondSubcat.subcategoriaId,
+                            }}
+                            onSuccess={() => setShowEditModal(false)}
+                        />
+                    )}
                 </DialogContent>
             </Dialog>
 

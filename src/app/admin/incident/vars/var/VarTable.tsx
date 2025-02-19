@@ -1,9 +1,9 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import Link from "next/link";
 import { ArrowDownUp } from "lucide-react";
 import { RiDeleteBin7Line } from "react-icons/ri";
+import { FaRegEdit } from "react-icons/fa";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -30,6 +30,16 @@ import { VariableForm } from "./create/var-form";
 interface Data {
     id: number;
     name: string;
+    categories: {
+        id: number;
+        name: string;
+        variableId: number;
+        subcategories: {
+            id: number;
+            name: string;
+            categoryId: number;
+        }[];
+    }[];
 }
 
 interface TableProps {
@@ -42,7 +52,11 @@ export default function TablePage({ data }: TableProps) {
     const itemsPerPage = 10;
     const [sortColumn, setSortColumn] = useState<keyof Data | null>(null);
     const [sortDirection, setSortDirection] = useState<"asc" | "desc" | null>(null);
-    const [showCreateModal, setShowCreateModal] = useState(false); // Estado para mostrar el modal del formulario
+
+    const [showCreateModal, setShowCreateModal] = useState(false);
+    const [showEditModal, setShowEditModal] = useState(false); // Estado para el modal de edición
+    const [selectedVariable, setSelectedVariable] = useState<Data | null>(null); // Estado para la variable seleccionada
+
     const [deleteModal, setDeleteModal] = useState<{ show: boolean; id: number | null }>({
         show: false,
         id: null,
@@ -58,16 +72,14 @@ export default function TablePage({ data }: TableProps) {
         [data, search],
     );
 
-  // Ordenamiento
-  const sortedData = useMemo(() => {
-    if (!sortColumn) return filteredData;
-    return filteredData.slice().sort((a, b) => {
-        if (a[sortColumn]! < b[sortColumn]!) return sortDirection === "asc" ? -1 : 1;
-        if (a[sortColumn]! > b[sortColumn]!) return sortDirection === "asc" ? 1 : -1;
-        return 0;
-    });
-}, [filteredData, sortColumn, sortDirection]);
-
+    const sortedData = useMemo(() => {
+        if (!sortColumn) return filteredData;
+        return filteredData.slice().sort((a, b) => {
+            if (a[sortColumn]! < b[sortColumn]!) return sortDirection === "asc" ? -1 : 1;
+            if (a[sortColumn]! > b[sortColumn]!) return sortDirection === "asc" ? 1 : -1;
+            return 0;
+        });
+    }, [filteredData, sortColumn, sortDirection]);
 
     const lastItem = currentPage * itemsPerPage;
     const firstItem = lastItem - itemsPerPage;
@@ -87,6 +99,12 @@ export default function TablePage({ data }: TableProps) {
         setDeleteModal({ show: false, id: null });
     };
 
+    // Nueva función para manejar la edición
+    const handleEdit = (variable: Data) => {
+        setSelectedVariable(variable);
+        setShowEditModal(true);
+    };
+
     return (
         <div className="flex flex-col gap-4 rounded-lg bg-white p-4 shadow-md">
             {/* Encabezado */}
@@ -101,7 +119,7 @@ export default function TablePage({ data }: TableProps) {
                     />
                     <Button
                         className="bg-slate-800 text-white"
-                        onClick={() => setShowCreateModal(true)} // Muestra el modal al hacer clic
+                        onClick={() => setShowCreateModal(true)}
                     >
                         Agregar Nueva
                     </Button>
@@ -109,9 +127,9 @@ export default function TablePage({ data }: TableProps) {
             </div>
 
             {/* Tabla */}
-            <div className="overflow-y-auto max-h-[calc(100vh-200px)] sm:max-h-[calc(80vh)] md:max-h-[500px] border border-slate-300 rounded-lg">
+            <div className="max-h-[calc(100vh-200px)] overflow-y-auto rounded-lg border border-slate-300 sm:max-h-[calc(80vh)] md:max-h-[500px]">
                 <Table>
-                    <TableHeader className="sticky top-0 bg-white shadow-md z-10">
+                    <TableHeader className="sticky top-0 z-10 bg-white shadow-md">
                         <TableRow>
                             {["id", "name", "acciones"].map((column) => (
                                 <TableHead key={column} className="text-slate-700">
@@ -130,21 +148,32 @@ export default function TablePage({ data }: TableProps) {
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                    {currentItems.map((row, index) => (
+                        {currentItems.map((row, index) => (
                             <TableRow key={row.id}>
-                                {/* Número de fila basado en el índice y la página actual */}
-            <TableCell>{firstItem + index + 1}</TableCell>
+                                <TableCell>{firstItem + index + 1}</TableCell>
                                 <TableCell>{row.name}</TableCell>
                                 <TableCell>
-                                    <Button
-                                        variant="destructive"
-                                        size="sm"
-                                        onClick={() => handleDelete(row.id)}
-                                        className="flex items-center gap-1"
-                                    >
-                                        <RiDeleteBin7Line size={14} />
-                                        Eliminar
-                                    </Button>
+                                    <div className="flex items-center justify-start gap-2">
+                                        <Button
+                                            variant="destructive"
+                                            size="sm"
+                                            onClick={() => handleDelete(row.id)}
+                                            className="flex items-center gap-1"
+                                        >
+                                            <RiDeleteBin7Line size={14} />
+                                            Eliminar
+                                        </Button>
+
+                                        <Button
+                                            variant="default"
+                                            size="sm"
+                                            onClick={() => handleEdit(row)}
+                                            className="flex items-center gap-1 bg-green-700 text-white hover:bg-green-800"
+                                        >
+                                            <FaRegEdit size={14} />
+                                            Editar
+                                        </Button>
+                                    </div>
                                 </TableCell>
                             </TableRow>
                         ))}
@@ -184,15 +213,28 @@ export default function TablePage({ data }: TableProps) {
                 </Pagination>
             </div>
 
-  {/* Modal de creación */}
-  <Dialog open={showCreateModal} onOpenChange={setShowCreateModal}>
+            {/* Modal de creación */}
+            <Dialog open={showCreateModal} onOpenChange={setShowCreateModal}>
                 <DialogContent>
-                    
-                    <VariableForm />
-                    
+                    <VariableForm variableData={{ id: 0, name: "", categories: [] }} />
                 </DialogContent>
             </Dialog>
 
+            {/* Modal de edición */}
+            <Dialog open={showEditModal} onOpenChange={setShowEditModal}>
+                <DialogContent>
+                    {selectedVariable && (
+                        <VariableForm
+                            variableData={{
+                                id: selectedVariable.id,
+                                name: selectedVariable.name,
+                                categories: selectedVariable.categories || [],
+                            }}
+                            onSuccess={() => setShowEditModal(false)} // Esta función cierra el modal de edición
+                        />
+                    )}
+                </DialogContent>
+            </Dialog>
 
             {/* Modal de eliminación */}
             {deleteModal.show && deleteModal.id !== null && (

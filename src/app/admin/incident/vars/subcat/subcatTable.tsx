@@ -1,9 +1,9 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import Link from "next/link";
 import { ArrowDownUp } from "lucide-react";
 import { RiDeleteBin7Line } from "react-icons/ri";
+import { FaRegEdit } from "react-icons/fa"; // Icono para editar
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -25,11 +25,13 @@ import {
 import DeleteModal from "@/app/admin/incident/vars/subcat/delete/page";
 import { handleDeleteSubCategoryAction } from "@/app/admin/incident/vars/subcat/delete/delete.action";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
-import {SubCatForm} from "./create/subcat-form";
+import { SubCatForm } from "./create/subcat-form";
 
 interface Data {
-    id: number;    name: string;
+    id: number;
+    name: string;
     categoria: string;
+    categoriaId: number; // Campo adicional para disponer del id de la categoría
 }
 
 interface TableProps {
@@ -37,7 +39,7 @@ interface TableProps {
 }
 
 export default function TablePage({ data }: TableProps) {
-    const [showCreateModal, setShowCreateModal] = useState(false); // Estado para mostrar el modal del formulario
+    const [showCreateModal, setShowCreateModal] = useState(false);
     const [search, setSearch] = useState("");
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 10;
@@ -48,14 +50,18 @@ export default function TablePage({ data }: TableProps) {
         id: null,
     });
 
+    // Estado para el modal de edición y la subcategoría seleccionada
+    const [showEditModal, setShowEditModal] = useState(false);
+    const [selectedSubcat, setSelectedSubcat] = useState<Data | null>(null);
+
     const filteredData = useMemo(
         () =>
             data.filter((row) =>
                 Object.values(row).some((value) =>
-                    String(value).toLowerCase().includes(search.toLowerCase()),
-                ),
+                    String(value).toLowerCase().includes(search.toLowerCase())
+                )
             ),
-        [data, search],
+        [data, search]
     );
 
     const sortedData = useMemo(() => {
@@ -70,7 +76,6 @@ export default function TablePage({ data }: TableProps) {
     const lastItem = currentPage * itemsPerPage;
     const firstItem = lastItem - itemsPerPage;
     const currentItems = sortedData.slice(firstItem, lastItem);
-
     const totalPages = Math.ceil(filteredData.length / itemsPerPage);
 
     const requestSort = (column: keyof Data) => {
@@ -80,10 +85,14 @@ export default function TablePage({ data }: TableProps) {
     };
 
     const handleDelete = (id: number) => setDeleteModal({ show: true, id });
-
     const confirmDelete = async (id: number) => {
         await handleDeleteSubCategoryAction(id);
         setDeleteModal({ show: false, id: null });
+    };
+
+    const handleEdit = (subcat: Data) => {
+        setSelectedSubcat(subcat);
+        setShowEditModal(true);
     };
 
     return (
@@ -98,9 +107,9 @@ export default function TablePage({ data }: TableProps) {
                         onChange={(e) => setSearch(e.target.value)}
                         className="w-56"
                     />
-                     <Button
+                    <Button
                         className="bg-slate-800 text-white"
-                        onClick={() => setShowCreateModal(true)} // Muestra el modal al hacer clic
+                        onClick={() => setShowCreateModal(true)} // Muestra el modal de creación
                     >
                         Agregar Nueva
                     </Button>
@@ -129,22 +138,33 @@ export default function TablePage({ data }: TableProps) {
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                    {currentItems.map((row, index) => (
+                        {currentItems.map((row, index) => (
                             <TableRow key={row.id}>
-                                {/* Número de fila basado en el índice y la página actual */}
                                 <TableCell>{firstItem + index + 1}</TableCell>
                                 <TableCell>{row.name}</TableCell>
                                 <TableCell>{row.categoria}</TableCell>
                                 <TableCell>
-                                    <Button
-                                        variant="destructive"
-                                        size="sm"
-                                        onClick={() => handleDelete(row.id)}
-                                        className="flex items-center gap-1"
-                                    >
-                                        <RiDeleteBin7Line size={14} />
-                                        Eliminar
-                                    </Button>
+                                    <div className="flex items-center justify-start gap-2">
+                                    
+                                        <Button
+                                            variant="destructive"
+                                            size="sm"
+                                            onClick={() => handleDelete(row.id)}
+                                            className="flex items-center gap-1"
+                                        >
+                                            <RiDeleteBin7Line size={14} />
+                                            Eliminar
+                                        </Button>
+                                        <Button
+                                            variant="default"
+                                            size="sm"
+                                            onClick={() => handleEdit(row)}
+                                            className="flex items-center gap-1 bg-green-700 text-white hover:bg-green-800"
+                                        >
+                                            <FaRegEdit size={14} />
+                                            Editar
+                                        </Button>
+                                    </div>
                                 </TableCell>
                             </TableRow>
                         ))}
@@ -157,9 +177,7 @@ export default function TablePage({ data }: TableProps) {
                 <Pagination>
                     <PaginationContent>
                         <PaginationItem>
-                            <PaginationPrevious
-                                onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-                            />
+                            <PaginationPrevious onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))} />
                         </PaginationItem>
                         {Array.from({ length: totalPages }, (_, index) => (
                             <PaginationItem key={index}>
@@ -172,20 +190,33 @@ export default function TablePage({ data }: TableProps) {
                             </PaginationItem>
                         ))}
                         <PaginationItem>
-                            <PaginationNext
-                                onClick={() =>
-                                    setCurrentPage((prev) => Math.min(prev + 1, totalPages))
-                                }
-                            />
+                            <PaginationNext onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))} />
                         </PaginationItem>
                     </PaginationContent>
                 </Pagination>
             </div>
 
-             {/* Modal de creación */}
-             <Dialog open={showCreateModal} onOpenChange={setShowCreateModal}>
+            {/* Modal de creación */}
+            <Dialog open={showCreateModal} onOpenChange={setShowCreateModal}>
                 <DialogContent>
-                    <SubCatForm />
+                    <SubCatForm categoryId={0} />
+                </DialogContent>
+            </Dialog>
+
+            {/* Modal de edición */}
+            <Dialog open={showEditModal} onOpenChange={setShowEditModal}>
+                <DialogContent>
+                    {selectedSubcat && (
+                        <SubCatForm
+                            subcategoryData={{
+                                id: selectedSubcat.id,
+                                name: selectedSubcat.name,
+                                variableId: 0, // Ajusta este valor según corresponda
+                            }}
+                            categoryId={selectedSubcat.categoriaId}
+                            onSuccess={() => setShowEditModal(false)}
+                        />
+                    )}
                 </DialogContent>
             </Dialog>
 

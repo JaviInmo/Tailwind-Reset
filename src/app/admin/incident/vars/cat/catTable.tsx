@@ -29,8 +29,9 @@ import {
     PaginationNext,
 } from "@/components/ui/pagination";
 import DeleteModal from "@/app/admin/incident/vars/cat/delete/page";
-import { CatForm } from "@/app/admin/incident/vars/cat/create/cat-form"; // Importa el formulario
+import { CategoryForm } from "@/app/admin/incident/vars/cat/create/cat-form"; // Importa el formulario
 import { handleDeleteCategoryAction } from "./delete/delete.action";
+import { FaRegEdit } from "react-icons/fa";
 
 interface Data {
     id: number;
@@ -54,6 +55,9 @@ export default function TablePage({ data }: TableProps) {
 
     const [sortColumn, setSortColumn] = useState<keyof Data | null>(null);
     const [sortDirection, setSortDirection] = useState<"asc" | "desc" | null>(null);
+
+    const [showEditModal, setShowEditModal] = useState(false);
+    const [selectedCategory, setSelectedCategory] = useState<Data | null>(null);
 
     // Filtrado
     const filteredData = useMemo(
@@ -93,6 +97,11 @@ export default function TablePage({ data }: TableProps) {
     const confirmDelete = async (id: number) => {
         await handleDeleteCategoryAction(id);
         setDeleteModal({ show: false, id: null });
+    };
+
+    const handleEdit = (category: Data) => {
+        setSelectedCategory(category);
+        setShowEditModal(true);
     };
 
     return (
@@ -147,15 +156,27 @@ export default function TablePage({ data }: TableProps) {
                                 <TableCell>{row.name}</TableCell>
                                 <TableCell>{row.variable}</TableCell>
                                 <TableCell>
-                                    <Button
-                                        variant="destructive"
-                                        size="sm"
-                                        onClick={() => handleDelete(row.id)}
-                                        className="flex items-center gap-1"
-                                    >
-                                        <RiDeleteBin7Line size={14} />
-                                        Eliminar
-                                    </Button>
+                                    <div className="flex items-center justify-start gap-2">
+                                        <Button
+                                            variant="destructive"
+                                            size="sm"
+                                            onClick={() => handleDelete(row.id)}
+                                            className="flex items-center gap-1"
+                                        >
+                                            <RiDeleteBin7Line size={14} />
+                                            Eliminar
+                                        </Button>
+
+                                        <Button
+                                            variant="default"
+                                            size="sm"
+                                            onClick={() => handleEdit(row)}
+                                            className="flex items-center gap-1 bg-green-700 text-white hover:bg-green-800"
+                                        >
+                                            <FaRegEdit size={14} />
+                                            Editar
+                                        </Button>
+                                    </div>
                                 </TableCell>
                             </TableRow>
                         ))}
@@ -198,7 +219,24 @@ export default function TablePage({ data }: TableProps) {
             {/* Modal de creación */}
             <Dialog open={showCreateModal} onOpenChange={setShowCreateModal}>
                 <DialogContent>
-                    <CatForm />
+                    <CategoryForm variableId={0} />
+                </DialogContent>
+            </Dialog>
+
+            {/* Modal de edición */}
+            <Dialog open={showEditModal} onOpenChange={setShowEditModal}>
+                <DialogContent>
+                    {selectedCategory && (
+                        <CategoryForm
+                            categoryData={{
+                                id: selectedCategory.id,
+                                name: selectedCategory.name,
+                                variableId: Number(selectedCategory.variable),
+                            }}
+                            variableId={0}
+                            onSuccess={() => setShowEditModal(false)} // Esta función cierra el modal de edición
+                        />
+                    )}
                 </DialogContent>
             </Dialog>
 

@@ -8,257 +8,259 @@ import { z } from "zod";
 
 import { countSecondSubCats } from "../readsecondsubcat.action";
 import {
-    fetchSecondSubCategoriesBySubCategory,
-    fetchSubCategories,
-    registerAction,
+  fetchSubCategories,
+  registerAction,
+  updateSecondSubCategoryAction,
 } from "./subcat.action";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from "@/components/ui/select";
-import {
-    Form,
-    FormField,
-    FormItem,
-    FormLabel,
-    FormControl,
-    FormMessage,
+  Form,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormControl,
+  FormMessage,
 } from "@/components/ui/form";
 import {
-    Dialog,
-    DialogContent,
-    DialogHeader,
-    DialogTitle,
-    DialogFooter,
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
 } from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 const formSchema = z.object({
-    subcategory: z.string({ required_error: "Subcategoría es requerida" }),
-    secondSubcategories: z
-        .string({ required_error: "Segundas subcategorías no pueden estar vacías" })
-        .min(1, { message: "Segundas subcategorías no pueden estar vacías" }),
+  // El campo "subcategory" solo se usará en modo creación
+  subcategory: z.string({ required_error: "Subcategoría es requerida" }),
+  secondSubcategories: z
+    .string({ required_error: "El nombre es requerido" })
+    .min(1, { message: "El campo no puede estar vacío" }),
 });
 
 type FormSchemaData = z.infer<typeof formSchema>;
 
-export function SecondSubCatForm() {
-    const [showSuccessModal, setShowSuccessModal] = useState(false);
-    const [initialCount, setInitialCount] = useState<number | null>(null);
-    const [subcategories, setSubcategories] = useState<{ id: number; name: string }[]>([]);
-    const [selectedSubcategoryId, setSelectedSubcategoryId] = useState<number | null>(null);
-    const [secondSubcategories, setSecondSubcategories] = useState<{ id: number; name: string }[]>(
-        [],
-    );
-    const router = useRouter();
+interface SecondSubCatFormProps {
+  secondSubcategoryData?: {
+    id: number;
+    name: string;
+    subcategoryId: number;
+  };
+  onSuccess?: () => void;
+}
 
-    const form = useForm<FormSchemaData>({
-        resolver: zodResolver(formSchema),
-        mode: "onTouched",
-    });
+export function SecondSubCatForm({
+  secondSubcategoryData,
+  onSuccess,
+}: SecondSubCatFormProps) {
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [subcategories, setSubcategories] = useState<{ id: number; name: string }[]>([]);
+  const [selectedSubcategoryId, setSelectedSubcategoryId] = useState<number | null>(null);
+  const router = useRouter();
 
-    useEffect(() => {
-        const fetchData = async () => {
-            const subs = await fetchSubCategories();
-            setSubcategories(subs);
+  const form = useForm<FormSchemaData>({
+    resolver: zodResolver(formSchema),
+    mode: "onTouched",
+    defaultValues: {
+      // En modo edición no se requiere el valor para "subcategory"
+      subcategory: "",
+      secondSubcategories: secondSubcategoryData ? secondSubcategoryData.name : "",
+    },
+  });
 
-            const count = await countSecondSubCats();
-            setInitialCount(count);
-        };
+  // Se cargan las subcategorías para obtener el nombre del padre en modo edición o para la creación
+  useEffect(() => {
+    const fetchData = async () => {
+      const subs = await fetchSubCategories();
+      setSubcategories(subs);
 
-        fetchData();
-    }, []);
-
-    useEffect(() => {
-        if (selectedSubcategoryId) {
-            const fetchSecondSubCategories = async () => {
-                const secondSubs =
-                    await fetchSecondSubCategoriesBySubCategory(selectedSubcategoryId);
-                setSecondSubcategories(secondSubs);
-            };
-
-            fetchSecondSubCategories();
-        } else {
-            setSecondSubcategories([]);
+      if (secondSubcategoryData) {
+        const parent = subs.find((s) => s.id === secondSubcategoryData.subcategoryId);
+        if (parent) {
+          form.setValue("subcategory", parent.name);
+          setSelectedSubcategoryId(parent.id);
         }
-    }, [selectedSubcategoryId]);
-
-    const handleSubcategoryChange = (value: string) => {
-        const selectedSubcategory = subcategories.find((s) => s.name === value);
-        if (selectedSubcategory) {
-            setSelectedSubcategoryId(selectedSubcategory.id);
-        }
+      }
     };
 
-    const onSubmit: SubmitHandler<FormSchemaData> = async (data) => {
-        if (!selectedSubcategoryId) {
-            form.setError("subcategory", { message: "Debe seleccionar una subcategoría válida" });
-            return;
+    fetchData();
+  }, [secondSubcategoryData, form]);
+
+  const handleSubcategoryChange = (value: string) => {
+    if (!secondSubcategoryData) {
+      const selected = subcategories.find((s) => s.name === value);
+      if (selected) {
+        setSelectedSubcategoryId(selected.id);
+      }
+    }
+  };
+
+  const onSubmit: SubmitHandler<FormSchemaData> = async (data) => {
+    if (secondSubcategoryData?.id) {
+      // Modo edición: solo se actualiza el nombre de la segunda subcategoría
+      try {
+        const response = await updateSecondSubCategoryAction(
+          secondSubcategoryData.id,
+          data.secondSubcategories
+        );
+        if (!response.success) {
+          form.setError("secondSubcategories", { message: response.error });
+          return;
         }
+        setShowSuccessModal(true);
+      } catch (error) {
+        form.setError("secondSubcategories", { message: `Error al actualizar: ${error}` });
+      }
+    } else {
+      // Modo creación: se requiere seleccionar la subcategoría padre
+      if (!selectedSubcategoryId) {
+        form.setError("subcategory", { message: "Debe seleccionar una subcategoría válida" });
+        return;
+      }
 
-        const secondSubcategoriesArray = data.secondSubcategories
-            .split(",")
-            .map((name) => name.trim());
-        let allSuccess = true;
+      const secondSubcategoriesArray = data.secondSubcategories
+        .split(",")
+        .map((name) => name.trim());
+      let allSuccess = true;
 
-        for (const secondSubcategory of secondSubcategoriesArray) {
-            const response = await registerAction({
-                subcategoryId: selectedSubcategoryId,
-                name: secondSubcategory,
-            });
-            if (!response.success) {
-                form.setError("root", {
-                    message: `Segunda subcategoría "${secondSubcategory}" ya registrada`,
-                });
-                allSuccess = false;
-            }
+      for (const secondSubcategory of secondSubcategoriesArray) {
+        const response = await registerAction({
+          subcategoryId: selectedSubcategoryId,
+          name: secondSubcategory,
+        });
+        if (!response.success) {
+          form.setError("secondSubcategories", {
+            message: `La segunda subcategoría "${secondSubcategory}" ya existe para esta subcategoría.`,
+          });
+          allSuccess = false;
         }
+      }
 
-        if (allSuccess) {
-            const newCount = await countSecondSubCats();
+      if (allSuccess) {
+        setShowSuccessModal(true);
+      }
+    }
+  };
 
-            if (initialCount !== null && newCount > initialCount) {
-                setShowSuccessModal(true);
-            } else {
-                console.error("Error al actualizar la tabla después de la inserción");
-            }
-        }
-    };
+  const handleModalAccept = () => {
+    setShowSuccessModal(false);
+    form.reset();
+    if (secondSubcategoryData) {
+      router.refresh();
+      if (onSuccess) onSuccess();
+    } else {
+      router.push("/admin/incident/vars/secondsubcat");
+    }
+  };
 
-    const handleCloseSuccessModal = () => {
-        setShowSuccessModal(false);
-        form.reset();
-    };
-
-    const handleConfirmSuccessModal = () => {
-        setShowSuccessModal(false);
-        form.reset();
-        router.push("/admin/incident/vars/secondsubcat");
-    };
-
-    return (
-        <div className="flex justify-center py-2">
-             <div className="w-7/12 space-y-7 rounded-sm bg-white py-8">
-            {/* Encabezado */}
-            <div className="text-center">
-                <h1 className="text-2xl font-semibold">Registro de Segundas Subcategorías</h1>
-                <p className="text-sm text-gray-500">
-                    Seleccione una subcategoría y rellene el campo del formulario para registrar las
-                    segundas subcategorías.
-                </p>
-            </div>
-
-            {/* Formulario */}
-            <div className="flex justify-center">
-            <Form {...form}>
-                <form
-                 onSubmit={form.handleSubmit(onSubmit)} 
-                 className="w-full max-w-lg space-y-6">
-                    {/* Select de Subcategorías */}
-                    <FormField
-                        control={form.control}
-                        name="subcategory"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Subcategoría:</FormLabel>
-                                <Select
-                                    onValueChange={(value) => {
-                                        handleSubcategoryChange(value); // Actualizar el estado del ID seleccionado
-                                        field.onChange(value); // Actualizar el valor del formulario
-                                    }}
-                                    value={field.value} // Asegurar que el valor del formulario se mantenga sincronizado
-                                >
-                                    <FormControl>
-                                        <SelectTrigger>
-                                            <SelectValue placeholder="Seleccione una subcategoría" />
-                                        </SelectTrigger>
-                                    </FormControl>
-                                    <SelectContent>
-                                        {subcategories.map((subcategory) => (
-                                            <SelectItem
-                                                key={subcategory.id}
-                                                value={subcategory.name}
-                                            >
-                                                {subcategory.name}
-                                            </SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-
-                    {/* Input de Segundas Subcategorías */}
-                    <FormField
-                        control={form.control}
-                        name="secondSubcategories"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>
-                                    Nombre de las Segundas Subcategorías (separadas por comas):
-                                </FormLabel>
-                                <FormControl>
-                                    <Input
-                                        placeholder="Introduzca los nombres de las segundas subcategorías separados por comas"
-                                        {...field}
-                                    />
-                                </FormControl>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-
-                    {/* Botón de envío */}
-                    <Button type="submit" className="w-full">
-                        Registrar
-                    </Button>
-                </form>
-            </Form>
-
-           {/*   Card de segundas subcategorías
-            {secondSubcategories.length > 0 && (
-                <Card className="w-full max-w-lg">
-                    <CardHeader>
-                        <CardTitle>
-                            Segundas Subcategorías de la Subcategoría Seleccionada
-                        </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="flex flex-wrap gap-2">
-                            {secondSubcategories.map((secondSubCat) => (
-                                <div
-                                    key={secondSubCat.id}
-                                    className="rounded-md bg-gray-200 px-3 py-1 text-sm text-gray-700"
-                                >
-                                    {secondSubCat.name}
-                                </div>
-                            ))}
-                        </div>
-                    </CardContent>
-                </Card>
-            )} */}
-            </div>
-            </div>
-
-            {/* Modal de éxito */}
-            <Dialog open={showSuccessModal} onOpenChange={handleCloseSuccessModal}>
-                <DialogContent>
-                    <DialogHeader>
-                        <DialogTitle>Segundas Subcategorías Creadas</DialogTitle>
-                    </DialogHeader>
-                    <div>Segundas subcategorías creadas con éxito.</div>
-                    <DialogFooter>
-                        <Button onClick={handleConfirmSuccessModal}>Aceptar</Button>
-                    </DialogFooter>
-                </DialogContent>
-            </Dialog>
+  return (
+    <div className="flex justify-center py-2">
+      <div className="w-7/12 space-y-7 rounded-sm bg-white py-8">
+        {/* Encabezado */}
+        <div className="text-center">
+          <h1 className="text-2xl font-semibold">
+            {secondSubcategoryData
+              ? "Editar Segunda Subcategoría"
+              : "Registro de Segundas Subcategorías"}
+          </h1>
+          <p className="text-sm text-gray-500">
+            {secondSubcategoryData
+              ? "Modifique el nombre de la segunda subcategoría."
+              : "Seleccione una subcategoría y complete el campo para registrar segundas subcategorías."}
+          </p>
         </div>
-    );
+
+        {/* Formulario */}
+        <div className="flex justify-center">
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="w-full max-w-lg space-y-6">
+              {/* El selector de subcategorías solo se muestra en modo creación */}
+              {!secondSubcategoryData && (
+                <FormField
+                  control={form.control}
+                  name="subcategory"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Subcategoría:</FormLabel>
+                      <Select
+                        onValueChange={(value) => {
+                          handleSubcategoryChange(value);
+                          field.onChange(value);
+                        }}
+                        value={field.value}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Seleccione una subcategoría" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {subcategories.map((subcategory) => (
+                            <SelectItem key={subcategory.id} value={subcategory.name}>
+                              {subcategory.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              )}
+
+              {/* Campo para el nombre de la segunda subcategoría */}
+              <FormField
+                control={form.control}
+                name="secondSubcategories"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Nombre de la Segunda Subcategoría:</FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder="Ingrese el nombre de la segunda subcategoría"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <Button type="submit" className="w-full">
+                {secondSubcategoryData ? "Actualizar" : "Registrar"}
+              </Button>
+            </form>
+          </Form>
+        </div>
+      </div>
+
+      {/* Modal de éxito */}
+      <Dialog open={showSuccessModal} onOpenChange={handleModalAccept}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>
+              {secondSubcategoryData
+                ? "Segunda Subcategoría Actualizada"
+                : "Segundas Subcategorías Creadas"}
+            </DialogTitle>
+          </DialogHeader>
+          <div>
+            {secondSubcategoryData
+              ? "La segunda subcategoría ha sido actualizada con éxito."
+              : "Segundas subcategorías creadas con éxito."}
+          </div>
+          <DialogFooter>
+            <Button onClick={handleModalAccept}>Aceptar</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
 }
