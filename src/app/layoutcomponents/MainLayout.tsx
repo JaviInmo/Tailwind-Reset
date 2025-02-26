@@ -12,19 +12,21 @@ export function MainLayout({ children }: PropsWithChildren) {
     const { open, onToggle } = useMenuState();
 
     return (
-        <SidebarProvider>
+        <SidebarProvider defaultOpen={false}>
             <div className="relative flex min-h-screen w-full bg-slate-100">
                 <div
                     className={`flex h-screen flex-none flex-col border-slate-700 bg-red-400 text-slate-100 shadow-lg`}
-                >
+                > 
                     <AppSidebar />
                 </div>
                 <div className="flex flex-1 flex-col  py-0">
-                    <header className="top-0 z-10 flex h-10 w-full items-center border-b border-slate-700 bg-slate-800 px-4 text-slate-100">
+                    <header className="top-0 fixed z-10 flex h-10 w-full items-center border-b border-slate-700 bg-slate-800 px-4 text-slate-100">
+                  
                         <MainHeader />
-                        <SidebarTrigger className="lg:hidden" />
+                        
                     </header>
-                    <main className="flex-1  p-6 pt-5">
+                    <main className="flex-1  p-6 pt-20">
+                  
                         
                             <div >{children}</div>
                         

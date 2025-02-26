@@ -14,10 +14,11 @@ import {
     Table2,
     Tag,
     Variable,
-} from "lucide-react";
-import Link from "next/link";
-
-import {
+  } from "lucide-react";
+  import Link from "next/link";
+  import { usePathname } from "next/navigation"; // Para Next.js 13
+  
+  import {
     Sidebar,
     SidebarContent,
     SidebarGroup,
@@ -29,104 +30,129 @@ import {
     SidebarMenuSub,
     SidebarMenuSubButton,
     SidebarMenuSubItem,
-} from "@/components/ui/sidebar";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@radix-ui/react-collapsible";
+    SidebarTrigger, // Asegúrate de importar el trigger
+  } from "@/components/ui/sidebar";
 
-// Menu items.
-const items = [
+  import { useSidebar } from "@/components/ui/sidebar";
+  
+  const items = [
     {
-        title: "Home",
-        url: "/",
-        icon: Home,
+      title: "Home",
+      url: "/",
+      icon: Home,
     },
     {
-        title: "Dashboard",
-        url: "#",
-        icon: LayoutDashboard,
+      title: "Dashboard",
+      url: "#",
+      icon: LayoutDashboard,
     },
     {
-        title: "Gráficas",
-        url: "#",
-        icon: ChartLine,
+      title: "Gráficas",
+      url: "#",
+      icon: ChartLine,
     },
     {
-        title: "Formulario",
-        url: "/admin/incident/create",
-        icon: LetterText,
+      title: "Formulario",
+      url: "/admin/incident/create",
+      icon: LetterText,
     },
     {
-        title: "Tablas",
-        url: "/admin/incident/read",
-        icon: Table2,
+      title: "Tablas",
+      url: "/admin/incident/read",
+      icon: Table2,
     },
-];
-const extra = [
+  ];
+  
+  const extra = [
     {
-        title: "Variables",
-        url: "/admin/incident/vars/var",
-        icon: Variable,
-    },
-    {
-        title: "Categorías",
-        url: "/admin/incident/vars/cat",
-        icon: Tag,
+      title: "Variables",
+      url: "/admin/incident/vars/var",
+      icon: Variable,
     },
     {
-        title: "Subcategorías",
-        url: "/admin/incident/vars/subcat",
-        icon: Layers,
+      title: "Categorías",
+      url: "/admin/incident/vars/cat",
+      icon: Tag,
     },
     {
-        title: "2da Subcategoría",
-        url: "/admin/incident/vars/secondsubcat",
-        icon: FolderTree,
+      title: "Subcategorías",
+      url: "/admin/incident/vars/subcat",
+      icon: Layers,
     },
     {
-        title: "Medidas",
-        url: "/admin/incident/read",
-        icon: Ruler,
+      title: "2da Subcategoría",
+      url: "/admin/incident/vars/secondsubcat",
+      icon: FolderTree,
     },
-];
+    {
+      title: "Medidas",
+      url: "/admin/incident/medidas",
+      icon: Ruler,
+    },
+  ];
 
-export function AppSidebar() {
+  
+  export function AppSidebar() {
+    const { state } = useSidebar();
+    const pathname = usePathname();
+
     return (
-        <Sidebar className="shadow-left-3 shadow-2xl">
-            <SidebarContent>
-                <SidebarGroup>
-                    <SidebarGroupLabel>Application</SidebarGroupLabel>
-                    <SidebarGroupContent>
-                        <SidebarMenu>
-                            {items.map((item) => (
-                                <SidebarMenuItem key={item.title}>
-                                    <SidebarMenuButton asChild>
-                                        <Link href={item.url}>
-                                            <item.icon />
-                                            <span>{item.title}</span>
-                                        </Link>
-                                    </SidebarMenuButton>
-                                </SidebarMenuItem>
-                            ))}
-                        </SidebarMenu>
-                    </SidebarGroupContent>
-                </SidebarGroup>
-                <SidebarGroup>
-                    <SidebarGroupLabel>Extra</SidebarGroupLabel>
-                    <SidebarGroupContent>
-                        <SidebarMenu>
-                            {extra.map((item) => (
-                                <SidebarMenuItem key={item.title}>
-                                    <SidebarMenuButton asChild>
-                                        <Link href={item.url}>
-                                            <item.icon />
-                                            <span>{item.title}</span>
-                                        </Link>
-                                    </SidebarMenuButton>
-                                </SidebarMenuItem>
-                            ))}
-                        </SidebarMenu>
-                    </SidebarGroupContent>
-                </SidebarGroup>
-            </SidebarContent>
-        </Sidebar>
-    );
+        //modo icon para q no se oculten los iconos
+        <Sidebar collapsible="icon" className="shadow-left-3 shadow-2xl">
+      <div className="relative p-2 h-10 border-b border-slate-700 bg-slate-800 text-slate-100">
+        <SidebarTrigger />
+        <div className="absolute left-10 top-1/2 -translate-y-1/2 pointer-events-none">
+          <span
+            className={`transition-opacity duration-300 ${
+              state === "expanded" ? "opacity-100" : "opacity-0"
+            }`}
+          >
+            App
+          </span>
+        </div>
+      </div>
+      <SidebarContent>
+        <SidebarGroup>
+          <SidebarGroupLabel>Application</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {items.map((item) => {
+                const isActive = pathname === item.url;
+                return (
+                  <SidebarMenuItem key={item.title}>
+                    <SidebarMenuButton asChild isActive={isActive}>
+                      <Link href={item.url}>
+                        <item.icon />
+                        <span>{item.title}</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                );
+              })}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+        <SidebarGroup>
+          <SidebarGroupLabel>Extra</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {extra.map((item) => {
+                const isActive = pathname === item.url;
+                return (
+                  <SidebarMenuItem key={item.title}>
+                    <SidebarMenuButton asChild isActive={isActive}>
+                      <Link href={item.url}>
+                        <item.icon />
+                        <span>{item.title}</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                );
+              })}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+      </SidebarContent>
+    </Sidebar>
+  );
 }

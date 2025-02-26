@@ -128,7 +128,7 @@ export default function TablePage({ data }: TableProps) {
     };
 
     return (
-        <div className="relative flex w-full flex-col gap-4 rounded-lg bg-white p-4 shadow-xl">
+        <div className="flex flex-col gap-4 rounded-lg bg-white p-4 shadow-md">
             <div className="flex items-center justify-between">
                 <h3 className="text-lg font-semibold text-slate-800">Tabla de Incidencias</h3>
                 <div className="relative flex items-center gap-4">
@@ -147,7 +147,7 @@ export default function TablePage({ data }: TableProps) {
                             Filtro
                         </Button>
                         {filterOpen && (
-                            <div className="absolute left-0 mt-2">
+                            <div className="absolute left-0 z-50 mt-2">
                                 <ColumnVisibilityFilter
                                     columns={columns}
                                     visibleColumns={visibleColumns}
@@ -164,9 +164,9 @@ export default function TablePage({ data }: TableProps) {
                 </div>
             </div>
 
-            <div className="block w-full overflow-x-auto">
-                <Table className="w-full border border-gray-300">
-                    <TableHeader className="relative text-white">
+            <div className="max-h-[calc(100vh-200px)] overflow-y-auto rounded-lg border border-slate-300 sm:max-h-[calc(80vh)] md:max-h-[500px]">
+                <Table>
+                    <TableHeader className="sticky top-0 z-10 bg-white shadow-md">
                         <TableRow>
                             {columns.map(
                                 ({ label, key }, index) =>
@@ -174,26 +174,24 @@ export default function TablePage({ data }: TableProps) {
                                         <TableHead
                                             key={label}
                                             className={cx(
-                                                `border-r-2 border-slate-400 bg-slate-800 p-2.5 text-sm font-semibold text-white`,
+                                                "border-r-2 p-2.5 text-sm font-semibold text-slate-800",
                                                 label === "2° subcat" && "whitespace-nowrap",
                                                 index === columns.length - 1 && "border-r-0",
                                             )}
                                         >
-                                            <div className="flex items-center justify-between text-white">
+                                            <div className="flex items-center justify-between">
                                                 {label}
-                                                {label !== "Acciones" && (
-                                                    <ArrowDownUp
-                                                        size={12}
-                                                        className="ml-2 cursor-pointer transition-transform hover:scale-125"
-                                                        onClick={() => requestSort(key)}
-                                                    />
-                                                )}
+                                                <ArrowDownUp
+                                                    size={12}
+                                                    className="ml-2 cursor-pointer text-slate-800 transition-transform hover:scale-125"
+                                                    onClick={() => requestSort(key)}
+                                                />
                                             </div>
                                         </TableHead>
                                     ),
                             )}
                             <TableHead
-                                className="sticky right-0 bg-slate-800 p-2.5 text-sm font-semibold text-white"
+                                className="sticky right-0 p-2.5 text-sm font-semibold text-slate-800"
                                 style={{ boxShadow: "2px 0 0 #f1f5f9 inset" }}
                             >
                                 Acciones
@@ -201,37 +199,39 @@ export default function TablePage({ data }: TableProps) {
                         </TableRow>
                     </TableHeader>
                     <TableBody className="text-slate-700">
-                        {currentItems.map((row, index) => (
+                        {currentItems.map((row, rowIndex) => (
                             <TableRow
                                 key={row.id}
                                 className={cx(
                                     "h-14",
-                                    index % 2 === 0 ? "bg-slate-100" : "bg-white",
+                                    rowIndex % 2 === 0 ? "bg-slate-100" : "bg-white",
                                 )}
                             >
                                 {columns.map(
-                                    ({ key }) =>
+                                    ({ key, label }) =>
                                         visibleColumns[key] && (
                                             <TableCell
                                                 key={key}
                                                 className={cx(
                                                     "max-w-40 truncate border-r-2 px-2 py-2 text-sm",
-                                                    index % 2 === 0 ?
+                                                    rowIndex % 2 === 0 ?
                                                         "border-white"
                                                     :   "border-slate-100",
                                                 )}
                                             >
-                                                {row[key]}
+                                                {key === "id" ? firstItem + rowIndex + 1 : row[key]}
                                             </TableCell>
                                         ),
                                 )}
                                 <TableCell
                                     className={cx(
                                         "sticky right-0 max-w-40 truncate p-3 text-sm",
-                                        index % 2 === 0 ? "bg-slate-100" : "bg-white",
+                                        rowIndex % 2 === 0 ? "bg-slate-100" : "bg-white",
                                     )}
                                     style={{
-                                        boxShadow: `2px 0 0 ${index % 2 === 0 ? "white" : "#f1f5f9"} inset`,
+                                        boxShadow: `2px 0 0 ${
+                                            rowIndex % 2 === 0 ? "white" : "#f1f5f9"
+                                        } inset`,
                                     }}
                                 >
                                     <div className="flex items-center justify-start gap-2">
@@ -275,7 +275,9 @@ export default function TablePage({ data }: TableProps) {
                     id={deleteModal.id}
                     show={deleteModal.show}
                     onCancel={() => setDeleteModal({ show: false, id: null })}
-                    onConfirm={async () => { if (deleteModal.id) await confirmDelete(deleteModal.id); }}
+                    onConfirm={async () => {
+                        if (deleteModal.id) await confirmDelete(deleteModal.id);
+                    }}
                 />
             )}
         </div>
