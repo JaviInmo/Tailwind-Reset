@@ -20,12 +20,12 @@ export function MainLayout({ children }: PropsWithChildren) {
                     <AppSidebar />
                 </div>
                 <div className="flex flex-1 flex-col  py-0">
-                    <header className="top-0 fixed z-10 flex h-10 w-full items-center border-b border-slate-700 bg-slate-800 px-4 text-slate-100">
+                    <header className="top-0 sticky z-10 flex h-10 w-full items-center border-b border-slate-700 bg-slate-800 px-4 text-slate-100">
                   
                         <MainHeader />
                         
                     </header>
-                    <main className="flex-1  p-6 pt-20">
+                    <main className="flex-1  p-6 pt-6 ">
                   
                         
                             <div >{children}</div>

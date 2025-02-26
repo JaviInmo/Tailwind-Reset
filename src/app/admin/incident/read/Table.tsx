@@ -30,6 +30,7 @@ interface Data {
     subcategoria: string;
     segundasubcategoria: string;
     amount: number;
+    numberOfPeople: number; // Nuevo campo para la cantidad de personas
     descripcion: string;
     provincia: string;
     municipio: string;
@@ -47,19 +48,17 @@ const columns: { label: string; key: keyof Data }[] = [
     { label: "Subcat", key: "subcategoria" },
     { label: "2° subcat", key: "segundasubcategoria" },
     { label: "Cant.", key: "amount" },
+    { label: "No. Personas", key: "numberOfPeople" }, // Nueva columna
     { label: "Desc.", key: "descripcion" },
     { label: "Prov.", key: "provincia" },
     { label: "Munic.", key: "municipio" },
     { label: "Fecha", key: "fecha" },
 ];
 
-const initialVisibleColumns = columns.reduce(
-    (acc, { key }) => {
-        acc[key] = true;
-        return acc;
-    },
-    {} as Record<string, boolean>,
-);
+const initialVisibleColumns = columns.reduce((acc, { key }) => {
+    acc[key] = true;
+    return acc;
+}, {} as Record<string, boolean>);
 
 export default function TablePage({ data }: TableProps) {
     const [visibleColumns, setVisibleColumns] = useState(initialVisibleColumns);
@@ -164,7 +163,7 @@ export default function TablePage({ data }: TableProps) {
                 </div>
             </div>
 
-            <div className="max-h-[calc(100vh-200px)] overflow-y-auto rounded-lg border border-slate-300 sm:max-h-[calc(80vh)] md:max-h-[500px]">
+            <div className="max-h-[calc(100vh-200px)] max-w-[calc(100vw-120px)] overflow-x-auto overflow-y-auto rounded-lg border border-slate-300 sm:max-h-[calc(80vh)] md:max-h-[500px]">
                 <Table>
                     <TableHeader className="sticky top-0 z-10 bg-white shadow-md">
                         <TableRow>
@@ -191,7 +190,7 @@ export default function TablePage({ data }: TableProps) {
                                     ),
                             )}
                             <TableHead
-                                className="sticky right-0 p-2.5 text-sm font-semibold text-slate-800"
+                                className="sticky right-0 p-2.5 text-sm font-semibold text-slate-800 bg-white"
                                 style={{ boxShadow: "2px 0 0 #f1f5f9 inset" }}
                             >
                                 Acciones
@@ -214,9 +213,7 @@ export default function TablePage({ data }: TableProps) {
                                                 key={key}
                                                 className={cx(
                                                     "max-w-40 truncate border-r-2 px-2 py-2 text-sm",
-                                                    rowIndex % 2 === 0 ?
-                                                        "border-white"
-                                                    :   "border-slate-100",
+                                                    rowIndex % 2 === 0 ? "border-white" : "border-slate-100",
                                                 )}
                                             >
                                                 {key === "id" ? firstItem + rowIndex + 1 : row[key]}
@@ -259,9 +256,9 @@ export default function TablePage({ data }: TableProps) {
                         <button
                             key={i + 1}
                             className={`border border-gray-400 px-2 py-0 shadow-md ${
-                                currentPage === i + 1 ?
-                                    "border-slate-950 bg-slate-600 text-white"
-                                :   "bg-white text-gray-700"
+                                currentPage === i + 1
+                                    ? "border-slate-950 bg-slate-600 text-white"
+                                    : "bg-white text-gray-700"
                             }`}
                             onClick={() => setCurrentPage(i + 1)}
                         >

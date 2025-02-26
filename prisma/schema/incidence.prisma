@@ -16,6 +16,7 @@ model Incident {
     unitMeasureId       Int?
     unitMeasure         UnitMeasure?       @relation(fields: [unitMeasureId], references: [id])
     amount              Float?
+    numberOfPeople      Int?               // Nuevo campo para el número de personas
     description         String
 
     @@map("incidencias")

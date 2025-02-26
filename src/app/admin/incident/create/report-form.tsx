@@ -33,6 +33,9 @@ const formSchema = z.object({
     subcategoria: z.coerce.number({ required_error: "Subcategoría es requerido" }),
     segundasubcategoria: z.coerce.number().optional(),
     amount: z.coerce.number().min(0.01, { message: "Toneladas debe ser mayor a 0.01" }),
+    numberOfPeople: z.coerce
+        .number()
+        .min(0, { message: "El número de personas no puede ser negativo" }), // Nuevo campo
     description: z
         .string({ required_error: "Descripción es requerido" })
         .min(1, { message: "Descripción es requerido" }),
@@ -41,7 +44,7 @@ const formSchema = z.object({
 type FormSchemaData = z.infer<typeof formSchema>;
 
 type ReportFormProps = {
-    incidentData?: Prisma.IncidentGetPayload<{}>;
+    incidentData?: Prisma.IncidentGetPayload<true> & { numberOfPeople?: number };
     provinceData: Array<Prisma.ProvinceGetPayload<{ include: { municipalities: true } }>>;
     variableData: Array<
         Prisma.VariableGetPayload<{
@@ -49,7 +52,7 @@ type ReportFormProps = {
                 categories: {
                     include: {
                         subcategories: {
-                            include: { secondSubcategories: true }; // Agregar segunda subcategoría aquí
+                            include: { secondSubcategories: true };
                         };
                     };
                 };
@@ -76,6 +79,7 @@ export function ReportForm({ incidentData, variableData, provinceData }: ReportF
             fecha:
                 incidentData ? new Date(incidentData.date).toISOString().split("T")[0] : undefined,
             amount: incidentData?.amount ?? undefined,
+            numberOfPeople: incidentData?.numberOfPeople ?? 0, // Valor por defecto para número de personas
             categoria: incidentData?.categoryId ?? undefined,
             subcategoria: incidentData?.subcategoryId ?? undefined,
             segundasubcategoria: incidentData?.secondSubcategoryId ?? undefined,
@@ -97,6 +101,7 @@ export function ReportForm({ incidentData, variableData, provinceData }: ReportF
             variableId: data.variable,
             amount: data.amount,
             date: new Date(data.fecha),
+            numberOfPeople: data.numberOfPeople, // Se envía el número de personas
             description: data.description,
             municipalityId: data.municipio,
             provinceId: data.provincia,
@@ -112,8 +117,6 @@ export function ReportForm({ incidentData, variableData, provinceData }: ReportF
         setShowSuccessModal(false);
     };
     const watchedProvince = watch("provincia");
-
-    /*  const provinceId = watch("provincia"); */
     const variableId = watch("variable");
     const categoryId = watch("categoria");
     const subcategoryId = watch("subcategoria");
@@ -136,9 +139,9 @@ export function ReportForm({ incidentData, variableData, provinceData }: ReportF
     }, [watchedProvince]);
 
     return (
-        <div className="flex justify-center">
+        <div className="flex justify-center ">
             <div className="w-9/12">
-                <div className="flex h-full w-full flex-col items-center justify-center py-4 shadow-sm bg-white rounded ">
+                <div className="flex h-full w-full flex-col items-center justify-center rounded bg-white py-4 shadow-sm">
                     <div className="text-center">
                         <p className="font-semibold">Formulario de Incidencias</p>
                         <p className="font-semibold">
@@ -148,7 +151,7 @@ export function ReportForm({ incidentData, variableData, provinceData }: ReportF
 
                     <form
                         onSubmit={handleSubmit(onSubmit)}
-                        className="flex h-full w-full flex-col gap-2 overflow-y-auto px-4 lg:h-auto lg:w-11/12"
+                        className="flex h-full w-full flex-col gap-2  px-4  lg:w-11/12  overflow-y-auto "
                     >
                         <div className="pb-4">
                             <Label className="block pb-2">Fecha:</Label>
@@ -160,18 +163,14 @@ export function ReportForm({ incidentData, variableData, provinceData }: ReportF
                             {errors.fecha && <p className="text-red-600">{errors.fecha.message}</p>}
                         </div>
 
-                        <div className="flex gap-4 pb-4">
+                        <div className="flex gap-4 pb-2">
                             <div className="w-full">
                                 <Label className="block pb-2">Provincia:</Label>
                                 <Controller
                                     control={control}
                                     name="provincia"
                                     render={({ field: { onChange, value } }) => (
-                                        <Select
-                                            {...register("provincia")}
-                                            onValueChange={onChange}
-                                            value={value}
-                                        >
+                                        <Select onValueChange={onChange} value={value}>
                                             <SelectTrigger className="w-full rounded border border-gray-300 bg-white p-2">
                                                 <SelectValue placeholder="Seleccionar provincia" />
                                             </SelectTrigger>
@@ -198,7 +197,6 @@ export function ReportForm({ incidentData, variableData, provinceData }: ReportF
                                     name="municipio"
                                     render={({ field: { onChange, value } }) => (
                                         <Select
-                                            {...register("municipio")}
                                             onValueChange={onChange}
                                             value={value}
                                             disabled={!provinceId}
@@ -224,7 +222,7 @@ export function ReportForm({ incidentData, variableData, provinceData }: ReportF
                             </div>
                         </div>
 
-                        <div className="flex gap-4 pb-4">
+                        <div className="flex gap-4 pb-2">
                             <div className="w-full">
                                 <Label className="block pb-2">Variable:</Label>
                                 <Controller
@@ -232,7 +230,6 @@ export function ReportForm({ incidentData, variableData, provinceData }: ReportF
                                     name="variable"
                                     render={({ field: { onChange, value } }) => (
                                         <Select
-                                            {...register("variable")}
                                             onValueChange={onChange}
                                             value={value ? value.toString() : ""}
                                         >
@@ -242,7 +239,10 @@ export function ReportForm({ incidentData, variableData, provinceData }: ReportF
                                             <SelectContent>
                                                 <SelectGroup>
                                                     {variableData.map((opt) => (
-                                                        <SelectItem key={opt.id} value={opt.id.toString()}>
+                                                        <SelectItem
+                                                            key={opt.id}
+                                                            value={opt.id.toString()}
+                                                        >
                                                             {opt.name}
                                                         </SelectItem>
                                                     ))}
@@ -264,7 +264,6 @@ export function ReportForm({ incidentData, variableData, provinceData }: ReportF
                                     name="categoria"
                                     render={({ field: { onChange, value } }) => (
                                         <Select
-                                            {...register("categoria")}
                                             onValueChange={onChange}
                                             value={value ? value.toString() : ""}
                                             disabled={!variableId}
@@ -275,7 +274,10 @@ export function ReportForm({ incidentData, variableData, provinceData }: ReportF
                                             <SelectContent>
                                                 <SelectGroup>
                                                     {variableOptions?.categories?.map((opt) => (
-                                                        <SelectItem key={opt.id} value={opt.id.toString()}>
+                                                        <SelectItem
+                                                            key={opt.id}
+                                                            value={opt.id.toString()}
+                                                        >
                                                             {opt.name}
                                                         </SelectItem>
                                                     ))}
@@ -290,7 +292,7 @@ export function ReportForm({ incidentData, variableData, provinceData }: ReportF
                             </div>
                         </div>
 
-                        <div className="flex gap-4 pb-4">
+                        <div className="flex gap-4 pb-2">
                             <div className="w-full">
                                 <Label className="block pb-2">Subcategoría:</Label>
                                 <Controller
@@ -298,7 +300,6 @@ export function ReportForm({ incidentData, variableData, provinceData }: ReportF
                                     name="subcategoria"
                                     render={({ field: { onChange, value } }) => (
                                         <Select
-                                            {...register("subcategoria")}
                                             onValueChange={onChange}
                                             value={value ? value.toString() : ""}
                                             disabled={!categoryId}
@@ -309,7 +310,10 @@ export function ReportForm({ incidentData, variableData, provinceData }: ReportF
                                             <SelectContent>
                                                 <SelectGroup>
                                                     {subcategoriesOptions?.map((opt) => (
-                                                        <SelectItem key={opt.id} value={opt.id.toString()}>
+                                                        <SelectItem
+                                                            key={opt.id}
+                                                            value={opt.id.toString()}
+                                                        >
                                                             {opt.name}
                                                         </SelectItem>
                                                     ))}
@@ -330,7 +334,6 @@ export function ReportForm({ incidentData, variableData, provinceData }: ReportF
                                     name="segundasubcategoria"
                                     render={({ field: { onChange, value } }) => (
                                         <Select
-                                            {...register("segundasubcategoria")}
                                             onValueChange={onChange}
                                             value={value ? value.toString() : ""}
                                             disabled={!categoryId}
@@ -341,7 +344,10 @@ export function ReportForm({ incidentData, variableData, provinceData }: ReportF
                                             <SelectContent>
                                                 <SelectGroup>
                                                     {secondSubcategoriesOptions?.map((opt) => (
-                                                        <SelectItem key={opt.id} value={opt.id.toString()}>
+                                                        <SelectItem
+                                                            key={opt.id}
+                                                            value={opt.id.toString()}
+                                                        >
                                                             {opt.name}
                                                         </SelectItem>
                                                     ))}
@@ -352,20 +358,39 @@ export function ReportForm({ incidentData, variableData, provinceData }: ReportF
                                 />
 
                                 {errors.segundasubcategoria && (
-                                    <p className="text-red-600">{errors.segundasubcategoria.message}</p>
+                                    <p className="text-red-600">
+                                        {errors.segundasubcategoria.message}
+                                    </p>
                                 )}
                             </div>
                         </div>
 
-                        <div className="pb-4">
-                            <Label className="block pb-2">Toneladas:</Label>
-                            <Input
-                                type="number"
-                                step="0.01"
-                                {...register("amount")}
-                                className="w-full rounded border border-gray-300 bg-white p-2"
-                            />
-                            {errors.amount && <p className="text-red-600">{errors.amount.message}</p>}
+                        <div className="flex gap-4 pb-2">
+                            <div className="w-full">
+                                <Label className="block pb-2">Toneladas:</Label>
+                                <Input
+                                    type="number"
+                                    step="0.01"
+                                    {...register("amount")}
+                                    className="w-full rounded border border-gray-300 bg-white p-2"
+                                />
+                                {errors.amount && (
+                                    <p className="text-red-600">{errors.amount.message}</p>
+                                )}
+                            </div>
+
+                            <div className="w-full">
+                                <Label className="block pb-2">No de Personas:</Label>
+                                <Input
+                                    type="number"
+                                    {...register("numberOfPeople")}
+                                    className="w-full rounded border border-gray-300 bg-white p-2"
+                                    min={0}
+                                />
+                                {errors.numberOfPeople && (
+                                    <p className="text-red-600">{errors.numberOfPeople.message}</p>
+                                )}
+                            </div>
                         </div>
 
                         <div className="pb-4">
@@ -382,11 +407,11 @@ export function ReportForm({ incidentData, variableData, provinceData }: ReportF
                         <div className="flex justify-center">
                             <Button
                                 type="submit"
-                                className="rounded w-1/4 border-slate-700 bg-slate-800 py-2 text-slate-100 hover:bg-slate-950"
+                                className="w-1/4 rounded border-slate-700 bg-slate-800 py-2 text-slate-100 hover:bg-slate-950"
                             >
                                 Crear Incidencia
                             </Button>
-                        </div>                
+                        </div>
                     </form>
 
                     {showSuccessModal && (
