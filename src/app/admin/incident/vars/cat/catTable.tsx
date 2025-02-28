@@ -29,9 +29,10 @@ import {
     PaginationNext,
 } from "@/components/ui/pagination";
 import DeleteModal from "@/app/admin/incident/vars/cat/delete/page";
-import { CategoryForm } from "@/app/admin/incident/vars/cat/create/cat-form"; // Importa el formulario
+import { CategoryForm } from "@/app/admin/incident/vars/cat/create/cat-form";
 import { handleDeleteCategoryAction } from "./delete/delete.action";
 import { FaRegEdit } from "react-icons/fa";
+import { cx } from "@/util/cx";
 
 interface Data {
     id: number;
@@ -46,7 +47,7 @@ interface TableProps {
 export default function TablePage({ data }: TableProps) {
     const [search, setSearch] = useState("");
     const [currentPage, setCurrentPage] = useState(1);
-    const [showCreateModal, setShowCreateModal] = useState(false); // Estado para mostrar el modal del formulario
+    const [showCreateModal, setShowCreateModal] = useState(false);
     const [deleteModal, setDeleteModal] = useState<{ show: boolean; id: number | null }>({
         show: false,
         id: null,
@@ -64,10 +65,10 @@ export default function TablePage({ data }: TableProps) {
         () =>
             data.filter((row) =>
                 Object.values(row).some((value) =>
-                    String(value).toLowerCase().includes(search.toLowerCase()),
-                ),
+                    String(value).toLowerCase().includes(search.toLowerCase())
+                )
             ),
-        [data, search],
+        [data, search]
     );
 
     // Ordenamiento
@@ -118,7 +119,7 @@ export default function TablePage({ data }: TableProps) {
                     />
                     <Button
                         className="bg-slate-800 text-white"
-                        onClick={() => setShowCreateModal(true)} // Muestra el modal al hacer clic
+                        onClick={() => setShowCreateModal(true)}
                     >
                         Agregar Nueva
                     </Button>
@@ -126,7 +127,6 @@ export default function TablePage({ data }: TableProps) {
             </div>
 
             {/* Tabla */}
-
             <div className="max-h-[calc(100vh-200px)] overflow-y-auto rounded-lg border border-slate-300 sm:max-h-[calc(80vh)] md:max-h-[500px]">
                 <Table>
                     <TableHeader className="sticky top-0 z-10 bg-white shadow-md">
@@ -150,8 +150,12 @@ export default function TablePage({ data }: TableProps) {
 
                     <TableBody>
                         {currentItems.map((row, index) => (
-                            <TableRow key={row.id}>
-                                {/* Número de fila basado en el índice y la página actual */}
+                            <TableRow
+                                key={row.id}
+                                className={cx(
+                                    index % 2 === 0 ? "bg-slate-100" : "bg-white"
+                                )}
+                            >
                                 <TableCell>{firstItem + index + 1}</TableCell>
                                 <TableCell>{row.name}</TableCell>
                                 <TableCell>{row.variable}</TableCell>
@@ -234,7 +238,7 @@ export default function TablePage({ data }: TableProps) {
                                 variableId: Number(selectedCategory.variable),
                             }}
                             variableId={0}
-                            onSuccess={() => setShowEditModal(false)} // Esta función cierra el modal de edición
+                            onSuccess={() => setShowEditModal(false)}
                         />
                     )}
                 </DialogContent>

@@ -1,91 +1,93 @@
 model Incident {
-    id                  Int                @id @default(autoincrement())
-    date                DateTime
-    provinceId          String
-    province            Province           @relation(fields: [provinceId], references: [id])
-    municipalityId      String
-    municipality        Municipality       @relation(fields: [municipalityId], references: [id])
-    variableId          Int
-    variable            Variable           @relation(fields: [variableId], references: [id])
-    categoryId          Int
-    category            Category           @relation(fields: [categoryId], references: [id])
-    subcategoryId       Int?
-    subcategory         Subcategory?       @relation(fields: [subcategoryId], references: [id])
-    secondSubcategoryId Int?
-    secondSubcategory   SecondSubcategory? @relation(fields: [secondSubcategoryId], references: [id])
-    unitMeasureId       Int?
-    unitMeasure         UnitMeasure?       @relation(fields: [unitMeasureId], references: [id])
-    amount              Float?
-    numberOfPeople      Int?               // Nuevo campo para el número de personas
-    description         String
+  id                  Int                @id @default(autoincrement())
+  date                DateTime
+  provinceId          String
+  province            Province           @relation(fields: [provinceId], references: [id])
+  municipalityId      String
+  municipality        Municipality       @relation(fields: [municipalityId], references: [id])
+  variableId          Int
+  variable            Variable           @relation(fields: [variableId], references: [id])
+  categoryId          Int
+  category            Category           @relation(fields: [categoryId], references: [id])
+  subcategoryId       Int?
+  subcategory         Subcategory?       @relation(fields: [subcategoryId], references: [id])
+  secondSubcategoryId Int?
+  secondSubcategory   SecondSubcategory? @relation(fields: [secondSubcategoryId], references: [id])
+  unitMeasureId       Int?
+  unitMeasure         UnitMeasure?       @relation(fields: [unitMeasureId], references: [id])
+  amount              Float?
+  numberOfPeople      Int? // Nuevo campo para el número de personas
+  description         String
 
-    @@map("incidencias")
+  @@map("incidencias")
 }
 
 model Variable {
-    id             Int          @id @default(autoincrement())
-    name           String
-    categories     Category[]
-    incidents      Incident[]
+  id         Int        @id @default(autoincrement())
+  name       String
+  categories Category[]
+  incidents  Incident[]
 
-    @@map("variables")
+  @@map("variables")
 }
 
 model Category {
-    id             Int          @id @default(autoincrement())
-    name           String
-    variableId     Int
-    variable       Variable     @relation(fields: [variableId], references: [id])
-    subcategories  Subcategory[]
-    incidents      Incident[]
+  id            Int           @id @default(autoincrement())
+  name          String
+  variableId    Int
+  variable      Variable      @relation(fields: [variableId], references: [id])
+  subcategories Subcategory[]
+  incidents     Incident[]
 
-    @@map("categorias")
+  @@map("categorias")
 }
 
 model Subcategory {
-    id                  Int                @id @default(autoincrement())
-    name                String
-    categoryId          Int
-    category            Category           @relation(fields: [categoryId], references: [id])
-    secondSubcategories SecondSubcategory[]
-    incidents           Incident[]
+  id                  Int                 @id @default(autoincrement())
+  name                String
+  categoryId          Int
+  category            Category            @relation(fields: [categoryId], references: [id])
+  secondSubcategories SecondSubcategory[]
+  incidents           Incident[]
 
-    @@map("subcategorias")
+  @@map("subcategorias")
 }
 
 model SecondSubcategory {
-    id             Int          @id @default(autoincrement())
-    name           String
-    subcategoryId  Int
-    subcategory    Subcategory  @relation(fields: [subcategoryId], references: [id])
-    incidents      Incident[]
+  id            Int         @id @default(autoincrement())
+  name          String
+  subcategoryId Int
+  subcategory   Subcategory @relation(fields: [subcategoryId], references: [id])
+  incidents     Incident[]
 
-    @@map("secondsubcategorias")
+  @@map("secondsubcategorias")
 }
 
 model UnitMeasure {
-    id             Int          @id @default(autoincrement())
-    name           String       @unique
-    incidents      Incident[]
+  id        Int        @id @default(autoincrement())
+  name      String     @unique
+  incidents Incident[]
 
-    @@map("unidades_medida")
+  @@map("unidades_medida")
 }
 
 model Province {
-    id             String         @id @default(cuid())
-    name           String         @unique
-    municipalities Municipality[]
-    incidents      Incident[]
+  id             String         @id @default(cuid())
+  name           String         @unique
+  municipalities Municipality[]
+  incidents      Incident[] // Relación inversa con Incident
+  Contact        Contact[]
 
-    @@map("provincias")
+  @@map("provincias")
 }
 
 model Municipality {
-    id             String         @id @default(cuid())
-    name           String
-    provinceId     String
-    province       Province       @relation(fields: [provinceId], references: [id])
-    incidents      Incident[]
+  id         String     @id @default(cuid())
+  name       String
+  provinceId String
+  province   Province   @relation(fields: [provinceId], references: [id])
+  incidents  Incident[] // Relación inversa con Incident
+  Contact    Contact[]
 
-    @@map("municipios")
+  @@map("municipios")
 }

@@ -26,12 +26,13 @@ import DeleteModal from "@/app/admin/incident/vars/secondsubcat/delete/page";
 import { handleDeleteSecondSubCategoryAction } from "@/app/admin/incident/vars/secondsubcat/delete/delete.action";
 import { SecondSubCatForm } from "./create/secondsubcat-form";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { cx } from "@/util/cx";
 
 interface Data {
     id: number;
     name: string;
     subcategoria: string;
-    subcategoriaId: number; // Se agrega para disponer del id de la subcategoría padre en el formulario de edición
+    subcategoriaId: number; // Para disponer del id de la subcategoría padre en el formulario de edición
 }
 
 interface TableProps {
@@ -146,13 +147,17 @@ export default function TablePage({ data }: TableProps) {
                     </TableHeader>
                     <TableBody>
                         {currentItems.map((row, index) => (
-                            <TableRow key={row.id}>
+                            <TableRow
+                                key={row.id}
+                                className={cx(
+                                    index % 2 === 0 ? "bg-slate-100" : "bg-white"
+                                )}
+                            >
                                 <TableCell>{firstItem + index + 1}</TableCell>
                                 <TableCell>{row.name}</TableCell>
                                 <TableCell>{row.subcategoria}</TableCell>
                                 <TableCell>
                                     <div className="flex items-center justify-start gap-2">
-                                       
                                         <Button
                                             variant="destructive"
                                             size="sm"

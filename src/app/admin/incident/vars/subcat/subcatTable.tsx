@@ -26,6 +26,7 @@ import DeleteModal from "@/app/admin/incident/vars/subcat/delete/page";
 import { handleDeleteSubCategoryAction } from "@/app/admin/incident/vars/subcat/delete/delete.action";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { SubCatForm } from "./create/subcat-form";
+import { cx } from "@/util/cx";
 
 interface Data {
     id: number;
@@ -139,13 +140,15 @@ export default function TablePage({ data }: TableProps) {
                     </TableHeader>
                     <TableBody>
                         {currentItems.map((row, index) => (
-                            <TableRow key={row.id}>
+                            <TableRow
+                                key={row.id}
+                                className={cx(index % 2 === 0 ? "bg-slate-100" : "bg-white")}
+                            >
                                 <TableCell>{firstItem + index + 1}</TableCell>
                                 <TableCell>{row.name}</TableCell>
                                 <TableCell>{row.categoria}</TableCell>
                                 <TableCell>
                                     <div className="flex items-center justify-start gap-2">
-                                    
                                         <Button
                                             variant="destructive"
                                             size="sm"

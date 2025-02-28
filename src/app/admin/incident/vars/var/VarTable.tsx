@@ -26,6 +26,7 @@ import DeleteModal from "@/app/admin/incident/vars/var/delete/page";
 import { handleDeleteVariableAction } from "@/app/admin/incident/vars/var/delete/delete.action";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { VariableForm } from "./create/var-form";
+import { cx } from "@/util/cx";
 
 interface Data {
     id: number;
@@ -66,10 +67,10 @@ export default function TablePage({ data }: TableProps) {
         () =>
             data.filter((row) =>
                 Object.values(row).some((value) =>
-                    String(value).toLowerCase().includes(search.toLowerCase()),
-                ),
+                    String(value).toLowerCase().includes(search.toLowerCase())
+                )
             ),
-        [data, search],
+        [data, search]
     );
 
     const sortedData = useMemo(() => {
@@ -149,7 +150,10 @@ export default function TablePage({ data }: TableProps) {
                     </TableHeader>
                     <TableBody>
                         {currentItems.map((row, index) => (
-                            <TableRow key={row.id}>
+                            <TableRow
+                                key={row.id}
+                                className={cx(index % 2 === 0 ? "bg-slate-100" : "bg-white")}
+                            >
                                 <TableCell>{firstItem + index + 1}</TableCell>
                                 <TableCell>{row.name}</TableCell>
                                 <TableCell>
@@ -230,7 +234,7 @@ export default function TablePage({ data }: TableProps) {
                                 name: selectedVariable.name,
                                 categories: selectedVariable.categories || [],
                             }}
-                            onSuccess={() => setShowEditModal(false)} // Esta función cierra el modal de edición
+                            onSuccess={() => setShowEditModal(false)}
                         />
                     )}
                 </DialogContent>
