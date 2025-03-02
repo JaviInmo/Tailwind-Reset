@@ -207,7 +207,7 @@ export default function TablePage({ data }: TableProps) {
                             <TableRow
                                 key={row.id}
                                 className={cx(
-                                    "h-14",
+                                  
                                     rowIndex % 2 === 0 ? "bg-slate-100" : "bg-white",
                                 )}
                             >
