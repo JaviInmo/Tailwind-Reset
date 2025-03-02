@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 interface Data {
     id: number;
@@ -39,6 +40,8 @@ interface Data {
 
 interface TableProps {
     data: Data[];
+    pageCount:number;
+    currentPage: number;
 }
 
 const columns: { label: string; key: keyof Data }[] = [
@@ -63,11 +66,46 @@ const initialVisibleColumns = columns.reduce(
     {} as Record<string, boolean>,
 );
 
-export default function TablePage({ data }: TableProps) {
+
+function useQueryString(){
+    const searchParams = useSearchParams();
+    const router = useRouter();
+    const pathname = usePathname();
+
+    function createQueryString(name: string, value: string) {
+        const params = new URLSearchParams(searchParams.toString())
+    
+        if(value=== ''){
+            // TODO: remove empty query string 
+            params.delete(name)
+        } {
+            params.set(name, value)
+        }
+   
+        return params.toString()
+  }
+     
+    function pushQueryString(name: string, value: string){
+        const newUrl = pathname + '?' + createQueryString(name, value)
+        router.push(newUrl)
+    }
+    
+    function getQueryString(name:string){
+        const params = new URLSearchParams(searchParams.toString())
+        return params.get(name)
+    }
+
+    return { createQueryString, pushQueryString, getQueryString }
+}
+
+export default function TablePage({ data, pageCount, currentPage }: TableProps) {
+    const { pushQueryString, getQueryString } = useQueryString()
+
     const [visibleColumns, setVisibleColumns] = useState(initialVisibleColumns);
     const [filterOpen, setFilterOpen] = useState(false);
-    const [search, setSearch] = useState("");
-    const [currentPage, setCurrentPage] = useState(1);
+
+    // const [search, setSearch] = useState("");
+   
     const itemsPerPage = 5;
     const [sortColumn, setSortColumn] = useState<keyof Data | null>(null);
     const [sortDirection, setSortDirection] = useState<"asc" | "desc" | null>(null);
@@ -80,34 +118,34 @@ export default function TablePage({ data }: TableProps) {
         setVisibleColumns((prev) => ({ ...prev, [key]: !prev[key] }));
     };
 
-    const filteredData = useMemo(
-        () =>
-            data.filter((row) =>
-                Object.values(row).some((value) =>
-                    String(value).toLowerCase().includes(search.toLowerCase()),
-                ),
-            ),
-        [data, search],
-    );
+    // const filteredData = useMemo(
+    //     () =>
+    //         data.filter((row) =>
+    //             Object.values(row).some((value) =>
+    //                 String(value).toLowerCase().includes(search.toLowerCase()),
+    //             ),
+    //         ),
+    //     [data, search],
+    // );
 
-    const sortedData = useMemo(() => {
-        if (sortColumn === null) return filteredData;
-        return filteredData.slice().sort((a, b) => {
-            if (a[sortColumn] < b[sortColumn]) {
-                return sortDirection === "asc" ? -1 : 1;
-            }
-            if (a[sortColumn] > b[sortColumn]) {
-                return sortDirection === "asc" ? 1 : -1;
-            }
-            return 0;
-        });
-    }, [filteredData, sortColumn, sortDirection]);
+    // const sortedData = useMemo(() => {
+    //     if (sortColumn === null) return filteredData;
+    //     return filteredData.slice().sort((a, b) => {
+    //         if (a[sortColumn] < b[sortColumn]) {
+    //             return sortDirection === "asc" ? -1 : 1;
+    //         }
+    //         if (a[sortColumn] > b[sortColumn]) {
+    //             return sortDirection === "asc" ? 1 : -1;
+    //         }
+    //         return 0;
+    //     });
+    // }, [filteredData, sortColumn, sortDirection]);
 
     const lastItem = currentPage * itemsPerPage;
     const firstItem = lastItem - itemsPerPage;
-    const currentItems = sortedData.slice(firstItem, lastItem);
+    // const currentItems = sortedData.slice(firstItem, lastItem);
 
-    const totalPages = Math.ceil(filteredData.length / itemsPerPage);
+    // const totalPages = Math.ceil(filteredData.length / itemsPerPage);
 
     const requestSort = (columnKey: keyof Data) => {
         const direction = sortColumn === columnKey && sortDirection === "asc" ? "desc" : "asc";
@@ -115,9 +153,9 @@ export default function TablePage({ data }: TableProps) {
         setSortDirection(direction);
     };
 
-    const handleDelete = (id: number) => {
-        setDeleteModal({ show: true, id });
-    };
+    // const handleDelete = (id: number) => {
+    //     setDeleteModal({ show: true, id });
+    // };
 
     const confirmDelete = async (id: number) => {
         const result = await handleDeleteIncidentAction(id);
@@ -129,6 +167,8 @@ export default function TablePage({ data }: TableProps) {
         setDeleteModal({ show: false, id: null });
     };
 
+
+  
     return (
         <div className="flex flex-col gap-4 rounded-lg bg-white p-4 shadow-md">
             <div className="flex items-center justify-between">
@@ -139,7 +179,11 @@ export default function TablePage({ data }: TableProps) {
                         type="text"
                         placeholder="Buscar..."
                         className="input input-bordered input-primary rounded border border-slate-400 py-1 pl-10 text-left"
-                        onChange={(event) => setSearch(event.target.value)}
+                        onChange={(event) => {
+                            // TODO: add debouncing 
+                            pushQueryString('search', event.target.value)
+                        }}
+                        value={getQueryString('search') ?? ''}
                     />
                     <div className="relative">
                         <Button
@@ -203,7 +247,7 @@ export default function TablePage({ data }: TableProps) {
                         </TableRow>
                     </TableHeader>
                     <TableBody className="text-slate-700">
-                        {currentItems.map((row, rowIndex) => (
+                        {data.map((row, rowIndex) => (
                             <TableRow
                                 key={row.id}
                                 className={cx(
@@ -242,12 +286,7 @@ export default function TablePage({ data }: TableProps) {
                                                 <FaRegEdit className="text-lg transition-transform hover:scale-110" />
                                             </button>
                                         </Link>
-                                        <button
-                                            className="flex w-full items-center justify-center"
-                                            onClick={() => handleDelete(row.id)}
-                                        >
-                                            <RiDeleteBin7Line className="text-lg transition-transform hover:scale-110" />
-                                        </button>
+
                                     </div>
                                 </TableCell>
                             </TableRow>
@@ -257,7 +296,7 @@ export default function TablePage({ data }: TableProps) {
             </div>
             <div className="flex justify-end">
                 <div className="btn-group gap-2">
-                    {Array.from({ length: totalPages }).map((_, i) => (
+                    {Array.from({ length:  pageCount }).map((_, i) => (
                         <button
                             key={i + 1}
                             className={`border border-gray-400 px-2 py-0 shadow-md ${
@@ -265,7 +304,10 @@ export default function TablePage({ data }: TableProps) {
                                     "border-slate-950 bg-slate-600 text-white"
                                 :   "bg-white text-gray-700"
                             }`}
-                            onClick={() => setCurrentPage(i + 1)}
+                            onClick={() => {
+                                pushQueryString('page', `${i + 1}`)
+                            }}
+                            // onClick={() => setCurrentPage(i + 1)}
                         >
                             {i + 1}
                         </button>

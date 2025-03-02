@@ -2,7 +2,20 @@ import prisma from "@/libs/db";
 
 import Table from "./Table";
 
-export default async function Page() {
+type TableSearchParams = Partial<{
+    page: string;
+    search: string
+}>
+
+export default async function Page({ searchParams }:{ searchParams: TableSearchParams }) {
+    
+    const itemsPerPage = 5;
+    const page = searchParams.page ? Number(searchParams.page) : 1;
+    const search = searchParams.search ?? null;
+
+    const skip = (page - 1) * itemsPerPage
+
+    const incidentCount = await prisma.incident.count(); 
     // Obtener datos de la base de datos
     const incidents = await prisma.incident.findMany({
         include: {
@@ -13,8 +26,13 @@ export default async function Page() {
             subcategory: true,
             unitMeasure: true,
             secondSubcategory: true,
-        },
+        }, 
+        where:search ? { description: { contains: search }}: undefined,
+        take: itemsPerPage,
+        skip: skip
     });
+
+    const pageCount = Math.ceil(incidentCount / itemsPerPage)
 
     // Mapear los datos a un formato compatible con el componente de tabla
     const data = incidents.map((incident) => ({
@@ -30,5 +48,6 @@ export default async function Page() {
         fecha: incident.date.toISOString().split("T")[0],
     }));
 
-    return <Table data={data} />;
+
+    return <Table data={data} pageCount={pageCount} currentPage={page}/>;
 }
