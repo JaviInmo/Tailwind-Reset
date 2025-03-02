@@ -153,9 +153,9 @@ export default function TablePage({ data, pageCount, currentPage }: TableProps) 
         setSortDirection(direction);
     };
 
-    // const handleDelete = (id: number) => {
-    //     setDeleteModal({ show: true, id });
-    // };
+    const handleDelete = (id: number) => {
+        setDeleteModal({ show: true, id });
+    };
 
     const confirmDelete = async (id: number) => {
         const result = await handleDeleteIncidentAction(id);
@@ -286,7 +286,12 @@ export default function TablePage({ data, pageCount, currentPage }: TableProps) 
                                                 <FaRegEdit className="text-lg transition-transform hover:scale-110" />
                                             </button>
                                         </Link>
-
+                                        <button
+                                            className="flex w-full items-center justify-center"
+                                            onClick={() => handleDelete(row.id)}
+                                        >
+                                            <RiDeleteBin7Line className="text-lg transition-transform hover:scale-110" />
+                                        </button>
                                     </div>
                                 </TableCell>
                             </TableRow>
