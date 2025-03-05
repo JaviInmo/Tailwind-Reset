@@ -42,6 +42,7 @@ export default async function Page({ searchParams }:{ searchParams: TableSearchP
         subcategoria: incident.subcategory?.name || "",
         segundasubcategoria: incident.secondSubcategory?.name || "",
         amount: incident.amount || 0,
+        numberOfPeople: incident.numberOfPeople || 0,
         descripcion: incident.description,
         provincia: incident.province.name,
         municipio: incident.municipality.name,
