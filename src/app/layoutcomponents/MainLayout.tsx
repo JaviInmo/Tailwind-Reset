@@ -24,7 +24,7 @@ export function MainLayout({ children }: PropsWithChildren) {
                         <MainHeader />
                     </header>
                     <main className="flex-1 p-2 pt-2 overflow-hidden">
-                        <div className="h-full flex ">{children}</div>
+                        <div className="h-full">{children}</div>
                     </main>
                 </div>
             </div>
