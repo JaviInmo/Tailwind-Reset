@@ -22,6 +22,13 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useDebounce } from "@/hooks/debounce-hook";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
 
 function useQueryString() {
     const searchParams = useSearchParams();
@@ -195,8 +202,8 @@ export default function TablePage({ data, pageCount, currentPage }: TableProps) 
                                                 "w-[150px]",
                                                 key === "id" ? "w-[15px] min-w-[15px]"
                                                 : key === "numberOfPeople" || key === "amount" ?
-                                                    "w-[150px] min-w-[150px]"
-                                                :   "w-[150px]",
+                                                    "w-[120px] min-w-[120px]"
+                                                :   "w-[120px]",
                                                 label === "2° subcat" && "whitespace-nowrap",
                                                 index === columns.length - 1 && "border-r-0",
                                             )}
@@ -241,7 +248,7 @@ export default function TablePage({ data, pageCount, currentPage }: TableProps) 
                                         ),
                                 )}
                                 <TableCell
-                                    className="sticky right-0 w-[100px] truncate px-3 py-1 text-sm"
+                                    className="sticky right-0 w-[100px] truncate bg-white px-3 py-1 text-sm"
                                     style={{
                                         boxShadow: `2px 0 0 ${rowIndex % 2 === 0 ? "white" : "#f1f5f9"} inset`,
                                     }}
@@ -267,20 +274,39 @@ export default function TablePage({ data, pageCount, currentPage }: TableProps) 
                     </TableBody>
                 </Table>
             </div>
-            <div className="flex justify-end">
+            <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                    <label htmlFor="itemsPerPage" className="text-sm font-medium text-slate-700">
+                        Filas:
+                    </label>
+                    <Select
+                        value={getQueryString("limit") || "10"}
+                        onValueChange={(value) => pushQueryString("limit", value)}
+                    >
+                        <SelectTrigger className="w-[70px] h-6 px-2  py-0 shadow-md">
+                            <SelectValue placeholder="Selecciona" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="10">10</SelectItem>
+                            <SelectItem value="50">50</SelectItem>
+                            <SelectItem value="100">100</SelectItem>
+                            <SelectItem value="200">200</SelectItem>
+                        </SelectContent>
+                    </Select>
+                </div>
                 <div className="btn-group gap-2">
                     {Array.from({ length: pageCount }).map((_, i) => (
-                        <button
-                            key={i + 1}
-                            className={`border border-gray-400 px-2 py-0 shadow-md ${
-                                currentPage === i + 1 ?
-                                    "border-slate-950 bg-slate-600 text-white"
-                                :   "bg-white text-gray-700"
-                            }`}
-                            onClick={() => pushQueryString("page", `${i + 1}`)}
-                        >
-                            {i + 1}
-                        </button>
+                       <button
+                       key={i + 1}
+                       className={`border border-gray-400 px-2 py-0 shadow-md h-6 w-6 flex items-center justify-center ${
+                         currentPage === i + 1
+                           ? "rounded-sm border-slate-950 bg-slate-800 text-white"
+                           : "rounded bg-white text-gray-700"
+                       }`}
+                       onClick={() => pushQueryString("page", `${i + 1}`)}
+                     >
+                       {i + 1}
+                     </button>
                     ))}
                 </div>
             </div>

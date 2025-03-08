@@ -1,3 +1,4 @@
+// page.tsx
 import prisma from "@/libs/db";
 import Table from "./Table";
 
@@ -6,18 +7,20 @@ type TableSearchParams = Partial<{
   search: string;
   sort: string;           // Campo por el que ordenar (ej: "provincia", "numeroPeople", etc.)
   order: "asc" | "desc";  // Orden: ascendente o descendente
+  limit: string;          // Cantidad de elementos por página
 }>;
 
 export default async function Page({ searchParams }: { searchParams: TableSearchParams }) {
-  const itemsPerPage = 5;
+  // Leer el parámetro "limit" y asignar un valor por defecto de 10 si no existe
+  const itemsPerPage = searchParams.limit ? Number(searchParams.limit) : 10;
   const page = searchParams.page ? Number(searchParams.page) : 1;
   const search = searchParams.search ?? null;
-  // Recibir los parámetros de ordenamiento, con valores por defecto
+  
+  // Parámetros de ordenamiento
   const sortField = searchParams.sort ?? "date";
   const sortOrder = searchParams.order ?? "desc";
   const skip = (page - 1) * itemsPerPage;
 
-  // Definir un mapeo entre el parámetro recibido y la estructura que espera Prisma en orderBy
   const sortMapping: { [key: string]: any } = {
     provincia: { province: { name: sortOrder } },
     municipio: { municipality: { name: sortOrder } },
@@ -31,14 +34,10 @@ export default async function Page({ searchParams }: { searchParams: TableSearch
     fecha: { date: sortOrder },
   };
 
-  // Se asigna el orderBy de Prisma según el campo recibido; si no se reconoce, se ordena por fecha por defecto
   const orderBy = sortMapping[sortField] || { date: "desc" };
-
-  // Convertir la búsqueda a número para filtrar campos numéricos si es posible
   const searchNumber = Number(search);
   const hasNumericSearch = !isNaN(searchNumber);
 
-  // Contar las incidencias aplicando el filtro de búsqueda
   const incidentCount = await prisma.incident.count({
     where: search
       ? {
@@ -61,7 +60,6 @@ export default async function Page({ searchParams }: { searchParams: TableSearch
       : undefined,
   });
 
-  // Obtener las incidencias incluyendo las relaciones necesarias y aplicar el ordenamiento dinámico
   const incidents = await prisma.incident.findMany({
     orderBy,
     include: {
@@ -98,7 +96,6 @@ export default async function Page({ searchParams }: { searchParams: TableSearch
 
   const pageCount = Math.ceil(incidentCount / itemsPerPage);
 
-  // Mapear los datos para que sean compatibles con el componente de tabla
   const data = incidents.map((incident) => ({
     id: incident.id,
     variable: incident.variable.name,
