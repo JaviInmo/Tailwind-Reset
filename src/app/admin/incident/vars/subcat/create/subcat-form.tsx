@@ -7,148 +7,210 @@ import { useForm, SubmitHandler } from "react-hook-form";
 import { z } from "zod";
 
 import { countSubCats } from "../readsubcat.action";
-import { registerAction, updateSubCategoryAction } from "./subcat.action";
+import { fetchCategory, fetchSubCategoriesByCategory, registerAction } from "./subcat.action";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
-  Form,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormControl,
-  FormMessage,
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
+import {
+    Form,
+    FormField,
+    FormItem,
+    FormLabel,
+    FormControl,
+    FormMessage,
 } from "@/components/ui/form";
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+    DialogFooter,
 } from "@/components/ui/dialog";
 
 const formSchema = z.object({
-  subcategories: z
-    .string({ required_error: "El nombre de la subcategoría es requerido" })
-    .min(1, { message: "El nombre de la subcategoría es requerido" }),
+    category: z.string({ required_error: "Categoría es requerida" }),
+    subcategories: z
+        .string({ required_error: "Subcategorías no pueden estar vacías" })
+        .min(1, { message: "Subcategorías no pueden estar vacías" }),
 });
 
-
-
-interface SubCatFormProps {
-  subcategoryData?: {
-      id: number;
-      name: string;
-      variableId: number;
-  };
-  categoryId: number;
-  onSuccess?: () => void;
-}
 type FormSchemaData = z.infer<typeof formSchema>;
 
-export function SubCatForm({ subcategoryData, onSuccess }: SubCatFormProps) {
-  const [showSuccessModal, setShowSuccessModal] = useState(false);
-  const router = useRouter();
-  const [globalError, setGlobalError] = useState<string | null>(null);
+export function SubCatForm() {
+    const [showSuccessModal, setShowSuccessModal] = useState(false);
+    const [initialCount, setInitialCount] = useState<number | null>(null);
+    const [categories, setCategories] = useState<{ id: number; name: string }[]>([]);
+    const [selectedCategoryId, setSelectedCategoryId] = useState<number | null>(null);
+    const [subcategories, setSubcategories] = useState<{ id: number; name: string }[]>([]);
+    const router = useRouter();
+    const [globalError, setGlobalError] = useState<string | null>(null);
 
-  const form = useForm<FormSchemaData>({
-    resolver: zodResolver(formSchema),
-    mode: "onTouched",
-    defaultValues: {
-      subcategories: subcategoryData ? subcategoryData.name : "",
-    },
-  });
+    const form = useForm<FormSchemaData>({
+        resolver: zodResolver(formSchema),
+        mode: "onTouched",
+    });
 
-  async function onSubmit(data: FormSchemaData) {
-    setGlobalError(null);
+    useEffect(() => {
+        const fetchData = async () => {
+            const cats = await fetchCategory();
+            setCategories(cats);
+            const count = await countSubCats();
+            setInitialCount(count);
+        };
+        fetchData();
+    }, []);
 
-    if (subcategoryData?.id) {
-      try {
-        const response = await updateSubCategoryAction(subcategoryData.id, data.subcategories);
-        if (!response.success) {
-          form.setError("subcategories", { message: response.error });
-          return;
+    useEffect(() => {
+        if (selectedCategoryId) {
+            const fetchSubCategories = async () => {
+                const subCats = await fetchSubCategoriesByCategory(selectedCategoryId);
+                setSubcategories(subCats);
+            };
+            fetchSubCategories();
+        } else {
+            setSubcategories([]);
         }
-        setShowSuccessModal(true);
-      } catch (error) {
-        form.setError("subcategories", { message: `Error al actualizar: ${error}` });
-      }
-    } else {
-      try {
-        const response = await registerAction({
-          name: data.subcategories,
-          categoryId: 0
+    }, [selectedCategoryId]);
+
+    const handleCategoryChange = (value: string) => {
+        const selectedCategory = categories.find((c) => c.name === value);
+        if (selectedCategory) {
+            setSelectedCategoryId(selectedCategory.id);
+        }
+    };
+
+    const onSubmit: SubmitHandler<FormSchemaData> = async (data) => {
+        if (!selectedCategoryId) {
+            form.setError("category", { message: "Debe seleccionar una categoría válida" });
+            return;
+        }
+
+        const subcategoriesArray = data.subcategories.split(",").map((name) => name.trim());
+        let allSuccess = true;
+
+        for (const subcategory of subcategoriesArray) {
+            const response = await registerAction({
+                categoryId: selectedCategoryId,
+                name: subcategory,
+            });
+
+            if (!response.success) {
+                form.setError("subcategories", { message: response.error ?? "Error desconocido" });
+                allSuccess = false;
+            }
+        }
+
+        if (allSuccess) {
+            const newCount = await countSubCats();
+            if (initialCount !== null && newCount > initialCount) {
+                setShowSuccessModal(true);
+            } else {
+                console.error("Error al actualizar la tabla después de la inserción");
+            }
+        }
+    };
+
+    const handleCloseSuccessModal = () => {
+        setShowSuccessModal(false);
+        form.reset({
+            category: "",
+            subcategories: "",
         });
-        if (!response.success) {
-          form.setError("subcategories", { message: response.error });
-          return;
-        }
-        setShowSuccessModal(true);
-      } catch (error) {
-        form.setError("subcategories", { message: `Error al registrar: ${error}` });
-      }
-    }
-  }
+        setSelectedCategoryId(null);
+        setGlobalError(null);
+    };
 
-  const handleCloseSuccessModal = () => {
-    setShowSuccessModal(false);
-    form.reset({ subcategories: "" });
-    setGlobalError(null);
-    router.refresh();
-    if (onSuccess) onSuccess();
-  };
+    return (
+        <div className="flex justify-center py-2">
+            <div className="w-7/12 space-y-7 rounded-sm bg-white py-8">
+                <div className="text-center">
+                    <h1 className="text-2xl font-semibold">Registro de Subcategorías</h1>
+                    <p className="text-sm text-gray-500">
+                        Seleccione una categoría y rellene el campo del formulario para registrar
+                        las subcategorías.
+                    </p>
+                </div>
+                <div className="flex justify-center">
+                    <Form {...form}>
+                        <form
+                            onSubmit={form.handleSubmit(onSubmit)}
+                            className="w-full max-w-lg space-y-6"
+                        >
+                            <FormField
+                                control={form.control}
+                                name="category"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Categoría:</FormLabel>
+                                        <Select
+                                            onValueChange={(value) => {
+                                                field.onChange(value);
+                                                handleCategoryChange(value);
+                                            }}
+                                            value={field.value}
+                                        >
+                                            <FormControl>
+                                                <SelectTrigger>
+                                                    <SelectValue placeholder="Seleccione una categoría" />
+                                                </SelectTrigger>
+                                            </FormControl>
+                                            <SelectContent>
+                                                {categories.map((category) => (
+                                                    <SelectItem
+                                                        key={category.id}
+                                                        value={category.name}
+                                                    >
+                                                        {category.name}
+                                                    </SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                            {/* Input de SubCategorías */}
+                            <FormField
+                                control={form.control}
+                                name="subcategories"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Subcategorías:</FormLabel>
+                                        <Input
+                                            {...field}
+                                            placeholder="Escriba las subcategorías separadas por coma"
+                                            type="text"
+                                        />
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
 
-  return (
-    <div className="flex justify-center py-2">
-      <div className="w-7/12 space-y-7 rounded-sm bg-white py-8">
-        <div className="text-center">
-          <h1 className="text-2xl font-semibold">
-            {subcategoryData ? "Editar Subcategoría" : "Registro de Subcategoría"}
-          </h1>
-          <p className="text-sm text-gray-500">
-            {subcategoryData
-              ? "Modifique el nombre de la subcategoría."
-              : "Complete el campo para registrar la subcategoría."}
-          </p>
+                            <Button type="submit" className="w-full">
+                                Registrar
+                            </Button>
+                        </form>
+                    </Form>
+                </div>
+            </div>
+            <Dialog open={showSuccessModal} onOpenChange={handleCloseSuccessModal}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Subcategorías Creadas</DialogTitle>
+                    </DialogHeader>
+                    <div>Subcategorías creadas con éxito.</div>
+                    <DialogFooter>
+                        <Button onClick={handleCloseSuccessModal}>Aceptar</Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </div>
-        <div className="flex justify-center">
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="w-full max-w-lg space-y-6">
-              <FormField
-                control={form.control}
-                name="subcategories"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Nombre de la Subcategoría:</FormLabel>
-                    <Input {...field} placeholder="Ingrese el nombre de la subcategoría" />
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <Button type="submit" className="w-full">
-                {subcategoryData ? "Actualizar" : "Registrar"}
-              </Button>
-            </form>
-          </Form>
-        </div>
-      </div>
-      <Dialog open={showSuccessModal} onOpenChange={handleCloseSuccessModal}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>
-              {subcategoryData ? "Subcategoría Actualizada" : "Subcategoría Creada"}
-            </DialogTitle>
-          </DialogHeader>
-          <div>
-            {subcategoryData
-              ? "La subcategoría ha sido actualizada con éxito."
-              : "Subcategoría creada con éxito."}
-          </div>
-          <DialogFooter>
-            <Button onClick={handleCloseSuccessModal}>Aceptar</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    </div>
-  );
+    );
 }

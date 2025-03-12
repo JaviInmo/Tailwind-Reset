@@ -15,12 +15,13 @@ export async function registerAction(data: FormSchemaData) {
                 name: data.name,
             },
         });
-
+        
+        // Retornamos un error si la variable ya existe
         if (existingVar) {
             return { success: false, error: "La Variable ya existe" };
         }
-
-        // Crear la variable si no existe
+        
+        // Crea la variable si no existe ya
         const variable = await prisma.variable.create({
             data: {
                 name: data.name,
@@ -30,37 +31,14 @@ export async function registerAction(data: FormSchemaData) {
         revalidatePath("/admin/incident/vars/var/create");
         return { success: true, variable };
     } catch (error) {
-        console.error("Error al registrar la variable:", error);
-        return { success: false, error: error instanceof Error ? error.message : "Error inesperado" };
-    }
-}
+        let errorMessage = "An unexpected error occurred";
 
-export async function updateVariableAction(id: number, name: string) {
-    try {
-        // Verificar si la variable ya existe con otro ID
-        const existingVar = await prisma.variable.findFirst({
-            where: {
-                name,
-                NOT: {
-                    id,
-                },
-            },
-        });
-
-        if (existingVar) {
-            return { success: false, error: "Ya existe otra variable con este nombre" };
+        if (error instanceof Error) {
+            errorMessage = error.message;
         }
 
-        // Actualizar la variable
-        const updatedVariable = await prisma.variable.update({
-            where: { id },
-            data: { name },
-        });
-
-        revalidatePath("/admin/incident/vars/var/create");
-        return { success: true, variable: updatedVariable };
-    } catch (error) {
-        console.error("Error al actualizar la variable:", error);
-        return { success: false, error: error instanceof Error ? error.message : "Error inesperado" };
+        console.error("Error al registrar la variable:", error);
+    
+        return { success: false, error: errorMessage };
     }
 }

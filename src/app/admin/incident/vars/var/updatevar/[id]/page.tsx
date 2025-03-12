@@ -1,7 +1,7 @@
 import { getAuth } from "@/libs/auth";
 import prisma from "@/libs/db";
 
-import { VariableForm } from "../../create/var-form";
+import { VariableForm } from "../../var-form";
 
 export default async function VarPage({ params }: { params: { id: string } }) {
     await getAuth();

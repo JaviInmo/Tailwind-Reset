@@ -47,46 +47,6 @@ export async function registerAction(data: FormSchemaData) {
     }
 }
 
-
-export async function updateSubCategoryAction(id: number, name: string) {
-    try {
-        const existingSubcategory = await prisma.subcategory.findFirst({
-            where: {
-                name,
-                NOT: {
-                    id,
-                },
-            },
-        });
-
-        if (existingSubcategory) {
-            return { success: false, error: "La subcategoría ya existe." };
-        }
-
-        const subcategory = await prisma.subcategory.update({
-            where: {
-                id,
-            },
-            data: {
-                name,
-            },
-        });
-
-        revalidatePath("/admin/incident/vars/subcat/create");
-
-        return { success: true, subcategory };
-    } catch (error) {
-        let errorMessage = "An unexpected error occurred";
-
-        if (error instanceof Error) {
-            errorMessage = error.message;
-        }
-
-        console.error("Error al actualizar la subcategoría:", error);
-        return { success: false, error: errorMessage };
-    }
-}
-
 // Obtiene todas las categorias disponibles
 export async function fetchCategory() {
     return await prisma.category.findMany({
