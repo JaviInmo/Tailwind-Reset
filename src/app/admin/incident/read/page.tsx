@@ -32,6 +32,7 @@ export default async function Page({ searchParams }: { searchParams: TableSearch
     numberOfPeople: { numberOfPeople: sortOrder },
     descripcion: { description: sortOrder },
     fecha: { date: sortOrder },
+    titulo: { title: sortOrder },
   };
 
   const orderBy = sortMapping[sortField] || { date: "desc" };
@@ -43,6 +44,7 @@ export default async function Page({ searchParams }: { searchParams: TableSearch
       ? {
           OR: [
             { description: { contains: search, mode: "insensitive" } },
+            { title: { contains: search, mode: "insensitive" } },
             { variable: { name: { contains: search, mode: "insensitive" } } },
             { category: { name: { contains: search, mode: "insensitive" } } },
             { subcategory: { name: { contains: search, mode: "insensitive" } } },
@@ -75,6 +77,7 @@ export default async function Page({ searchParams }: { searchParams: TableSearch
       ? {
           OR: [
             { description: { contains: search, mode: "insensitive" } },
+            { title: { contains: search, mode: "insensitive" } },
             { variable: { name: { contains: search, mode: "insensitive" } } },
             { category: { name: { contains: search, mode: "insensitive" } } },
             { subcategory: { name: { contains: search, mode: "insensitive" } } },
@@ -108,6 +111,7 @@ export default async function Page({ searchParams }: { searchParams: TableSearch
     provincia: incident.province.name,
     municipio: incident.municipality.name,
     fecha: incident.date.toISOString().split("T")[0],
+    titulo: incident.title,
   }));
 
   return <Table data={data} pageCount={pageCount} currentPage={page} />;

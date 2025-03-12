@@ -18,6 +18,7 @@ model Incident {
   amount              Float?
   numberOfPeople      Int? // Nuevo campo para el número de personas
   description         String
+  title              String
 
   @@map("incidencias")
 }

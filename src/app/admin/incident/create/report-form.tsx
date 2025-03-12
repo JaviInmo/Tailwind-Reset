@@ -22,25 +22,17 @@ import { Button } from "@/components/ui/button";
 
 const formSchema = z.object({
     fecha: z.string().date("Fecha es requerido"),
-    provincia: z
-        .string({ required_error: "Provincia es requerido" })
-        .min(1, { message: "Provincia es requerido" }),
-    municipio: z
-        .string({ required_error: "Municipio es requerido" })
-        .min(1, { message: "Municipio es requerido" }),
+    provincia: z.string({ required_error: "Provincia es requerido" }).min(1, { message: "Provincia es requerido" }),
+    municipio: z.string({ required_error: "Municipio es requerido" }).min(1, { message: "Municipio es requerido" }),
     variable: z.coerce.number({ required_error: "Variable es requerido" }),
     categoria: z.coerce.number({ required_error: "Categoría es requerido" }),
     subcategoria: z.coerce.number({ required_error: "Subcategoría es requerido" }),
     segundasubcategoria: z.coerce.number().optional(),
     amount: z.coerce.number().min(0.01, { message: "Toneladas debe ser mayor a 0.01" }),
-    numberOfPeople: z.coerce
-        .number()
-        .min(0, { message: "El número de personas no puede ser negativo" }), // Nuevo campo
-    description: z
-        .string({ required_error: "Descripción es requerido" })
-        .min(1, { message: "Descripción es requerido" }),
+    numberOfPeople: z.coerce.number().min(0, { message: "El número de personas no puede ser negativo" }),
+    description: z.string({ required_error: "Descripción es requerido" }).min(1, { message: "Descripción es requerido" }),
+    titulo: z.string({ required_error: "Título es requerido" }).min(1, { message: "Título es requerido" }),
 });
-
 type FormSchemaData = z.infer<typeof formSchema>;
 
 type ReportFormProps = {
@@ -76,10 +68,9 @@ export function ReportForm({ incidentData, variableData, provinceData }: ReportF
         resolver: zodResolver(formSchema),
         mode: "onTouched",
         defaultValues: {
-            fecha:
-                incidentData ? new Date(incidentData.date).toISOString().split("T")[0] : undefined,
+            fecha: incidentData ? new Date(incidentData.date).toISOString().split("T")[0] : undefined,
             amount: incidentData?.amount ?? undefined,
-            numberOfPeople: incidentData?.numberOfPeople ?? 0, // Valor por defecto para número de personas
+            numberOfPeople: incidentData?.numberOfPeople ?? 0,
             categoria: incidentData?.categoryId ?? undefined,
             subcategoria: incidentData?.subcategoryId ?? undefined,
             segundasubcategoria: incidentData?.secondSubcategoryId ?? undefined,
@@ -87,6 +78,7 @@ export function ReportForm({ incidentData, variableData, provinceData }: ReportF
             provincia: incidentData?.provinceId,
             municipio: incidentData?.municipalityId,
             description: incidentData?.description,
+            titulo: incidentData?.title, 
         },
     });
 
@@ -103,6 +95,7 @@ export function ReportForm({ incidentData, variableData, provinceData }: ReportF
             date: new Date(data.fecha),
             numberOfPeople: data.numberOfPeople, // Se envía el número de personas
             description: data.description,
+            title: data.titulo,
             municipalityId: data.municipio,
             provinceId: data.provincia,
         });
@@ -152,7 +145,8 @@ export function ReportForm({ incidentData, variableData, provinceData }: ReportF
                     onSubmit={handleSubmit(onSubmit)}
                     className="flex max-h-[calc(100vh-150px)] w-full flex-col gap-2 overflow-y-auto px-4 pt-2 lg:w-11/12"
                 >
-                    <div className="pb-4">
+                    <div className="flex gap-4 pb-2">
+                        <div className="w-full">
                         <Label className="block pb-2">Fecha:</Label>
                         <Input
                             type="date"
@@ -160,6 +154,19 @@ export function ReportForm({ incidentData, variableData, provinceData }: ReportF
                             className="w-full rounded border border-gray-300 bg-white p-2"
                         />
                         {errors.fecha && <p className="text-red-600">{errors.fecha.message}</p>}
+                        </div>
+                        <div className="w-full">
+                        <Label className="block pb-2">Titulo:</Label>
+                            <Input
+                                type="String"
+                               
+                                {...register("titulo")}
+                                className="w-full rounded border border-gray-300 bg-white p-2"
+                            />
+                            {errors.titulo && (
+                                <p className="text-red-600">{errors.titulo.message}</p>
+                            )}
+                        </div>
                     </div>
 
                     <div className="flex gap-4 pb-2">

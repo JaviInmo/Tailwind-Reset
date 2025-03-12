@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowDownUp } from "lucide-react";
+import { ArrowDownUp, InfoIcon } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import DeleteModal from "@/app/admin/incident/delete/page";
@@ -29,6 +29,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
+import { GrStatusInfo } from "react-icons/gr";
 
 function useQueryString() {
     const searchParams = useSearchParams();
@@ -71,6 +72,7 @@ interface Data {
     provincia: string;
     municipio: string;
     fecha: string;
+    titulo:string;
 }
 
 interface TableProps {
@@ -86,8 +88,8 @@ const columns: { label: string; key: keyof Data }[] = [
     { label: "Subcat", key: "subcategoria" },
     { label: "2° subcat", key: "segundasubcategoria" },
     { label: "Cant.", key: "amount" },
-    { label: "No. Personas", key: "numberOfPeople" },
-    { label: "Desc.", key: "descripcion" },
+    { label: "Pers", key: "numberOfPeople" },
+    { label: "Titulo", key: "titulo" },
     { label: "Prov.", key: "provincia" },
     { label: "Munic.", key: "municipio" },
     { label: "Fecha", key: "fecha" },
@@ -186,7 +188,7 @@ export default function TablePage({ data, pageCount, currentPage }: TableProps) 
                 </div>
             </div>
 
-            <div className="relative w-full overflow-x-auto overflow-y-auto rounded-lg border border-slate-300">
+            <div className="relative w-full overflow-x-auto overflow-y-auto max-h-[calc(100vh-200px)] rounded-lg border border-slate-300">
                 <Table className="w-full">
                     <TableHeader className="sticky top-0 z-10 bg-white shadow-md">
                         <TableRow>
@@ -200,8 +202,8 @@ export default function TablePage({ data, pageCount, currentPage }: TableProps) 
                                                 "w-[150px]",
                                                 key === "id" ? "w-[15px] min-w-[15px]"
                                                 : key === "numberOfPeople" || key === "amount" ?
-                                                    "w-[120px] min-w-[120px]"
-                                                :   "w-[120px]",
+                                                    "w-[60px] min-w-[60px]"
+                                                :   "w-[60px]",
                                                 label === "2° subcat" && "whitespace-nowrap",
                                                 index === columns.length - 1 && "border-r-0",
                                             )}
@@ -265,6 +267,13 @@ export default function TablePage({ data, pageCount, currentPage }: TableProps) 
                                         >
                                             <RiDeleteBin7Line className="text-lg transition-transform hover:scale-110" />
                                         </button>
+
+                                        <Link href={`/admin/incident/edit/${row.id}`}>
+                                        <button className="flex w-full items-center justify-center">
+                                        
+                                            <GrStatusInfo className="text-lg transition-transform hover:scale-110" />
+                                        </button>
+                                        </Link>
                                     </div>
                                 </TableCell>
                             </TableRow>

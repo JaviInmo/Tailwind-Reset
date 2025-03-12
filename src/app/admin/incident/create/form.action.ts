@@ -14,6 +14,7 @@ type FormSchemaData = {
   amount: number;
   numberOfPeople: number; // Nuevo campo
   description: string;
+  title: string;
 };
 
 export async function customSubmit(data: FormSchemaData) {
@@ -36,6 +37,7 @@ export async function registerAction(data: FormSchemaData) {
         amount: data.amount,
         numberOfPeople: data.numberOfPeople, // Se inserta el número de personas
         description: data.description,
+        title: data.title,
       },
     });
 
