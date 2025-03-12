@@ -9,6 +9,6 @@ model Contact {
   statePhone     String // Número de teléfono estatal
   landlinePhone  String // Número de teléfono fijo
   jobTitle       String // Cargo
-
+  workplace      String// lugar de trabajo
   @@map("contacts")
 }

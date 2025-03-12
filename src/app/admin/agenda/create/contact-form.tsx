@@ -17,15 +17,18 @@ import {
 } from "@/components/ui/select";
 import { useState } from "react";
 
+
+
 // Definición del esquema del formulario
 const formSchema = z.object({
-  name: z.string().min(1, { message: "El nombre es obligatorio" }),
-  province: z.string().min(1, { message: "La provincia es obligatoria" }),
-  municipality: z.string().min(1, { message: "El municipio es obligatorio" }),
-  personalPhone: z.string().min(1, { message: "El teléfono personal es obligatorio" }),
-  statePhone: z.string().min(1, { message: "El teléfono estatal es obligatorio" }),
-  landlinePhone: z.string().min(1, { message: "El teléfono fijo es obligatorio" }),
-  jobTitle: z.string().min(1, { message: "El cargo es obligatorio" }),
+    name: z.string().min(1, { message: "El nombre es obligatorio" }),
+    province: z.string().min(1, { message: "La provincia es obligatoria" }),
+    municipality: z.string().min(1, { message: "El municipio es obligatorio" }),
+    personalPhone: z.string().min(1, { message: "El teléfono personal es obligatorio" }),
+    statePhone: z.string().min(1, { message: "El teléfono estatal es obligatorio" }),
+    landlinePhone: z.string().min(1, { message: "El teléfono fijo es obligatorio" }),
+    jobTitle: z.string().min(1, { message: "El cargo es obligatorio" }),
+    workplace: z.string().min(1, { message: "El lugar de trabajo es obligatorio" }),
 });
 
 type FormSchemaData = z.infer<typeof formSchema>;
@@ -42,10 +45,29 @@ type Province = {
     municipalities: Municipality[];
 };
 
-type ContactFormProps = {
+interface ContactFormProps {
+    contactData: {
+        id: number;
+        name: string;
+        provinceId: string;
+        municipalityId: string;
+        personalPhone: string;
+        statePhone: string;
+        landlinePhone: string;
+        jobTitle: string;
+        workplace: string;
+        province: {
+            id: string;
+            name: string;
+        };
+        municipality: {
+            id: string;
+            name: string;
+            provinceId: string;
+        };
+    };
     provinceData: Province[];
-};
-
+}
 export function ContactForm({ provinceData }: ContactFormProps) {
     const [showSuccessModal, setShowSuccessModal] = useState(false);
 
@@ -76,6 +98,7 @@ export function ContactForm({ provinceData }: ContactFormProps) {
             statePhone: data.statePhone,
             landlinePhone: data.landlinePhone,
             jobTitle: data.jobTitle,
+            workplace: data.workplace,
         });
         if (response.success) {
             reset();
@@ -97,7 +120,11 @@ export function ContactForm({ provinceData }: ContactFormProps) {
             <form onSubmit={handleSubmit(onSubmit)} className="w-full max-w-md space-y-4">
                 <div>
                     <Label htmlFor="name">Nombre Completo:</Label>
-                    <Input id="name" {...register("name")} placeholder="Insertar el nombre completo" />
+                    <Input
+                        id="name"
+                        {...register("name")}
+                        placeholder="Insertar el nombre completo"
+                    className="bg-white"/>
                     {errors.name && <p className="text-red-600">{errors.name.message}</p>}
                 </div>
 
@@ -168,7 +195,7 @@ export function ContactForm({ provinceData }: ContactFormProps) {
                             id="personalPhone"
                             {...register("personalPhone")}
                             placeholder="Número personal"
-                        />
+                            className="bg-white"/>
                         {errors.personalPhone && (
                             <p className="text-red-600">{errors.personalPhone.message}</p>
                         )}
@@ -179,32 +206,51 @@ export function ContactForm({ provinceData }: ContactFormProps) {
                             id="statePhone"
                             {...register("statePhone")}
                             placeholder="Número estatal"
-                        />
+                            className="bg-white"/>
                         {errors.statePhone && (
                             <p className="text-red-600">{errors.statePhone.message}</p>
                         )}
                     </div>
                 </div>
-                <div>
+                <div >
                     <Label htmlFor="landlinePhone">Telefono fijo:</Label>
                     <Input
                         id="landlinePhone"
                         {...register("landlinePhone")}
                         placeholder="Número fijo"
-                    />
+                        className="bg-white"/>
                     {errors.landlinePhone && (
                         <p className="text-red-600">{errors.landlinePhone.message}</p>
                     )}
                 </div>
-                <div>
-                    <Label htmlFor="jobTitle">Cargo:</Label>
-                    <Input id="jobTitle" {...register("jobTitle")} placeholder="Enter job title" />
-                    {errors.jobTitle && <p className="text-red-600">{errors.jobTitle.message}</p>}
+                <div className="flex  gap-4 pb-2">
+                    <div className="w-full">
+                        <Label htmlFor="">Lugar de Trabajo:</Label>
+                        <Input
+                            id=""
+                            {...register("workplace")}
+                            placeholder="Lugar de Trabajo"
+                            className="bg-white" />
+                        {errors.workplace && (
+                            <p className="text-red-600">{errors.workplace.message}</p>
+                        )}
+                    </div>
+                    <div className="w-full">
+                        <Label htmlFor="jobTitle">Cargo:</Label>
+                        <Input
+                            id="jobTitle"
+                            {...register("jobTitle")}
+                            placeholder="Enter job title"
+                        />
+                        {errors.jobTitle && (
+                            <p className="text-red-600">{errors.jobTitle.message}</p>
+                        )}
+                    </div>
                 </div>
 
                 <div className="flex justify-center">
                     <Button type="submit" className="px-4 py-2">
-                        Create Contact
+                        Crear Contacto
                     </Button>
                 </div>
             </form>

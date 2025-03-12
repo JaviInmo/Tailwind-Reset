@@ -11,6 +11,7 @@ type FormSchemaData = {
   statePhone: string;
   landlinePhone: string;
   jobTitle: string;
+  workplace: string;
 };
 
 export async function customSubmit(data: FormSchemaData) {
@@ -29,6 +30,7 @@ export async function registerAction(data: FormSchemaData) {
         statePhone: data.statePhone,
         landlinePhone: data.landlinePhone,
         jobTitle: data.jobTitle,
+        workplace:data.workplace
       },
     });
 

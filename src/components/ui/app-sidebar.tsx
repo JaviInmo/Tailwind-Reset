@@ -97,7 +97,7 @@ import {
 
   const phonebook=[{
     title:"Agenda",
-    url:"/admin/agenda/create",
+    url:"/admin/agenda/read",
     icon: Phone,
   }]
 
