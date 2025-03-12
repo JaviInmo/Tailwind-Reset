@@ -114,8 +114,6 @@ export default function TablePage({ data, pageCount, currentPage }: TableProps) 
         pushQueryString("search", debouncedSearch);
     }, [debouncedSearch, pushQueryString]);
 
-    // Se eliminó el estado de tableData para usar directamente "data" de las props
-
     const [deleteModal, setDeleteModal] = useState<{ show: boolean; id: number | null }>({
         show: false,
         id: null,
@@ -283,7 +281,7 @@ export default function TablePage({ data, pageCount, currentPage }: TableProps) 
                         value={getQueryString("limit") || "10"}
                         onValueChange={(value) => pushQueryString("limit", value)}
                     >
-                        <SelectTrigger className="w-[70px] h-6 px-2  py-0 shadow-md">
+                        <SelectTrigger className="h-6 w-[70px] px-2 py-0 shadow-md">
                             <SelectValue placeholder="Selecciona" />
                         </SelectTrigger>
                         <SelectContent>
@@ -294,19 +292,19 @@ export default function TablePage({ data, pageCount, currentPage }: TableProps) 
                         </SelectContent>
                     </Select>
                 </div>
-                <div className="btn-group gap-2">
+                <div className="flex ">
                     {Array.from({ length: pageCount }).map((_, i) => (
-                       <button
-                       key={i + 1}
-                       className={`border border-gray-400 px-2 py-0 shadow-md h-6 w-6 flex items-center justify-center ${
-                         currentPage === i + 1
-                           ? "rounded-sm border-slate-950 bg-slate-800 text-white"
-                           : "rounded bg-white text-gray-700"
-                       }`}
-                       onClick={() => pushQueryString("page", `${i + 1}`)}
-                     >
-                       {i + 1}
-                     </button>
+                        <button
+                            key={i + 1}
+                            className={`flex h-6 w-6 items-center justify-center border border-gray-400 px-2 py-0 shadow-md ${
+                                currentPage === i + 1 ?
+                                    "rounded-sm border-slate-950 bg-slate-800 text-white"
+                                :   "rounded bg-white text-gray-700"
+                            }`}
+                            onClick={() => pushQueryString("page", `${i + 1}`)}
+                        >
+                            {i + 1}
+                        </button>
                     ))}
                 </div>
             </div>
