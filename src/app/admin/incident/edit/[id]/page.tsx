@@ -18,7 +18,7 @@ export default async function FormPage({ params }: { params: { id: string } }) {
     }
 
     const variableData = await prisma.variable.findMany({
-        include: { categories: { include: { subcategories: true } } },
+        include: { categories: { include: { subcategories: {include:{secondSubcategories:true}} } } },
     });
 
     const provinceData = await prisma.province.findMany({

@@ -11,7 +11,6 @@ import {
     SelectContent,
     SelectGroup,
     SelectItem,
-    SelectLabel,
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
@@ -28,7 +27,7 @@ const formSchema = z.object({
     categoria: z.coerce.number({ required_error: "Categoría es requerido" }),
     subcategoria: z.coerce.number({ required_error: "Subcategoría es requerido" }),
     segundasubcategoria: z.coerce.number().optional(),
-    amount: z.coerce.number().min(0.01, { message: "Toneladas debe ser mayor a 0.01" }),
+    amount: z.coerce.number().min(0.01, { message: "Cantidad debe ser mayor a 0.01" }),
     numberOfPeople: z.coerce.number().min(0, { message: "El número de personas no puede ser negativo" }),
     description: z.string({ required_error: "Descripción es requerido" }).min(1, { message: "Descripción es requerido" }),
     titulo: z.string({ required_error: "Título es requerido" }).min(1, { message: "Título es requerido" }),
@@ -51,9 +50,10 @@ type ReportFormProps = {
             };
         }>
     >;
+    readOnly?: boolean;
 };
 
-export function ReportForm({ incidentData, variableData, provinceData }: ReportFormProps) {
+export function ReportForm({ incidentData, variableData, provinceData, readOnly = false }: ReportFormProps) {
     const [showSuccessModal, setShowSuccessModal] = useState(false);
 
     const {
@@ -82,10 +82,8 @@ export function ReportForm({ incidentData, variableData, provinceData }: ReportF
         },
     });
 
-    console.log("errors", errors);
-
     async function onSubmit(data: FormSchemaData) {
-        console.log("Datos enviados:", data);
+        if (readOnly) return; // En modo solo lectura no se procesa el envío
         const response = await registerAction({
             categoryId: data.categoria,
             subcategoryId: data.subcategoria,
@@ -93,7 +91,7 @@ export function ReportForm({ incidentData, variableData, provinceData }: ReportF
             variableId: data.variable,
             amount: data.amount,
             date: new Date(data.fecha),
-            numberOfPeople: data.numberOfPeople, // Se envía el número de personas
+            numberOfPeople: data.numberOfPeople,
             description: data.description,
             title: data.titulo,
             municipalityId: data.municipio,
@@ -109,6 +107,7 @@ export function ReportForm({ incidentData, variableData, provinceData }: ReportF
     const handleCloseSuccessModal = () => {
         setShowSuccessModal(false);
     };
+
     const watchedProvince = watch("provincia");
     const variableId = watch("variable");
     const categoryId = watch("categoria");
@@ -125,19 +124,19 @@ export function ReportForm({ incidentData, variableData, provinceData }: ReportF
 
     const [provinceId, setProvinceId] = useState("");
 
-    console.log("watchedProvince", watchedProvince);
-
     useEffect(() => {
         setProvinceId(watchedProvince);
     }, [watchedProvince]);
 
     return (
         <div className="flex h-full w-full items-center justify-center overflow-y-auto py-0">
-            <div className="flex h-full w-full flex-col items-center justify-center rounded bg-white py-2  shadow-sm">
+            <div className="flex h-full w-full flex-col items-center justify-center rounded bg-white py-2 shadow-sm">
                 <div className="text-center pb-4">
                     <p className="font-semibold">Formulario de Incidencias</p>
                     <p className="font-semibold">
-                        Rellene los campos del formulario para registrar la incidencia.
+                        {readOnly
+                            ? "Visualización de incidencia "
+                            : "Rellene los campos del formulario para registrar la incidencia."}
                     </p>
                 </div>
 
@@ -147,25 +146,24 @@ export function ReportForm({ incidentData, variableData, provinceData }: ReportF
                 >
                     <div className="flex gap-4 pb-2">
                         <div className="w-full">
-                        <Label className="block pb-2">Fecha:</Label>
-                        <Input
-                            type="date"
-                            {...register("fecha")}
-                            className="w-full rounded border border-gray-300 bg-white p-2"
-                        />
-                        {errors.fecha && <p className="text-red-600">{errors.fecha.message}</p>}
+                            <Label className="block pb-2">Fecha:</Label>
+                            <Input
+                                type="date"
+                                {...register("fecha")}
+                                className="w-full rounded border border-gray-300 bg-white p-2"
+                                disabled={readOnly}
+                            />
+                            {errors.fecha && <p className="text-red-600">{errors.fecha.message}</p>}
                         </div>
                         <div className="w-full">
-                        <Label className="block pb-2">Titulo:</Label>
+                            <Label className="block pb-2">Título:</Label>
                             <Input
-                                type="String"
-                               
+                                type="text"
                                 {...register("titulo")}
                                 className="w-full rounded border border-gray-300 bg-white p-2"
+                                disabled={readOnly}
                             />
-                            {errors.titulo && (
-                                <p className="text-red-600">{errors.titulo.message}</p>
-                            )}
+                            {errors.titulo && <p className="text-red-600">{errors.titulo.message}</p>}
                         </div>
                     </div>
 
@@ -176,7 +174,7 @@ export function ReportForm({ incidentData, variableData, provinceData }: ReportF
                                 control={control}
                                 name="provincia"
                                 render={({ field: { onChange, value } }) => (
-                                    <Select onValueChange={onChange} value={value}>
+                                    <Select onValueChange={onChange} value={value} disabled={readOnly}>
                                         <SelectTrigger className="w-full rounded border border-gray-300 bg-white p-2">
                                             <SelectValue placeholder="Seleccionar provincia" />
                                         </SelectTrigger>
@@ -192,9 +190,7 @@ export function ReportForm({ incidentData, variableData, provinceData }: ReportF
                                     </Select>
                                 )}
                             />
-                            {errors.provincia && (
-                                <p className="text-red-600">{errors.provincia.message}</p>
-                            )}
+                            {errors.provincia && <p className="text-red-600">{errors.provincia.message}</p>}
                         </div>
                         <div className="w-full">
                             <Label className="block pb-2">Municipio:</Label>
@@ -205,7 +201,7 @@ export function ReportForm({ incidentData, variableData, provinceData }: ReportF
                                     <Select
                                         onValueChange={onChange}
                                         value={value}
-                                        disabled={!provinceId}
+                                        disabled={readOnly || !provinceId}
                                     >
                                         <SelectTrigger className="w-full rounded border border-gray-300 bg-white p-2 disabled:bg-slate-300">
                                             <SelectValue placeholder="Seleccionar Municipio" />
@@ -222,9 +218,7 @@ export function ReportForm({ incidentData, variableData, provinceData }: ReportF
                                     </Select>
                                 )}
                             />
-                            {errors.municipio && (
-                                <p className="text-red-600">{errors.municipio.message}</p>
-                            )}
+                            {errors.municipio && <p className="text-red-600">{errors.municipio.message}</p>}
                         </div>
                     </div>
 
@@ -238,6 +232,7 @@ export function ReportForm({ incidentData, variableData, provinceData }: ReportF
                                     <Select
                                         onValueChange={onChange}
                                         value={value ? value.toString() : ""}
+                                        disabled={readOnly}
                                     >
                                         <SelectTrigger className="w-full rounded border border-gray-300 bg-white p-2">
                                             <SelectValue placeholder="Seleccionar variable" />
@@ -245,10 +240,7 @@ export function ReportForm({ incidentData, variableData, provinceData }: ReportF
                                         <SelectContent>
                                             <SelectGroup>
                                                 {variableData.map((opt) => (
-                                                    <SelectItem
-                                                        key={opt.id}
-                                                        value={opt.id.toString()}
-                                                    >
+                                                    <SelectItem key={opt.id} value={opt.id.toString()}>
                                                         {opt.name}
                                                     </SelectItem>
                                                 ))}
@@ -257,10 +249,7 @@ export function ReportForm({ incidentData, variableData, provinceData }: ReportF
                                     </Select>
                                 )}
                             />
-
-                            {errors.variable && (
-                                <p className="text-red-600">{errors.variable.message}</p>
-                            )}
+                            {errors.variable && <p className="text-red-600">{errors.variable.message}</p>}
                         </div>
 
                         <div className="w-full">
@@ -272,7 +261,7 @@ export function ReportForm({ incidentData, variableData, provinceData }: ReportF
                                     <Select
                                         onValueChange={onChange}
                                         value={value ? value.toString() : ""}
-                                        disabled={!variableId}
+                                        disabled={readOnly || !variableId}
                                     >
                                         <SelectTrigger className="w-full rounded border border-gray-300 bg-white p-2 text-black disabled:bg-slate-300">
                                             <SelectValue placeholder="Seleccionar categoría" />
@@ -280,10 +269,7 @@ export function ReportForm({ incidentData, variableData, provinceData }: ReportF
                                         <SelectContent>
                                             <SelectGroup>
                                                 {variableOptions?.categories?.map((opt) => (
-                                                    <SelectItem
-                                                        key={opt.id}
-                                                        value={opt.id.toString()}
-                                                    >
+                                                    <SelectItem key={opt.id} value={opt.id.toString()}>
                                                         {opt.name}
                                                     </SelectItem>
                                                 ))}
@@ -292,9 +278,7 @@ export function ReportForm({ incidentData, variableData, provinceData }: ReportF
                                     </Select>
                                 )}
                             />
-                            {errors.categoria && (
-                                <p className="text-red-600">{errors.categoria.message}</p>
-                            )}
+                            {errors.categoria && <p className="text-red-600">{errors.categoria.message}</p>}
                         </div>
                     </div>
 
@@ -308,7 +292,7 @@ export function ReportForm({ incidentData, variableData, provinceData }: ReportF
                                     <Select
                                         onValueChange={onChange}
                                         value={value ? value.toString() : ""}
-                                        disabled={!categoryId}
+                                        disabled={readOnly || !categoryId}
                                     >
                                         <SelectTrigger className="w-full rounded border border-gray-300 bg-white p-2 text-black disabled:bg-slate-300">
                                             <SelectValue placeholder="Seleccionar subcategoría" />
@@ -316,10 +300,7 @@ export function ReportForm({ incidentData, variableData, provinceData }: ReportF
                                         <SelectContent>
                                             <SelectGroup>
                                                 {subcategoriesOptions?.map((opt) => (
-                                                    <SelectItem
-                                                        key={opt.id}
-                                                        value={opt.id.toString()}
-                                                    >
+                                                    <SelectItem key={opt.id} value={opt.id.toString()}>
                                                         {opt.name}
                                                     </SelectItem>
                                                 ))}
@@ -328,9 +309,7 @@ export function ReportForm({ incidentData, variableData, provinceData }: ReportF
                                     </Select>
                                 )}
                             />
-                            {errors.subcategoria && (
-                                <p className="text-red-600">{errors.subcategoria.message}</p>
-                            )}
+                            {errors.subcategoria && <p className="text-red-600">{errors.subcategoria.message}</p>}
                         </div>
 
                         <div className="w-full">
@@ -342,7 +321,7 @@ export function ReportForm({ incidentData, variableData, provinceData }: ReportF
                                     <Select
                                         onValueChange={onChange}
                                         value={value ? value.toString() : ""}
-                                        disabled={!categoryId}
+                                        disabled={readOnly || !categoryId}
                                     >
                                         <SelectTrigger className="w-full rounded border border-gray-300 bg-white p-2 text-black disabled:bg-slate-300">
                                             <SelectValue placeholder="Seleccionar segundasubcategoría" />
@@ -350,10 +329,7 @@ export function ReportForm({ incidentData, variableData, provinceData }: ReportF
                                         <SelectContent>
                                             <SelectGroup>
                                                 {secondSubcategoriesOptions?.map((opt) => (
-                                                    <SelectItem
-                                                        key={opt.id}
-                                                        value={opt.id.toString()}
-                                                    >
+                                                    <SelectItem key={opt.id} value={opt.id.toString()}>
                                                         {opt.name}
                                                     </SelectItem>
                                                 ))}
@@ -362,25 +338,21 @@ export function ReportForm({ incidentData, variableData, provinceData }: ReportF
                                     </Select>
                                 )}
                             />
-
-                            {errors.segundasubcategoria && (
-                                <p className="text-red-600">{errors.segundasubcategoria.message}</p>
-                            )}
+                            {errors.segundasubcategoria && <p className="text-red-600">{errors.segundasubcategoria.message}</p>}
                         </div>
                     </div>
 
                     <div className="flex gap-4 pb-2">
                         <div className="w-full">
-                            <Label className="block pb-2">Toneladas:</Label>
+                            <Label className="block pb-2">Cantidad:</Label>
                             <Input
                                 type="number"
                                 step="0.01"
                                 {...register("amount")}
                                 className="w-full rounded border border-gray-300 bg-white p-2"
+                                disabled={readOnly}
                             />
-                            {errors.amount && (
-                                <p className="text-red-600">{errors.amount.message}</p>
-                            )}
+                            {errors.amount && <p className="text-red-600">{errors.amount.message}</p>}
                         </div>
 
                         <div className="w-full">
@@ -390,10 +362,9 @@ export function ReportForm({ incidentData, variableData, provinceData }: ReportF
                                 {...register("numberOfPeople")}
                                 className="w-full rounded border border-gray-300 bg-white p-2"
                                 min={0}
+                                disabled={readOnly}
                             />
-                            {errors.numberOfPeople && (
-                                <p className="text-red-600">{errors.numberOfPeople.message}</p>
-                            )}
+                            {errors.numberOfPeople && <p className="text-red-600">{errors.numberOfPeople.message}</p>}
                         </div>
                     </div>
 
@@ -402,20 +373,21 @@ export function ReportForm({ incidentData, variableData, provinceData }: ReportF
                         <Textarea
                             {...register("description")}
                             className="w-full rounded border border-gray-300 bg-white p-2"
+                            disabled={readOnly}
                         ></Textarea>
-                        {errors.description && (
-                            <p className="text-red-600">{errors.description.message}</p>
-                        )}
+                        {errors.description && <p className="text-red-600">{errors.description.message}</p>}
                     </div>
 
-                    <div className="flex justify-center">
-                        <Button
-                            type="submit"
-                            className="w-1/4 rounded border-slate-700 bg-slate-800 py-2 text-slate-100 hover:bg-slate-950"
-                        >
-                            Crear Incidencia
-                        </Button>
-                    </div>
+                    {!readOnly && (
+                        <div className="flex justify-center">
+                            <Button
+                                type="submit"
+                                className="w-1/4 rounded border-slate-700 bg-slate-800 py-2 text-slate-100 hover:bg-slate-950"
+                            >
+                                Crear Incidencia
+                            </Button>
+                        </div>
+                    )}
                 </form>
 
                 {showSuccessModal && (

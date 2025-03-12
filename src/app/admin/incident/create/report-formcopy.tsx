@@ -1,35 +1,42 @@
-/* eslint-disable @typescript-eslint/ban-types */
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Prisma } from "@prisma/client";
 import { useEffect, useState } from "react";
-import { useForm } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
 import { z } from "zod";
 import { registerAction } from "./form.action";
+import {
+    Select,
+    SelectContent,
+    SelectGroup,
+    SelectItem,
+    SelectLabel,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Button } from "@/components/ui/button";
 
 const formSchema = z.object({
     fecha: z.string().date("Fecha es requerido"),
-    provincia: z
-        .string({ required_error: "Provincia es requerido" })
-        .min(1, { message: "Provincia es requerido" }),
-    municipio: z
-        .string({ required_error: "Municipio es requerido" })
-        .min(1, { message: "Municipio es requerido" }),
+    provincia: z.string({ required_error: "Provincia es requerido" }).min(1, { message: "Provincia es requerido" }),
+    municipio: z.string({ required_error: "Municipio es requerido" }).min(1, { message: "Municipio es requerido" }),
     variable: z.coerce.number({ required_error: "Variable es requerido" }),
     categoria: z.coerce.number({ required_error: "Categoría es requerido" }),
     subcategoria: z.coerce.number({ required_error: "Subcategoría es requerido" }),
     segundasubcategoria: z.coerce.number().optional(),
     amount: z.coerce.number().min(0.01, { message: "Toneladas debe ser mayor a 0.01" }),
-    description: z
-        .string({ required_error: "Descripción es requerido" })
-        .min(1, { message: "Descripción es requerido" }),
+    numberOfPeople: z.coerce.number().min(0, { message: "El número de personas no puede ser negativo" }),
+    description: z.string({ required_error: "Descripción es requerido" }).min(1, { message: "Descripción es requerido" }),
+    titulo: z.string({ required_error: "Título es requerido" }).min(1, { message: "Título es requerido" }),
 });
-
 type FormSchemaData = z.infer<typeof formSchema>;
 
 type ReportFormProps = {
-    incidentData?: Prisma.IncidentGetPayload<{}>;
+    incidentData?: Prisma.IncidentGetPayload<true> & { numberOfPeople?: number };
     provinceData: Array<Prisma.ProvinceGetPayload<{ include: { municipalities: true } }>>;
     variableData: Array<
         Prisma.VariableGetPayload<{
@@ -37,7 +44,7 @@ type ReportFormProps = {
                 categories: {
                     include: {
                         subcategories: {
-                            include: { secondSubcategories: true }; // Agregar segunda subcategoría aquí
+                            include: { secondSubcategories: true };
                         };
                     };
                 };
@@ -55,14 +62,15 @@ export function ReportForm({ incidentData, variableData, provinceData }: ReportF
         watch,
         setError,
         reset,
+        control,
         formState: { errors },
     } = useForm<FormSchemaData>({
         resolver: zodResolver(formSchema),
         mode: "onTouched",
         defaultValues: {
-            fecha:
-                incidentData ? new Date(incidentData.date).toISOString().split("T")[0] : undefined,
+            fecha: incidentData ? new Date(incidentData.date).toISOString().split("T")[0] : undefined,
             amount: incidentData?.amount ?? undefined,
+            numberOfPeople: incidentData?.numberOfPeople ?? 0,
             categoria: incidentData?.categoryId ?? undefined,
             subcategoria: incidentData?.subcategoryId ?? undefined,
             segundasubcategoria: incidentData?.secondSubcategoryId ?? undefined,
@@ -70,6 +78,7 @@ export function ReportForm({ incidentData, variableData, provinceData }: ReportF
             provincia: incidentData?.provinceId,
             municipio: incidentData?.municipalityId,
             description: incidentData?.description,
+            titulo: incidentData?.title, 
         },
     });
 
@@ -84,7 +93,9 @@ export function ReportForm({ incidentData, variableData, provinceData }: ReportF
             variableId: data.variable,
             amount: data.amount,
             date: new Date(data.fecha),
+            numberOfPeople: data.numberOfPeople, // Se envía el número de personas
             description: data.description,
+            title: data.titulo,
             municipalityId: data.municipio,
             provinceId: data.provincia,
         });
@@ -98,14 +109,13 @@ export function ReportForm({ incidentData, variableData, provinceData }: ReportF
     const handleCloseSuccessModal = () => {
         setShowSuccessModal(false);
     };
-
-    const provinceId = watch("provincia");
+    const watchedProvince = watch("provincia");
     const variableId = watch("variable");
     const categoryId = watch("categoria");
     const subcategoryId = watch("subcategoria");
 
     const variableOptions = variableData.find((v) => v.id === +variableId);
-    const municipalityOptions = provinceData.find((p) => p.id === provinceId)?.municipalities;
+    const municipalityOptions = provinceData.find((p) => p.id === watchedProvince)?.municipalities;
     const subcategoriesOptions = variableOptions?.categories?.find(
         (c) => c.id === +categoryId,
     )?.subcategories;
@@ -113,203 +123,328 @@ export function ReportForm({ incidentData, variableData, provinceData }: ReportF
         (sc) => sc.id === +subcategoryId,
     )?.secondSubcategories;
 
+    const [provinceId, setProvinceId] = useState("");
+
+    console.log("watchedProvince", watchedProvince);
+
+    useEffect(() => {
+        setProvinceId(watchedProvince);
+    }, [watchedProvince]);
+
     return (
-        <div className="flex h-full flex-col items-center justify-center p-4 shadow-lg">
-            <div className="text-center">
-                <p className="font-semibold">Formulario de Incidencias</p>
-                <p className="font-semibold">
-                    Rellene los campos del formulario para registrar la incidencia.
-                </p>
-            </div>
-
-            <form
-                onSubmit={handleSubmit(onSubmit)}
-                className="flex h-full w-full flex-col gap-2 overflow-y-auto px-2 py-2 lg:h-auto lg:w-8/12"
-            >
-                <div className="pb-4">
-                    <label className="block">Fecha:</label>
-                    <input
-                        type="date"
-                        {...register("fecha")}
-                        className="w-full rounded border border-gray-300 p-2"
-                    />
-                    {errors.fecha && <p className="text-red-600">{errors.fecha.message}</p>}
+        <div className="flex h-full w-full items-center justify-center overflow-y-auto py-0">
+            <div className="flex h-full w-full flex-col items-center justify-center rounded bg-white py-2  shadow-sm">
+                <div className="text-center pb-4">
+                    <p className="font-semibold">Formulario de Incidencias</p>
+                    <p className="font-semibold">
+                        Rellene los campos del formulario para registrar la incidencia.
+                    </p>
                 </div>
 
-                <div className="flex gap-4 pb-4">
-                    <div className="w-full">
-                        <label className="block">Provincia:</label>
-                        <select
-                            {...register("provincia")}
-                            className="w-full rounded border border-gray-300 p-2"
-                        >
-                            <option value="">Seleccionar provincia</option>
-                            {provinceData.map((opt) => (
-                                <option key={opt.id} value={opt.id}>
-                                    {opt.name}
-                                </option>
-                            ))}
-                        </select>
-                        {errors.provincia && (
-                            <p className="text-red-600">{errors.provincia.message}</p>
-                        )}
-                    </div>
-
-                    <div className="w-full">
-                        <label className="block">Municipio:</label>
-                        <select
-                            {...register("municipio")}
-                            disabled={!provinceId}
-                            className="w-full rounded border border-gray-300 p-2 text-black disabled:bg-slate-300"
-                        >
-                            <option value="">Seleccionar municipio</option>
-                            {municipalityOptions?.map((opt) => (
-                                <option key={opt.id} value={opt.id}>
-                                    {opt.name}
-                                </option>
-                            ))}
-                        </select>
-                        {errors.municipio && (
-                            <p className="text-red-600">{errors.municipio.message}</p>
-                        )}
-                    </div>
-                </div>
-
-                <div className="flex gap-4 pb-4">
-                    <div className="w-full">
-                        <label className="block">Variable:</label>
-                        <select
-                            {...register("variable")}
-                            className="w-full rounded border border-gray-300 p-2"
-                        >
-                            <option value="">Seleccionar variable</option>
-                            {variableData.map((opt) => (
-                                <option key={opt.id} value={opt.id}>
-                                    {opt.name}
-                                </option>
-                            ))}
-                        </select>
-                        {errors.variable && (
-                            <p className="text-red-600">{errors.variable.message}</p>
-                        )}
-                    </div>
-
-                    <div className="w-full">
-                        <label className="block">Categoría:</label>
-                        <select
-                            {...register("categoria")}
-                            disabled={!variableId}
-                            className="w-full rounded border border-gray-300 p-2 text-black disabled:bg-slate-300"
-                        >
-                            <option value="">Seleccionar categoría</option>
-                            {variableOptions?.categories?.map((opt) => (
-                                <option key={opt.id} value={opt.id}>
-                                    {opt.name}
-                                </option>
-                            ))}
-                        </select>
-                        {errors.categoria && (
-                            <p className="text-red-600">{errors.categoria.message}</p>
-                        )}
-                    </div>
-                </div>
-
-                <div className="flex gap-4 pb-4">
-                    <div className="w-full">
-                        <label className="block">Subcategoría:</label>
-                        <select
-                            {...register("subcategoria")}
-                            disabled={!categoryId}
-                            className="w-full rounded border border-gray-300 p-2 text-black disabled:bg-slate-300"
-                        >
-                            <option value="">Seleccionar subcategoría</option>
-                            {subcategoriesOptions?.map((opt) => (
-                                <option key={opt.id} value={opt.id}>
-                                    {opt.name}
-                                </option>
-                            ))}
-                        </select>
-                        {errors.subcategoria && (
-                            <p className="text-red-600">{errors.subcategoria.message}</p>
-                        )}
-                    </div>
-
-                    <div className="w-full">
-                        <label className="block">Segunda Subcategoría:</label>
-                        <select
-                            {...register("segundasubcategoria")}
-                            disabled={!subcategoryId}
-                            className="w-full rounded border border-gray-300 p-2 text-black disabled:bg-slate-300"
-                        >
-                            <option value="">Seleccionar segunda subcategoría</option>
-                            {secondSubcategoriesOptions?.map((opt) => (
-                                <option key={opt.id} value={opt.id}>
-                                    {opt.name}
-                                </option>
-                            ))}
-                        </select>
-                        {errors.segundasubcategoria && (
-                            <p className="text-red-600">{errors.segundasubcategoria.message}</p>
-                        )}
-                    </div>
-                </div>
-
-                <div className="pb-4">
-                    <label className="block">Toneladas:</label>
-                    <input
-                        type="number"
-                        step="0.01"
-                        {...register("amount")}
-                        className="w-full rounded border border-gray-300 p-2"
-                    />
-                    {errors.amount && <p className="text-red-600">{errors.amount.message}</p>}
-                </div>
-
-                <div className="pb-4">
-                    <label className="block">Descripción:</label>
-                    <textarea
-                        {...register("description")}
-                        className="w-full rounded border border-gray-300 p-2"
-                    ></textarea>
-                    {errors.description && (
-                        <p className="text-red-600">{errors.description.message}</p>
-                    )}
-                </div>
-
-                <button
-                    type="submit"
-                    className="rounded border-slate-700 bg-slate-800 px-4 py-2 text-slate-100 hover:bg-slate-950"
+                <form
+                    onSubmit={handleSubmit(onSubmit)}
+                    className="flex max-h-[calc(100vh-150px)] w-full flex-col gap-2 overflow-y-auto px-4 pt-2 lg:w-11/12"
                 >
-                    Crear Incidencia
-                </button>
-            </form>
-
-            {showSuccessModal && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-                    <div className="mx-auto w-11/12 max-w-md rounded-lg bg-white p-4 shadow-lg">
-                        <div className="flex items-center justify-between border-b pb-2">
-                            <h3 className="text-xl font-semibold">Incidencia Creada</h3>
-                            <button
-                                className="text-gray-500 hover:text-gray-700"
-                                onClick={handleCloseSuccessModal}
-                            >
-                                &times;
-                            </button>
+                    <div className="flex gap-4 pb-2">
+                        <div className="w-full">
+                        <Label className="block pb-2">Fecha:</Label>
+                        <Input
+                            type="date"
+                            {...register("fecha")}
+                            className="w-full rounded border border-gray-300 bg-white p-2"
+                        />
+                        {errors.fecha && <p className="text-red-600">{errors.fecha.message}</p>}
                         </div>
-                        <div className="py-4">
-                            <p>Incidencia creada con éxito.</p>
-                        </div>
-                        <div className="flex justify-end pt-2">
-                            <button
-                                className="rounded bg-blue-500 px-4 py-2 text-white hover:bg-blue-600"
-                                onClick={handleCloseSuccessModal}
-                            >
-                                Aceptar
-                            </button>
+                        <div className="w-full">
+                        <Label className="block pb-2">Titulo:</Label>
+                            <Input
+                                type="String"
+                               
+                                {...register("titulo")}
+                                className="w-full rounded border border-gray-300 bg-white p-2"
+                            />
+                            {errors.titulo && (
+                                <p className="text-red-600">{errors.titulo.message}</p>
+                            )}
                         </div>
                     </div>
-                </div>
-            )}
+
+                    <div className="flex gap-4 pb-2">
+                        <div className="w-full">
+                            <Label className="block pb-2">Provincia:</Label>
+                            <Controller
+                                control={control}
+                                name="provincia"
+                                render={({ field: { onChange, value } }) => (
+                                    <Select onValueChange={onChange} value={value}>
+                                        <SelectTrigger className="w-full rounded border border-gray-300 bg-white p-2">
+                                            <SelectValue placeholder="Seleccionar provincia" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectGroup>
+                                                {provinceData.map((opt) => (
+                                                    <SelectItem key={opt.id} value={opt.id}>
+                                                        {opt.name}
+                                                    </SelectItem>
+                                                ))}
+                                            </SelectGroup>
+                                        </SelectContent>
+                                    </Select>
+                                )}
+                            />
+                            {errors.provincia && (
+                                <p className="text-red-600">{errors.provincia.message}</p>
+                            )}
+                        </div>
+                        <div className="w-full">
+                            <Label className="block pb-2">Municipio:</Label>
+                            <Controller
+                                control={control}
+                                name="municipio"
+                                render={({ field: { onChange, value } }) => (
+                                    <Select
+                                        onValueChange={onChange}
+                                        value={value}
+                                        disabled={!provinceId}
+                                    >
+                                        <SelectTrigger className="w-full rounded border border-gray-300 bg-white p-2 disabled:bg-slate-300">
+                                            <SelectValue placeholder="Seleccionar Municipio" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectGroup>
+                                                {municipalityOptions?.map((opt) => (
+                                                    <SelectItem key={opt.id} value={opt.id}>
+                                                        {opt.name}
+                                                    </SelectItem>
+                                                ))}
+                                            </SelectGroup>
+                                        </SelectContent>
+                                    </Select>
+                                )}
+                            />
+                            {errors.municipio && (
+                                <p className="text-red-600">{errors.municipio.message}</p>
+                            )}
+                        </div>
+                    </div>
+
+                    <div className="flex gap-4 pb-2">
+                        <div className="w-full">
+                            <Label className="block pb-2">Variable:</Label>
+                            <Controller
+                                control={control}
+                                name="variable"
+                                render={({ field: { onChange, value } }) => (
+                                    <Select
+                                        onValueChange={onChange}
+                                        value={value ? value.toString() : ""}
+                                    >
+                                        <SelectTrigger className="w-full rounded border border-gray-300 bg-white p-2">
+                                            <SelectValue placeholder="Seleccionar variable" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectGroup>
+                                                {variableData.map((opt) => (
+                                                    <SelectItem
+                                                        key={opt.id}
+                                                        value={opt.id.toString()}
+                                                    >
+                                                        {opt.name}
+                                                    </SelectItem>
+                                                ))}
+                                            </SelectGroup>
+                                        </SelectContent>
+                                    </Select>
+                                )}
+                            />
+
+                            {errors.variable && (
+                                <p className="text-red-600">{errors.variable.message}</p>
+                            )}
+                        </div>
+
+                        <div className="w-full">
+                            <Label className="block pb-2">Categoría:</Label>
+                            <Controller
+                                control={control}
+                                name="categoria"
+                                render={({ field: { onChange, value } }) => (
+                                    <Select
+                                        onValueChange={onChange}
+                                        value={value ? value.toString() : ""}
+                                        disabled={!variableId}
+                                    >
+                                        <SelectTrigger className="w-full rounded border border-gray-300 bg-white p-2 text-black disabled:bg-slate-300">
+                                            <SelectValue placeholder="Seleccionar categoría" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectGroup>
+                                                {variableOptions?.categories?.map((opt) => (
+                                                    <SelectItem
+                                                        key={opt.id}
+                                                        value={opt.id.toString()}
+                                                    >
+                                                        {opt.name}
+                                                    </SelectItem>
+                                                ))}
+                                            </SelectGroup>
+                                        </SelectContent>
+                                    </Select>
+                                )}
+                            />
+                            {errors.categoria && (
+                                <p className="text-red-600">{errors.categoria.message}</p>
+                            )}
+                        </div>
+                    </div>
+
+                    <div className="flex gap-4 pb-2">
+                        <div className="w-full">
+                            <Label className="block pb-2">Subcategoría:</Label>
+                            <Controller
+                                control={control}
+                                name="subcategoria"
+                                render={({ field: { onChange, value } }) => (
+                                    <Select
+                                        onValueChange={onChange}
+                                        value={value ? value.toString() : ""}
+                                        disabled={!categoryId}
+                                    >
+                                        <SelectTrigger className="w-full rounded border border-gray-300 bg-white p-2 text-black disabled:bg-slate-300">
+                                            <SelectValue placeholder="Seleccionar subcategoría" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectGroup>
+                                                {subcategoriesOptions?.map((opt) => (
+                                                    <SelectItem
+                                                        key={opt.id}
+                                                        value={opt.id.toString()}
+                                                    >
+                                                        {opt.name}
+                                                    </SelectItem>
+                                                ))}
+                                            </SelectGroup>
+                                        </SelectContent>
+                                    </Select>
+                                )}
+                            />
+                            {errors.subcategoria && (
+                                <p className="text-red-600">{errors.subcategoria.message}</p>
+                            )}
+                        </div>
+
+                        <div className="w-full">
+                            <Label className="block pb-2">Segunda Subcategoría:</Label>
+                            <Controller
+                                control={control}
+                                name="segundasubcategoria"
+                                render={({ field: { onChange, value } }) => (
+                                    <Select
+                                        onValueChange={onChange}
+                                        value={value ? value.toString() : ""}
+                                        disabled={!categoryId}
+                                    >
+                                        <SelectTrigger className="w-full rounded border border-gray-300 bg-white p-2 text-black disabled:bg-slate-300">
+                                            <SelectValue placeholder="Seleccionar segundasubcategoría" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectGroup>
+                                                {secondSubcategoriesOptions?.map((opt) => (
+                                                    <SelectItem
+                                                        key={opt.id}
+                                                        value={opt.id.toString()}
+                                                    >
+                                                        {opt.name}
+                                                    </SelectItem>
+                                                ))}
+                                            </SelectGroup>
+                                        </SelectContent>
+                                    </Select>
+                                )}
+                            />
+
+                            {errors.segundasubcategoria && (
+                                <p className="text-red-600">{errors.segundasubcategoria.message}</p>
+                            )}
+                        </div>
+                    </div>
+
+                    <div className="flex gap-4 pb-2">
+                        <div className="w-full">
+                            <Label className="block pb-2">Toneladas:</Label>
+                            <Input
+                                type="number"
+                                step="0.01"
+                                {...register("amount")}
+                                className="w-full rounded border border-gray-300 bg-white p-2"
+                            />
+                            {errors.amount && (
+                                <p className="text-red-600">{errors.amount.message}</p>
+                            )}
+                        </div>
+
+                        <div className="w-full">
+                            <Label className="block pb-2">No de Personas:</Label>
+                            <Input
+                                type="number"
+                                {...register("numberOfPeople")}
+                                className="w-full rounded border border-gray-300 bg-white p-2"
+                                min={0}
+                            />
+                            {errors.numberOfPeople && (
+                                <p className="text-red-600">{errors.numberOfPeople.message}</p>
+                            )}
+                        </div>
+                    </div>
+
+                    <div className="pb-4">
+                        <Label className="block pb-2">Descripción:</Label>
+                        <Textarea
+                            {...register("description")}
+                            className="w-full rounded border border-gray-300 bg-white p-2"
+                        ></Textarea>
+                        {errors.description && (
+                            <p className="text-red-600">{errors.description.message}</p>
+                        )}
+                    </div>
+
+                    <div className="flex justify-center">
+                        <Button
+                            type="submit"
+                            className="w-1/4 rounded border-slate-700 bg-slate-800 py-2 text-slate-100 hover:bg-slate-950"
+                        >
+                            Crear Incidencia
+                        </Button>
+                    </div>
+                </form>
+
+                {showSuccessModal && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+                        <div className="mx-auto w-11/12 max-w-md rounded-lg bg-white p-4 shadow-lg">
+                            <div className="flex items-center justify-between border-b pb-2">
+                                <h3 className="text-xl font-semibold">Incidencia Creada</h3>
+                                <button
+                                    className="text-gray-500 hover:text-gray-700"
+                                    onClick={handleCloseSuccessModal}
+                                >
+                                    &times;
+                                </button>
+                            </div>
+                            <div className="py-4">
+                                <p>Incidencia creada con éxito.</p>
+                            </div>
+                            <div className="flex justify-end pt-2">
+                                <Button
+                                    className="rounded bg-blue-500 px-4 py-2 text-white hover:bg-blue-600"
+                                    onClick={handleCloseSuccessModal}
+                                >
+                                    Aceptar
+                                </Button>
+                            </div>
+                        </div>
+                    </div>
+                )}
+            </div>
         </div>
     );
 }

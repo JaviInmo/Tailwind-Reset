@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowDownUp, InfoIcon } from "lucide-react";
+import { ArrowDownUp } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import DeleteModal from "@/app/admin/incident/delete/page";
@@ -72,7 +72,7 @@ interface Data {
     provincia: string;
     municipio: string;
     fecha: string;
-    titulo:string;
+    titulo: string;
 }
 
 interface TableProps {
@@ -108,13 +108,16 @@ export default function TablePage({ data, pageCount, currentPage }: TableProps) 
     const [visibleColumns, setVisibleColumns] = useState(initialVisibleColumns);
     const [filterOpen, setFilterOpen] = useState(false);
 
-    // Manejamos el estado para el input de búsqueda (con debounce)
+    // Estado para la búsqueda (con debounce)
     const [search, setSearch] = useState(getQueryString("search") ?? "");
     const debouncedSearch = useDebounce(search, 300);
 
     useEffect(() => {
         pushQueryString("search", debouncedSearch);
     }, [debouncedSearch, pushQueryString]);
+
+    // Estado para mantener los IDs de las incidencias mostradas
+    const [incidentIds, setIncidentIds] = useState<number[]>(data.map(item => item.id));
 
     const [deleteModal, setDeleteModal] = useState<{ show: boolean; id: number | null }>({
         show: false,
@@ -128,22 +131,25 @@ export default function TablePage({ data, pageCount, currentPage }: TableProps) 
     const requestSort = (columnKey: keyof Data) => {
         const currentSort = getQueryString("sort");
         const currentOrder = getQueryString("order");
-        // Se asigna un valor por defecto a cada campo
         const defaultOrder = columnKey === "numberOfPeople" ? "desc" : "asc";
         const newOrder =
-            currentSort === columnKey.toString() && currentOrder === defaultOrder ?
-                defaultOrder === "asc" ?
-                    "desc"
-                :   "asc"
-            :   defaultOrder;
+            currentSort === columnKey.toString() && currentOrder === defaultOrder
+                ? defaultOrder === "asc" ? "desc" : "asc"
+                : defaultOrder;
         updateQuery({ sort: columnKey.toString(), order: newOrder });
     };
 
     const confirmDelete = async (id: number) => {
-        const result = await handleDeleteIncidentAction(id);
+        // Se pasa el listado actual de IDs (como string separado por comas)
+        const result = await handleDeleteIncidentAction(id, incidentIds.join(","));
         if (result.success) {
             console.log(`Incidencia con ID: ${id} eliminada`);
-            // Se espera que al actualizar la URL se refresque la data, por lo que no es necesario actualizar el estado local
+            // Actualiza el estado eliminando el id borrado y actualiza la query string con el nuevo listado
+            setIncidentIds((prev) => {
+                const updated = prev.filter(itemId => itemId !== id);
+                pushQueryString("ids", updated.join(","));
+                return updated;
+            });
         } else {
             console.error(`Error al eliminar la incidencia con ID: ${id}`, result.error);
         }
@@ -188,7 +194,7 @@ export default function TablePage({ data, pageCount, currentPage }: TableProps) 
                 </div>
             </div>
 
-            <div className="relative w-full overflow-x-auto overflow-y-auto max-h-[calc(100vh-200px)] rounded-lg border border-slate-300">
+            <div className="relative max-h-[calc(100vh-200px)] w-full overflow-x-auto overflow-y-auto rounded-lg border border-slate-300">
                 <Table className="w-full">
                     <TableHeader className="sticky top-0 z-10 bg-white shadow-md">
                         <TableRow>
@@ -200,10 +206,11 @@ export default function TablePage({ data, pageCount, currentPage }: TableProps) 
                                             className={cx(
                                                 "border-r-2 p-2.5 text-sm font-semibold text-slate-800",
                                                 "w-[150px]",
-                                                key === "id" ? "w-[15px] min-w-[15px]"
-                                                : key === "numberOfPeople" || key === "amount" ?
-                                                    "w-[60px] min-w-[60px]"
-                                                :   "w-[60px]",
+                                                key === "id"
+                                                  ? "w-[15px] min-w-[15px]"
+                                                  : key === "numberOfPeople" || key === "amount"
+                                                  ? "w-[60px] min-w-[60px]"
+                                                  : "w-[60px]",
                                                 label === "2° subcat" && "whitespace-nowrap",
                                                 index === columns.length - 1 && "border-r-0",
                                             )}
@@ -228,7 +235,10 @@ export default function TablePage({ data, pageCount, currentPage }: TableProps) 
                         </TableRow>
                     </TableHeader>
                     <TableBody className="text-slate-700">
-                        {data.map((row, rowIndex) => (
+                        {data
+                          // Filtramos según el estado incidentIds
+                          .filter(row => incidentIds.includes(row.id))
+                          .map((row, rowIndex) => (
                             <TableRow
                                 key={row.id}
                                 className={cx(rowIndex % 2 === 0 ? "bg-slate-100" : "bg-white")}
@@ -239,9 +249,7 @@ export default function TablePage({ data, pageCount, currentPage }: TableProps) 
                                             <TableCell
                                                 key={key}
                                                 className="w-[200px] max-w-[200px] overflow-hidden truncate whitespace-nowrap border-r-2 px-2 py-2 text-sm"
-                                                title={String(
-                                                    key === "id" ? rowIndex + 1 : row[key],
-                                                )}
+                                                title={String(key === "id" ? rowIndex + 1 : row[key])}
                                             >
                                                 {key === "id" ? rowIndex + 1 : row[key]}
                                             </TableCell>
@@ -261,18 +269,14 @@ export default function TablePage({ data, pageCount, currentPage }: TableProps) 
                                         </Link>
                                         <button
                                             className="flex w-full items-center justify-center"
-                                            onClick={() =>
-                                                setDeleteModal({ show: true, id: row.id })
-                                            }
+                                            onClick={() => setDeleteModal({ show: true, id: row.id })}
                                         >
                                             <RiDeleteBin7Line className="text-lg transition-transform hover:scale-110" />
                                         </button>
-
-                                        <Link href={`/admin/incident/edit/${row.id}`}>
-                                        <button className="flex w-full items-center justify-center">
-                                        
-                                            <GrStatusInfo className="text-lg transition-transform hover:scale-110" />
-                                        </button>
+                                        <Link href={`/admin/incident/view/${row.id}`}>
+                                            <button className="flex w-full items-center justify-center">
+                                                <GrStatusInfo className="text-lg transition-transform hover:scale-110" />
+                                            </button>
                                         </Link>
                                     </div>
                                 </TableCell>
@@ -301,14 +305,14 @@ export default function TablePage({ data, pageCount, currentPage }: TableProps) 
                         </SelectContent>
                     </Select>
                 </div>
-                <div className="flex ">
+                <div className="flex">
                     {Array.from({ length: pageCount }).map((_, i) => (
                         <button
                             key={i + 1}
                             className={`flex h-6 w-6 items-center justify-center border border-gray-400 px-2 py-0 shadow-md ${
-                                currentPage === i + 1 ?
-                                    "rounded-sm border-slate-950 bg-slate-800 text-white"
-                                :   "rounded bg-white text-gray-700"
+                                currentPage === i + 1
+                                    ? "rounded-sm border-slate-950 bg-slate-800 text-white"
+                                    : "rounded bg-white text-gray-700"
                             }`}
                             onClick={() => pushQueryString("page", `${i + 1}`)}
                         >
