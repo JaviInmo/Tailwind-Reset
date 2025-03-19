@@ -111,7 +111,7 @@ export default function ContactsTable({ data, pageCount, currentPage }: TablePro
     }, [debouncedSearch, pushQueryString]);
 
     // Estado para mantener los IDs de los contactos que se muestran
-    const [contactIds, setContactIds] = useState<number[]>(data.map(item => item.id));
+    const [contactIds, setContactIds] = useState<number[]>(data.map((item) => item.id));
 
     const [deleteModal, setDeleteModal] = useState<{ show: boolean; id: number | null }>({
         show: false,
@@ -119,7 +119,7 @@ export default function ContactsTable({ data, pageCount, currentPage }: TablePro
     });
 
     const toggleColumnVisibility = (key: string) => {
-        setVisibleColumns(prev => ({ ...prev, [key]: !prev[key] }));
+        setVisibleColumns((prev) => ({ ...prev, [key]: !prev[key] }));
     };
 
     const requestSort = (columnKey: keyof Contact) => {
@@ -127,9 +127,11 @@ export default function ContactsTable({ data, pageCount, currentPage }: TablePro
         const currentOrder = getQueryString("order");
         const defaultOrder = "asc"; // Puedes ajustar el orden por defecto según cada columna si es necesario
         const newOrder =
-            currentSort === columnKey.toString() && currentOrder === defaultOrder
-                ? defaultOrder === "asc" ? "desc" : "asc"
-                : defaultOrder;
+            currentSort === columnKey.toString() && currentOrder === defaultOrder ?
+                defaultOrder === "asc" ?
+                    "desc"
+                :   "asc"
+            :   defaultOrder;
         updateQuery({ sort: columnKey.toString(), order: newOrder });
     };
 
@@ -139,8 +141,8 @@ export default function ContactsTable({ data, pageCount, currentPage }: TablePro
         if (result.success) {
             console.log(`Contacto con ID: ${id} eliminado`);
             // Actualiza el estado eliminando el id borrado y actualiza la query string
-            setContactIds(prev => {
-                const updated = prev.filter(itemId => itemId !== id);
+            setContactIds((prev) => {
+                const updated = prev.filter((itemId) => itemId !== id);
                 pushQueryString("ids", updated.join(","));
                 return updated;
             });
@@ -200,9 +202,7 @@ export default function ContactsTable({ data, pageCount, currentPage }: TablePro
                                             className={cx(
                                                 "border-r-2 p-2.5 text-sm font-semibold text-slate-800",
                                                 "w-[150px]",
-                                                key === "id"
-                                                    ? "w-[15px] min-w-[15px]"
-                                                    : "w-[150px]",
+                                                key === "id" ? "w-[15px] min-w-[15px]" : "w-[60px]",
                                                 index === columns.length - 1 && "border-r-0",
                                             )}
                                         >
@@ -227,53 +227,62 @@ export default function ContactsTable({ data, pageCount, currentPage }: TablePro
                     </TableHeader>
                     <TableBody className="text-slate-700">
                         {data
-                          // Filtramos según los IDs actuales
-                          .filter(row => contactIds.includes(row.id))
-                          .map((row, rowIndex) => (
-                            <TableRow
-                                key={row.id}
-                                className={cx(rowIndex % 2 === 0 ? "bg-slate-100" : "bg-white")}
-                            >
-                                {columns.map(
-                                    ({ key }) =>
-                                        visibleColumns[key] && (
-                                            <TableCell
-                                                key={key}
-                                                className="w-[200px] max-w-[200px] overflow-hidden truncate whitespace-nowrap border-r-2 px-2 py-2 text-sm"
-                                                title={String(key === "id" ? rowIndex + 1 : row[key])}
-                                            >
-                                                {/* Para el campo "id" se muestra la posición secuencial */}
-                                                {key === "id" ? rowIndex + 1 : row[key]}
-                                            </TableCell>
-                                        ),
-                                )}
-                                <TableCell
-                                    className="sticky right-0 w-[100px] truncate bg-white px-3 py-1 text-sm"
-                                    style={{
-                                        boxShadow: `2px 0 0 ${rowIndex % 2 === 0 ? "white" : "#f1f5f9"} inset`,
-                                    }}
+                            // Filtramos según los IDs actuales
+                            .filter((row) => contactIds.includes(row.id))
+                            .map((row, rowIndex) => (
+                                <TableRow
+                                    key={row.id}
+                                    className={cx(rowIndex % 2 === 0 ? "bg-slate-100" : "bg-white")}
                                 >
-                                    <div className="flex items-center justify-start gap-2 px-1">
-                                        <Link href={`/admin/agenda/edit/${row.id}`}>
-                                            <button className="flex w-full items-center justify-center">
-                                                <FaRegEdit className="text-lg transition-transform hover:scale-110" />
+                                    {columns.map(
+                                        ({ key }) =>
+                                            visibleColumns[key] && (
+                                                <TableCell
+                                                    key={key}
+                                                    className={cx(
+                                                        key === "id" ? "w-[15px] min-w-[15px]" : (
+                                                            "w-[200px] max-w-[200px]"
+                                                        ),
+                                                        "overflow-hidden truncate whitespace-nowrap border-r-2 px-2 py-2 text-sm",
+                                                    )}
+                                                    title={String(
+                                                        key === "id" ? rowIndex + 1 : row[key],
+                                                    )}
+                                                >
+                                                    {key === "id" ? rowIndex + 1 : row[key]}
+                                                </TableCell>
+                                            ),
+                                    )}
+
+                                    <TableCell
+                                        className="sticky right-0 w-[100px] truncate bg-white px-3 py-1 text-sm"
+                                        style={{
+                                            boxShadow: `2px 0 0 ${rowIndex % 2 === 0 ? "white" : "#f1f5f9"} inset`,
+                                        }}
+                                    >
+                                        <div className="flex items-center justify-start gap-2 px-1">
+                                            <Link href={`/admin/agenda/edit/${row.id}`}>
+                                                <button className="flex w-full items-center justify-center">
+                                                    <FaRegEdit className="text-lg transition-transform hover:scale-110" />
+                                                </button>
+                                            </Link>
+                                            <button
+                                                className="flex w-full items-center justify-center"
+                                                onClick={() =>
+                                                    setDeleteModal({ show: true, id: row.id })
+                                                }
+                                            >
+                                                <RiDeleteBin7Line className="text-lg transition-transform hover:scale-110" />
                                             </button>
-                                        </Link>
-                                        <button
-                                            className="flex w-full items-center justify-center"
-                                            onClick={() => setDeleteModal({ show: true, id: row.id })}
-                                        >
-                                            <RiDeleteBin7Line className="text-lg transition-transform hover:scale-110" />
-                                        </button>
-                                        <Link href={`/admin/contact/view/${row.id}`}>
-                                            <button className="flex w-full items-center justify-center">
-                                                {/* Aquí podrías agregar otro icono o acción si lo requieres */}
-                                            </button>
-                                        </Link>
-                                    </div>
-                                </TableCell>
-                            </TableRow>
-                        ))}
+                                            <Link href={`/admin/contact/view/${row.id}`}>
+                                                <button className="flex w-full items-center justify-center">
+                                                    {/* Aquí podrías agregar otro icono o acción si lo requieres */}
+                                                </button>
+                                            </Link>
+                                        </div>
+                                    </TableCell>
+                                </TableRow>
+                            ))}
                     </TableBody>
                 </Table>
             </div>
@@ -302,9 +311,9 @@ export default function ContactsTable({ data, pageCount, currentPage }: TablePro
                         <button
                             key={i + 1}
                             className={`flex h-6 w-6 items-center justify-center border border-gray-400 px-2 py-0 shadow-md ${
-                                currentPage === i + 1
-                                    ? "rounded-sm border-slate-950 bg-slate-800 text-white"
-                                    : "rounded bg-white text-gray-700"
+                                currentPage === i + 1 ?
+                                    "rounded-sm border-slate-950 bg-slate-800 text-white"
+                                :   "rounded bg-white text-gray-700"
                             }`}
                             onClick={() => pushQueryString("page", `${i + 1}`)}
                         >

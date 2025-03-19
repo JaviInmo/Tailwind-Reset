@@ -5,15 +5,14 @@ import prisma from "@/libs/db";
 export default async function FormPage({ params }: { params: { id: string } }) {
     await getAuth();
 
-    const id = Number(params.id); // Convierte el id a número
+    const id = Number(params.id); 
 
-    // Recupera el objeto que contiene el id desde la base de datos
+
     const incidentData = await prisma.incident.findUnique({
         where: { id: id },
     });
 
     if (!incidentData) {
-        // Maneja el caso donde el incidente no existe
         return { notFound: true };
     }
 
