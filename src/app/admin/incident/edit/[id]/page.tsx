@@ -5,8 +5,13 @@ import prisma from "@/libs/db";
 export default async function FormPage({ params }: { params: { id: string } }) {
     await getAuth();
 
-    const id = Number(params.id); 
+    return (
+        <EditReportPage params={params} />
+    );
+}
 
+export async function EditReportPage({ params }: { params: { id: string } }){
+    const id = Number(params.id); 
 
     const incidentData = await prisma.incident.findUnique({
         where: { id: id },
