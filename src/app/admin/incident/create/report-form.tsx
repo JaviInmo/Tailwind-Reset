@@ -382,7 +382,7 @@ export function ReportForm({ incidentData, variableData, provinceData, readOnly 
                         <div className="flex justify-center">
                             <Button
                                 type="submit"
-                                className="w-1/4 rounded border-slate-700 bg-slate-800 py-2 text-slate-100 hover:bg-slate-950"
+                                className="w-1/3 rounded border-slate-700 bg-slate-800 py-2 text-slate-100 hover:bg-slate-950"
                             >
                                 Crear Incidencia
                             </Button>

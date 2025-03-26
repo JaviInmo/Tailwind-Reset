@@ -2,9 +2,12 @@ import { ReportForm } from "@/app/admin/incident/create/report-form";
 import { getAuth } from "@/libs/auth";
 import prisma from "@/libs/db";
 
-export default async function ViewPage({ params }: { params: { id: string } }) {
+export default async function FormPage({ params }: { params: { id: string } }) {
   await getAuth();
+  return <ViewPage params={params} />;
+}
 
+export async function ViewPage({ params }: { params: { id: string } }) {
   const id = Number(params.id);
 
   const incidentData = await prisma.incident.findUnique({
@@ -16,9 +19,14 @@ export default async function ViewPage({ params }: { params: { id: string } }) {
   }
 
   const variableData = await prisma.variable.findMany({
-    include: { categories: { include: { subcategories: {include:{secondSubcategories:true}} } } },
-});
-
+    include: {
+      categories: {
+        include: {
+          subcategories: { include: { secondSubcategories: true } },
+        },
+      },
+    },
+  });
 
   const provinceData = await prisma.province.findMany({
     include: { municipalities: true },
