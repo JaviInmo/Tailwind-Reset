@@ -21,15 +21,17 @@ export default async function Page({ searchParams }: { searchParams: TableSearch
   const skip = (page - 1) * itemsPerPage;
 
   const sortMapping: { [key: string]: any } = {
-    nombre: { name: sortOrder },
-    provincia: { province: { name: sortOrder } },
-    municipio: { municipality: { name: sortOrder } },
-    telefonoPersonal: { personalPhone: sortOrder },
-    telefonoEstatal: { statePhone: sortOrder },
-    telefonoFijo: { landlinePhone: sortOrder },
-    cargo: { jobTitle: sortOrder },
-    lugarTrabajo: { workplace: sortOrder },
+    id: { id: sortOrder }, // opcional, si deseas permitir ordenar por id
+    name: { name: sortOrder },
+    province: { province: { name: sortOrder } },
+    municipality: { municipality: { name: sortOrder } },
+    personalPhone: { personalPhone: sortOrder },
+    statePhone: { statePhone: sortOrder },
+    landlinePhone: { landlinePhone: sortOrder },
+    jobTitle: { jobTitle: sortOrder },
+    workplace: { workplace: sortOrder },
   };
+  
 
   const orderBy = sortMapping[sortField] || { name: "asc" };
 
