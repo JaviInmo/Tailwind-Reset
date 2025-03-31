@@ -19,12 +19,12 @@ export const authConfig = {
       },
       authorize: async (credentials): Promise<User | null> => {
         const { name, password } = credentialsSchema.parse(credentials);
-
         try {
           const user = await prisma.user.findFirstOrThrow({
             where: { name, password },
           });
-          return { name: user.name, image: user.image, id: user.id };
+          // Se retorna también el rol
+          return { id: user.id, name: user.name, image: user.image, role: user.role };
         } catch (e) {
           return null;
         }
@@ -32,12 +32,27 @@ export const authConfig = {
     }),
   ],
   callbacks: {
+    jwt: async ({ token, user }) => {
+      // Si el usuario se acaba de autenticar, se agrega el rol al token
+      if (user) {
+        token.role = user.role;
+      }
+      return token;
+    },
+    session: async ({ session, token }) => {
+      // Se agrega el rol a la sesión
+      if (session.user) {
+        session.user.role = token.role as string;
+      }
+      return session;
+    },
+    // Puedes mantener o modificar la validación de rutas según rol
     authorized({ request, auth }) {
       const { pathname } = request.nextUrl;
-      console.log("[pathname] ", pathname);
-      console.log("[auth] ", auth);
-      if (pathname.includes("/admin")) return !!auth;
-
+      if (pathname.includes("/admin")) {
+        // Permite acceso tanto a ADMIN como a ADVANCED, por ejemplo
+        return auth?.user?.role === "ADMIN" || auth?.user?.role === "ADVANCED" || auth?.user?.role === "SIMPLE";
+      }
       return true;
     },
   },

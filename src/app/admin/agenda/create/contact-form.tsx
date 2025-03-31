@@ -16,6 +16,7 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 
 // Esquema del formulario utilizando zod
 const formSchema = z.object({
@@ -56,10 +57,12 @@ type ContactFormProps = {
         workplace: string;
     };
     provinceData: Province[];
+    readOnly?: boolean;
 };
 
-export function ContactForm({ contactData, provinceData }: ContactFormProps) {
+export function ContactForm({ contactData, provinceData, readOnly }: ContactFormProps) {
     const [showSuccessModal, setShowSuccessModal] = useState(false);
+    const router = useRouter();
 
     const {
         register,
@@ -85,6 +88,7 @@ export function ContactForm({ contactData, provinceData }: ContactFormProps) {
     });
 
     async function onSubmit(data: FormSchemaData) {
+        if (readOnly) return;
         const response = await customSubmit({
             name: data.name,
             provinceId: data.province,
@@ -104,6 +108,7 @@ export function ContactForm({ contactData, provinceData }: ContactFormProps) {
 
     const handleCloseSuccessModal = () => {
         setShowSuccessModal(false);
+        router.push("/admin/agenda/read");
     };
 
     const watchedProvince = watch("province");
@@ -266,7 +271,7 @@ export function ContactForm({ contactData, provinceData }: ContactFormProps) {
                     <div className="flex justify-center">
                         <Button
                             type="submit"
-                            className="w-1/4 rounded border-slate-700 bg-slate-800 py-2 text-slate-100 hover:bg-slate-950"
+                            className="w-2/4 rounded border-slate-700 bg-slate-800 py-2 text-slate-100 hover:bg-slate-950"
                         >
                             Crear Contacto
                         </Button>

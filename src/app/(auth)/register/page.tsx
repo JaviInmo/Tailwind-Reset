@@ -1,6 +1,6 @@
 "use client";
 
-import { LockKeyholeOpen, User } from "lucide-react";
+import { LockKeyholeOpen, User, ShieldCheck  } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 
@@ -9,6 +9,7 @@ import { registerAction } from "./register.action";
 type FormSchemaData = {
   name: string;
   password: string;
+  role: "SIMPLE" | "ADVANCED" | "ADMIN"; // se añade el rol
 };
 
 function RegisterPage() {
@@ -36,8 +37,8 @@ function RegisterPage() {
       <div className="w-full max-w-md">
         <div className="text-center mb-4">
           <h1 className="mb-3 text-2xl font-semibold">Registro de Usuarios</h1>
-          <p className="text-white">
-            Inserte el nombre de usuario y la contraseña.
+          <p className="text-black">
+            Inserte el nombre de usuario, la contraseña y seleccione el rol.
           </p>
         </div>
         <div className="bg-white shadow rounded-lg p-6">
@@ -89,6 +90,33 @@ function RegisterPage() {
               />
               {errors.password && (
                 <span className="text-red-500">{errors.password.message}</span>
+              )}
+            </div>
+
+            <div className="flex flex-col gap-2">
+              <label
+                htmlFor="role"
+                className="font-semibold flex items-center gap-2 text-black overflow-auto"
+              >
+                 <ShieldCheck className="text-black" />
+                Rol
+              </label>
+              <select
+                id="role"
+                className="border border-gray-300 rounded px-3 py-2"
+                {...register("role", {
+                  required: {
+                    value: true,
+                    message: "Debe seleccionar un rol",
+                  },
+                })}
+              >
+                <option value="SIMPLE">Simple</option>
+                <option value="ADVANCED">Avanzado</option>
+                <option value="ADMIN">Admin</option>
+              </select>
+              {errors.role && (
+                <span className="text-red-500">{errors.role.message}</span>
               )}
             </div>
 
