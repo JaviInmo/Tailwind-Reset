@@ -1,52 +1,72 @@
 import prisma from "@/libs/db";
-import UsersTable from "./UsersTable";
+import UsersTable from "./Table";
+import { Role } from "@prisma/client";
 
 type TableSearchParams = Partial<{
   page: string;
   search: string;
-  sort: string;
-  order: "asc" | "desc";
-  limit: string;
+  sort: string;           // Campo por el que ordenar (ej: "name", "role")
+  order: "asc" | "desc";  // Orden ascendente o descendente
+  limit: string;          // Cantidad de elementos por página
 }>;
 
 export default async function Page({ searchParams }: { searchParams: TableSearchParams }) {
+  // Leer el parámetro "limit" y asignar un valor por defecto de 10 si no existe
   const itemsPerPage = searchParams.limit ? Number(searchParams.limit) : 10;
   const page = searchParams.page ? Number(searchParams.page) : 1;
   const search = searchParams.search ?? null;
 
-  const sortField = searchParams.sort ?? "name";
+  // Parámetros de ordenamiento
+  const sortField = searchParams.sort ?? "name"; 
   const sortOrder = searchParams.order ?? "asc";
   const skip = (page - 1) * itemsPerPage;
 
-  const orderBy = { [sortField]: sortOrder };
+  // Mapeo de los parámetros de orden
+  const sortMapping: { [key: string]: any } = {
+    id: { id: sortOrder },
+    name: { name: sortOrder },
+    role: { role: sortOrder },
+  };
 
+  const orderBy = sortMapping[sortField] || { name: "asc" };
+
+  // Filtro para la búsqueda en el campo 'role'
+  const validRoles: Role[] = ['SIMPLE', 'ADVANCED', 'ADMIN'];
+  const roleFilter = search && validRoles.includes(search.toUpperCase() as Role)
+    ? { equals: search.toUpperCase() as Role }
+    : undefined;
+
+  // Filtro WHERE para búsqueda en 'name' y 'role' (si existe)
+  const whereFilter = search
+    ? {
+        OR: [
+          { name: { contains: search, mode: "insensitive" as const } },
+          ...(roleFilter ? [{ role: roleFilter }] : []),
+        ],
+      }
+    : undefined;
+
+  // Contar usuarios según el filtro
   const userCount = await prisma.user.count({
-    where: search
-      ? {
-          OR: [
-            { name: { contains: search, mode: "insensitive" } },
-            { role: { contains: search, mode: "insensitive" } },
-          ],
-        }
-      : undefined,
+    where: whereFilter,
   });
 
+  // Obtener los usuarios con paginación y ordenamiento
   const users = await prisma.user.findMany({
     orderBy,
-    where: search
-      ? {
-          OR: [
-            { name: { contains: search, mode: "insensitive" } },
-            { role: { contains: search, mode: "insensitive" } },
-          ],
-        }
-      : undefined,
+    where: whereFilter,
     take: itemsPerPage,
     skip: skip,
-    select: { id: true, name: true, role: true },
   });
 
   const pageCount = Math.ceil(userCount / itemsPerPage);
 
-  return <UsersTable data={users} pageCount={pageCount} currentPage={page} />;
+  // Mapear los datos al tipo User
+  const data = users.map((user) => ({
+    id: user.id,
+    name: user.name,
+    role: user.role,
+  }));
+
+  return <UsersTable data={data} pageCount={pageCount} currentPage={page} />;
 }

@@ -4,7 +4,7 @@ import React from "react";
 import { useRouter } from "next/navigation";
 
 interface DeleteModalProps {
-    id: number;
+    id: string;
     show: boolean;
     onCancel: () => void;
     onConfirm: () => Promise<void>; // Asegúrate de que onConfirm sea una función asíncrona que elimine la incidencia.

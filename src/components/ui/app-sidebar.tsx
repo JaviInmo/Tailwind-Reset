@@ -104,7 +104,7 @@ const phonebook = [
 const admin = [
     {
         title: "Administración",
-        url: "/admin/admin/users",
+        url: "/admin/users/read",
         icon: UserRoundPlus,
     },
 ];
