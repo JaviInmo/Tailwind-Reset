@@ -1,11 +1,14 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import Link from "next/link";
 import { ArrowDownUp } from "lucide-react";
+import Link from "next/link";
+import { useEffect, useState } from "react";
+import DeleteModal from "@/app/admin/incident/vars/var/delete/page"; 
+import { handleDeleteVariableAction } from "@/app/admin/incident/vars/var/delete/delete.action"; 
+import { cx } from "@/util/cx";
+import { CiSearch } from "react-icons/ci";
+import { FaRegEdit } from "react-icons/fa";
 import { RiDeleteBin7Line } from "react-icons/ri";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import {
     Table,
     TableBody,
@@ -14,138 +17,212 @@ import {
     TableHeader,
     TableRow,
 } from "@/components/ui/table";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useDebounce } from "@/hooks/debounce-hook";
 import {
-    Pagination,
-    PaginationContent,
-    PaginationItem,
-    PaginationLink,
-    PaginationPrevious,
-    PaginationNext,
-} from "@/components/ui/pagination";
-import DeleteModal from "@/app/admin/incident/vars/var/delete/page";
-import { handleDeleteVariableAction } from "@/app/admin/incident/vars/var/delete/delete.action";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
-import { VariableForm } from "./create/var-form";
-import { cx } from "@/util/cx";
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
 
-interface Data {
+function useQueryString() {
+    const searchParams = useSearchParams();
+    const router = useRouter();
+    const pathname = usePathname();
+
+    function updateQuery(newParams: Record<string, string>) {
+        const params = new URLSearchParams(searchParams.toString());
+        Object.entries(newParams).forEach(([key, value]) => {
+            if (value === "") {
+                params.delete(key);
+            } else {
+                params.set(key, value);
+            }
+        });
+        const newUrl = pathname + "?" + params.toString();
+        router.push(newUrl);
+    }
+
+    function pushQueryString(name: string, value: string) {
+        updateQuery({ [name]: value });
+    }
+
+    function getQueryString(name: string) {
+        return searchParams.get(name);
+    }
+
+    return { updateQuery, pushQueryString, getQueryString };
+}
+
+
+interface Variable {
     id: number;
     name: string;
 }
 
 interface TableProps {
-    data: Data[];
+    data: Variable[];
+    pageCount: number;
+    currentPage: number;
 }
 
-export default function TablePage({ data }: TableProps) {
-    const [search, setSearch] = useState("");
-    const [currentPage, setCurrentPage] = useState(1);
-    const itemsPerPage = 10;
-    const [sortColumn, setSortColumn] = useState<keyof Data | null>(null);
-    const [sortDirection, setSortDirection] = useState<"asc" | "desc" | null>(null);
-    const [showCreateModal, setShowCreateModal] = useState(false); // Estado para mostrar el modal del formulario
+export default function VariablesTable({ data, pageCount, currentPage }: TableProps) {
+    const { updateQuery, pushQueryString, getQueryString } = useQueryString();
+   
+    const [search, setSearch] = useState(getQueryString("search") ?? "");
+    const debouncedSearch = useDebounce(search, 300);
+
+    useEffect(() => {
+        pushQueryString("search", debouncedSearch);
+    }, [debouncedSearch, pushQueryString]);
+
+
+    const [variableIds, setVariableIds] = useState<number[]>(data.map(item => item.id));
+
     const [deleteModal, setDeleteModal] = useState<{ show: boolean; id: number | null }>({
         show: false,
         id: null,
     });
 
-    const filteredData = useMemo(
-        () =>
-            data.filter((row) =>
-                Object.values(row).some((value) =>
-                    String(value).toLowerCase().includes(search.toLowerCase())
-                )
-            ),
-        [data, search]
-    );
 
-  // Ordenamiento
-  const sortedData = useMemo(() => {
-    if (!sortColumn) return filteredData;
-    return filteredData.slice().sort((a, b) => {
-        if (a[sortColumn]! < b[sortColumn]!) return sortDirection === "asc" ? -1 : 1;
-        if (a[sortColumn]! > b[sortColumn]!) return sortDirection === "asc" ? 1 : -1;
-        return 0;
-    });
-}, [filteredData, sortColumn, sortDirection]);
-
-
-    const lastItem = currentPage * itemsPerPage;
-    const firstItem = lastItem - itemsPerPage;
-    const currentItems = sortedData.slice(firstItem, lastItem);
-    const totalPages = Math.ceil(filteredData.length / itemsPerPage);
-
-    const requestSort = (columnKey: keyof Data) => {
-        const direction = sortColumn === columnKey && sortDirection === "asc" ? "desc" : "asc";
-        setSortColumn(columnKey);
-        setSortDirection(direction);
+    const visibleColumns = {
+        id: true,
+        name: true,
     };
 
-    const handleDelete = (id: number) => setDeleteModal({ show: true, id });
+
+    const requestSort = (columnKey: keyof Variable) => {
+        const currentSort = getQueryString("sort");
+        const currentOrder = getQueryString("order");
+     
+        const defaultOrder = "asc";
+        const newOrder =
+            currentSort === columnKey.toString() && currentOrder === defaultOrder
+                ? defaultOrder === "asc" ? "desc" : "asc"
+                : defaultOrder;
+        updateQuery({ sort: columnKey.toString(), order: newOrder });
+    };
 
     const confirmDelete = async (id: number) => {
-        await handleDeleteVariableAction(id);
+     
+        const result = await handleDeleteVariableAction(id);
+        if (result.success) {
+            console.log(`Variable con ID: ${id} eliminada`);
+           
+            setVariableIds((prev) => {
+                const updated = prev.filter(itemId => itemId !== id);
+                pushQueryString("ids", updated.join(","));
+                return updated;
+            });
+        } else {
+            console.error(`Error al eliminar la variable con ID: ${id}`, result.error);
+        }
         setDeleteModal({ show: false, id: null });
     };
+    
 
     return (
         <div className="flex flex-col gap-4 rounded-lg bg-white p-4 shadow-md">
-            {/* Encabezado */}
+    
             <div className="flex items-center justify-between">
                 <h3 className="text-lg font-semibold text-slate-800">Tabla de Variables</h3>
-                <div className="flex gap-2">
+                <div className="relative flex items-center gap-4">
+                    <CiSearch className="absolute left-3 text-gray-500" size={20} />
                     <Input
                         type="text"
                         placeholder="Buscar..."
-                        onChange={(e) => setSearch(e.target.value)}
-                        className="w-56"
+                        className="input input-bordered input-primary rounded border border-slate-400 py-1 pl-10 text-left"
+                        onChange={(event) => setSearch(event.target.value)}
+                        value={search}
                     />
-                    <Button
-                        className="bg-slate-800 text-white"
-                        onClick={() => setShowCreateModal(true)} // Muestra el modal al hacer clic
-                    >
-                        Agregar Nueva
-                    </Button>
+                    
+                    <Link href="/admin/incident/vars/var/create" passHref>
+                        <Button className="rounded border border-slate-700 bg-slate-800 px-4 py-1 text-slate-100 hover:bg-slate-950">
+                            Agregar Variable
+                        </Button>
+                    </Link>
                 </div>
             </div>
 
-            {/* Tabla */}
-            <div className="overflow-y-auto max-h-[calc(100vh-200px)] sm:max-h-[calc(80vh)] md:max-h-[500px] border border-slate-300 rounded-lg">
-                <Table>
-                    <TableHeader className="sticky top-0 bg-white shadow-md z-10">
+          
+            <div className="relative max-h-[calc(100vh-200px)] w-full overflow-x-auto overflow-y-auto rounded-lg border border-slate-300">
+                <Table className="w-full">
+                    <TableHeader className="sticky top-0 z-10 bg-white shadow-md">
                         <TableRow>
-                            {["id", "name", "acciones"].map((column) => (
-                                <TableHead key={column} className="text-slate-700">
-                                    <div className="flex items-center justify-between">
-                                        {column.charAt(0).toUpperCase() + column.slice(1)}
-                                        {column !== "acciones" && (
-                                            <ArrowDownUp
-                                                size={16}
-                                                className="cursor-pointer"
-                                                onClick={() => requestSort(column as keyof Data)}
-                                            />
-                                        )}
-                                    </div>
-                                </TableHead>
-                            ))}
+                         
+                            <TableHead
+                                className="border-r-2 p-2.5 text-sm font-semibold text-slate-800 w-[15px] min-w-[15px]"
+                            >
+                                <div className="flex items-center justify-between">
+                                    ID
+                                </div>
+                            </TableHead>
+                      
+                            <TableHead
+                                className="border-r-2 p-2.5 text-sm font-semibold text-slate-800 w-[200px] max-w-[200px] cursor-pointer"
+                                onClick={() => requestSort("name")}
+                            >
+                                <div className="flex items-center justify-between">
+                                    Name
+                                    <ArrowDownUp
+                                        size={12}
+                                        className="ml-2 cursor-pointer text-slate-800 transition-transform hover:scale-125"
+                                    />
+                                </div>
+                            </TableHead>
+                      
+                            <TableHead
+                                className="sticky right-0 w-[50px] bg-white p-2.5 text-sm font-semibold text-slate-800"
+                                style={{ boxShadow: "2px 0 0 #f1f5f9 inset" }}
+                            >
+                                Acciones
+                            </TableHead>
                         </TableRow>
                     </TableHeader>
-                    <TableBody>
-                    {currentItems.map((row, index) => (
-                            <TableRow key={row.id}>
-                                {/* Número de fila basado en el índice y la página actual */}
-            <TableCell>{firstItem + index + 1}</TableCell>
-                                <TableCell>{row.name}</TableCell>
-                                <TableCell>
-                                    <Button
-                                        variant="destructive"
-                                        size="sm"
-                                        onClick={() => handleDelete(row.id)}
-                                        className="flex items-center gap-1"
-                                    >
-                                        <RiDeleteBin7Line size={14} />
-                                        Eliminar
-                                    </Button>
+                    <TableBody className="text-slate-700">
+                        {data
+                          
+                          .filter(row => variableIds.includes(row.id))
+                          .map((row, rowIndex) => (
+                            <TableRow
+                                key={row.id}
+                                className={cx(rowIndex % 2 === 0 ? "bg-slate-100" : "bg-white")}
+                            >
+                                <TableCell
+                                    className="border-r-2 px-2 py-2 text-sm"
+                                    title={String((currentPage - 1) * Number(getQueryString("limit") || "10") + rowIndex + 1)}
+                                >
+                                    {(currentPage - 1) * Number(getQueryString("limit") || "10") + rowIndex + 1}
+                                </TableCell>
+                                <TableCell
+                                    className="w-[200px] max-w-[200px] overflow-hidden truncate whitespace-nowrap border-r-2 px-2 py-2 text-sm"
+                                    title={row.name}
+                                >
+                                    {row.name}
+                                </TableCell>
+                                <TableCell
+                                    className="sticky right-0 w-[50px] truncate bg-white px-3 py-1 text-sm"
+                                    style={{
+                                        boxShadow: `2px 0 0 ${rowIndex % 2 === 0 ? "white" : "#f1f5f9"} inset`,
+                                    }}
+                                >
+                                    <div className="flex items-center justify-start gap-2 px-1">
+                                        <Link href={`/admin/incident/vars/var/edit/${row.id}`}>
+                                            <button className="flex w-full items-center justify-center">
+                                                <FaRegEdit className="text-lg transition-transform hover:scale-110" />
+                                            </button>
+                                        </Link>
+                                        <button
+                                            className="flex w-full items-center justify-center"
+                                            onClick={() => setDeleteModal({ show: true, id: row.id })}
+                                        >
+                                            <RiDeleteBin7Line className="text-lg transition-transform hover:scale-110" />
+                                        </button>
+                                    </div>
                                 </TableCell>
                             </TableRow>
                         ))}
@@ -153,54 +230,51 @@ export default function TablePage({ data }: TableProps) {
                 </Table>
             </div>
 
-            {/* Paginación */}
-            <div className="flex justify-end">
-                <Pagination>
-                    <PaginationContent>
-                        <PaginationItem>
-                            <PaginationPrevious
-                                onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-                            />
-                        </PaginationItem>
-
-                        {Array.from({ length: totalPages }, (_, index) => (
-                            <PaginationItem key={index}>
-                                <PaginationLink
-                                    isActive={currentPage === index + 1}
-                                    onClick={() => setCurrentPage(index + 1)}
-                                >
-                                    {index + 1}
-                                </PaginationLink>
-                            </PaginationItem>
-                        ))}
-
-                        <PaginationItem>
-                            <PaginationNext
-                                onClick={() =>
-                                    setCurrentPage((prev) => Math.min(prev + 1, totalPages))
-                                }
-                            />
-                        </PaginationItem>
-                    </PaginationContent>
-                </Pagination>
+     
+            <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                    <label htmlFor="itemsPerPage" className="text-sm font-medium text-slate-700">
+                        Filas:
+                    </label>
+                    <Select
+                        value={getQueryString("limit") || "10"}
+                        onValueChange={(value) => pushQueryString("limit", value)}
+                    >
+                        <SelectTrigger className="h-6 w-[70px] px-2 py-0 shadow-md">
+                            <SelectValue placeholder="Selecciona" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="10">10</SelectItem>
+                            <SelectItem value="50">50</SelectItem>
+                            <SelectItem value="100">100</SelectItem>
+                            <SelectItem value="200">200</SelectItem>
+                        </SelectContent>
+                    </Select>
+                </div>
+                <div className="flex">
+                    {Array.from({ length: pageCount }).map((_, i) => (
+                        <button
+                            key={i + 1}
+                            onClick={() => pushQueryString("page", `${i + 1}`)}
+                            className={`flex h-6 w-6 items-center justify-center border border-gray-400 px-2 py-0 shadow-md ${
+                                currentPage === i + 1
+                                    ? "rounded-sm border-slate-950 bg-slate-800 text-white"
+                                    : "rounded bg-white text-gray-700"
+                            }`}
+                        >
+                            {i + 1}
+                        </button>
+                    ))}
+                </div>
             </div>
-
-  {/* Modal de creación */}
-  <Dialog open={showCreateModal} onOpenChange={setShowCreateModal}>
-                <DialogContent>
-                    
-                    <VariableForm />
-                    
-                </DialogContent>
-            </Dialog>
-
-
-            {/* Modal de eliminación */}
             {deleteModal.show && deleteModal.id !== null && (
                 <DeleteModal
                     id={deleteModal.id}
+                 
                     onCancel={() => setDeleteModal({ show: false, id: null })}
-                    onConfirm={() => confirmDelete(deleteModal.id as number)}
+                    onConfirm={async () => {
+                        if (deleteModal.id) await confirmDelete(deleteModal.id);
+                    }}
                 />
             )}
         </div>

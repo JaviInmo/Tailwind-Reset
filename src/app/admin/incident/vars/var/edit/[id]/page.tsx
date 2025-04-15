@@ -1,11 +1,20 @@
 import { getAuth } from "@/libs/auth";
 import prisma from "@/libs/db";
 
-import { VariableForm } from "../../var-form";
+import { VariableForm } from "../../create/var-form";
 
-export default async function VarPage({ params }: { params: { id: string } }) {
+
+
+
+export default async function VarFormPage({ params }: { params: { id: string } }) {
     await getAuth();
+    return(
+        <EditVarPage params={params} /> 
+    );
+}
 
+    
+export async function EditVarPage({ params }: { params: { id: string } }) {
     const id = Number(params.id); // Convierte el id a número
 
     // Recupera la variable que contiene el id desde la base de datos

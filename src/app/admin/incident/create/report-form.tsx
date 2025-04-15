@@ -130,7 +130,7 @@ export function ReportForm({ incidentData, variableData, provinceData, readOnly 
 
     return (
         <div className="flex h-full w-full items-center justify-center overflow-y-auto py-0">
-            <div className="flex h-full w-full flex-col items-center justify-center rounded bg-white py-2 shadow-sm">
+            <div className="flex h-full w-full flex-col items-center justify-center rounded bg-white py-2 shadow-sm text-black">
                 <div className="text-center pb-4">
                     <p className="font-semibold">Formulario de Incidencias</p>
                     <p className="font-semibold">

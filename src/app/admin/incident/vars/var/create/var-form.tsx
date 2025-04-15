@@ -36,7 +36,26 @@ const formSchema = z.object({
 
 type FormSchemaData = z.infer<typeof formSchema>;
 
-export function VariableForm() {
+interface VariableFormProps {
+    variableData: {
+        name: string;
+        id: number;
+        categories: {
+            name: string;
+            id: number;
+            variableId: number;
+            subcategories: {
+                name: string;
+                id: number;
+                categoryId: number;
+            }[];
+        }[];
+    };
+}
+
+
+
+export function VariableForm({ variableData }: VariableFormProps) {
     const [showSuccessModal, setShowSuccessModal] = useState(false);
     const [initialCount, setInitialCount] = useState<number | null>(null);
     const router = useRouter();
@@ -55,6 +74,8 @@ export function VariableForm() {
 
         fetchInitialCount();
     }, []);
+
+    
 
     async function onSubmit(data: FormSchemaData) {
         const namesArray = data.names.split(",").map((name) => name.trim());
@@ -103,7 +124,7 @@ export function VariableForm() {
     };
 
     return (
-        <div className="flex justify-center py-2">
+        <div className="flex justify-center py-2 text-black">
             <div className="w-7/12 bg-white space-y-7 py-8 rounded-sm">
                 <div className="text-center">
                     <h1 className=" text-2xl font-semibold ">Registro de Variable</h1>

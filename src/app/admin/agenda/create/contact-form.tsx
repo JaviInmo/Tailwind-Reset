@@ -122,161 +122,165 @@ export function ContactForm({ contactData, provinceData, readOnly }: ContactForm
     }, [watchedProvince]);
 
     return (
-        <div className="flex h-full w-full items-center justify-center overflow-y-auto py-0 ">
-            <div className="flex h-full w-full flex-col items-center pt-24 rounded bg-white py-2 shadow-sm">
-                <div className="pb-4 text-center">
-                    <p className="font-semibold">Formulario de Contacto</p>
-                    <p className="font-semibold">
-                        Rellene los campos del formulario para registrar el contacto.
-                    </p>
+        <div className="flex h-full w-full items-center justify-center overflow-y-auto py-0 text-black">
+            <div className="  w-full flex flex-col items-center justify-center  rounded bg-white py-2 shadow-sm">
+                <div className="flex flex-col items-center justify-center w-full !lg:min-h-[calc(100vh-75px)]  ">
+                    <div className="pb-4 text-center">
+                        <p className="font-semibold ">Formulario de Contacto</p>
+                        <p className="font-semibold">
+                            Rellene los campos del formulario para registrar el contacto.
+                        </p>
+                    </div>
+
+                    <form
+                        onSubmit={handleSubmit(onSubmit)}
+                        className="flex h-full w-full flex-col gap-4 overflow-y-auto px-4 lg:w-11/12 "
+                    >
+                        <div className="flex gap-4 pb-2">
+                            <div className="w-full">
+                                <Label className="block pb-2">Nombre Completo:</Label>
+                                <Input
+                                    type="text"
+                                    {...register("name")}
+                                    className="w-full rounded border border-gray-300 bg-white p-2"
+                                />
+                                {errors.name && (
+                                    <p className="text-red-600">{errors.name.message}</p>
+                                )}
+                            </div>
+                            <div className="w-full">
+                                <Label className="block pb-2">Teléfono Fijo:</Label>
+                                <Input
+                                    type="text"
+                                    {...register("landlinePhone")}
+                                    className="w-full rounded border border-gray-300 bg-white p-2"
+                                />
+                                {errors.landlinePhone && (
+                                    <p className="text-red-600">{errors.landlinePhone.message}</p>
+                                )}
+                            </div>
+                        </div>
+
+                        <div className="flex gap-4 pb-2">
+                            <div className="w-full">
+                                <Label className="block pb-2">Provincia:</Label>
+                                <Controller
+                                    control={control}
+                                    name="province"
+                                    render={({ field: { onChange, value } }) => (
+                                        <Select onValueChange={onChange} value={value}>
+                                            <SelectTrigger className="w-full rounded border border-gray-300 bg-white p-2">
+                                                <SelectValue placeholder="Seleccionar provincia" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectGroup>
+                                                    {provinceData.map((opt) => (
+                                                        <SelectItem key={opt.id} value={opt.id}>
+                                                            {opt.name}
+                                                        </SelectItem>
+                                                    ))}
+                                                </SelectGroup>
+                                            </SelectContent>
+                                        </Select>
+                                    )}
+                                />
+                                {errors.province && (
+                                    <p className="text-red-600">{errors.province.message}</p>
+                                )}
+                            </div>
+
+                            <div className="w-full">
+                                <Label className="block pb-2">Municipio:</Label>
+                                <Controller
+                                    control={control}
+                                    name="municipality"
+                                    render={({ field: { onChange, value } }) => (
+                                        <Select
+                                            onValueChange={onChange}
+                                            value={value}
+                                            disabled={!provinceId}
+                                        >
+                                            <SelectTrigger className="w-full rounded border border-gray-300 bg-white p-2 disabled:bg-slate-300">
+                                                <SelectValue placeholder="Seleccionar Municipio" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectGroup>
+                                                    {municipalityOptions.map((opt) => (
+                                                        <SelectItem key={opt.id} value={opt.id}>
+                                                            {opt.name}
+                                                        </SelectItem>
+                                                    ))}
+                                                </SelectGroup>
+                                            </SelectContent>
+                                        </Select>
+                                    )}
+                                />
+                                {errors.municipality && (
+                                    <p className="text-red-600">{errors.municipality.message}</p>
+                                )}
+                            </div>
+                        </div>
+
+                        <div className="flex gap-4 pb-2">
+                            <div className="w-full">
+                                <Label className="block pb-2">Teléfono Personal:</Label>
+                                <Input
+                                    type="text"
+                                    {...register("personalPhone")}
+                                    className="w-full rounded border border-gray-300 bg-white p-2"
+                                />
+                                {errors.personalPhone && (
+                                    <p className="text-red-600">{errors.personalPhone.message}</p>
+                                )}
+                            </div>
+                            <div className="w-full">
+                                <Label className="block pb-2">Teléfono Estatal:</Label>
+                                <Input
+                                    type="text"
+                                    {...register("statePhone")}
+                                    className="w-full rounded border border-gray-300 bg-white p-2"
+                                />
+                                {errors.statePhone && (
+                                    <p className="text-red-600">{errors.statePhone.message}</p>
+                                )}
+                            </div>
+                        </div>
+
+                        <div className="flex gap-4 pb-2">
+                            <div className="w-full">
+                                <Label className="block pb-2">Cargo:</Label>
+                                <Input
+                                    type="text"
+                                    {...register("jobTitle")}
+                                    className="w-full rounded border border-gray-300 bg-white p-2"
+                                />
+                                {errors.jobTitle && (
+                                    <p className="text-red-600">{errors.jobTitle.message}</p>
+                                )}
+                            </div>
+                            <div className="w-full">
+                                <Label className="block pb-2">Lugar de Trabajo:</Label>
+                                <Input
+                                    type="text"
+                                    {...register("workplace")}
+                                    className="w-full rounded border border-gray-300 bg-white p-2"
+                                />
+                                {errors.workplace && (
+                                    <p className="text-red-600">{errors.workplace.message}</p>
+                                )}
+                            </div>
+                        </div>
+
+                        <div className="flex justify-center">
+                            <Button
+                                type="submit"
+                                className="w-2/4 rounded border-slate-700 bg-slate-800 py-2 text-slate-100 hover:bg-slate-950"
+                            >
+                                Crear Contacto
+                            </Button>
+                        </div>
+                    </form>
                 </div>
-
-                <form
-                    onSubmit={handleSubmit(onSubmit)}
-                    className="flex max-h-[calc(100vh-150px)] w-full flex-col gap-2 overflow-y-auto px-4 pt-2 lg:w-8/12"
-                >
-                    <div className="flex gap-4 pb-2">
-                        <div className="w-full">
-                            <Label className="block pb-2">Nombre Completo:</Label>
-                            <Input
-                                type="text"
-                                {...register("name")}
-                                className="w-full rounded border border-gray-300 bg-white p-2"
-                            />
-                            {errors.name && <p className="text-red-600">{errors.name.message}</p>}
-                        </div>
-                        <div className="w-full">
-                            <Label className="block pb-2">Teléfono Fijo:</Label>
-                            <Input
-                                type="text"
-                                {...register("landlinePhone")}
-                                className="w-full rounded border border-gray-300 bg-white p-2"
-                            />
-                            {errors.landlinePhone && (
-                                <p className="text-red-600">{errors.landlinePhone.message}</p>
-                            )}
-                        </div>
-                    </div>
-
-                    <div className="flex gap-4 pb-2">
-                        <div className="w-full">
-                            <Label className="block pb-2">Provincia:</Label>
-                            <Controller
-                                control={control}
-                                name="province"
-                                render={({ field: { onChange, value } }) => (
-                                    <Select onValueChange={onChange} value={value}>
-                                        <SelectTrigger className="w-full rounded border border-gray-300 bg-white p-2">
-                                            <SelectValue placeholder="Seleccionar provincia" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectGroup>
-                                                {provinceData.map((opt) => (
-                                                    <SelectItem key={opt.id} value={opt.id}>
-                                                        {opt.name}
-                                                    </SelectItem>
-                                                ))}
-                                            </SelectGroup>
-                                        </SelectContent>
-                                    </Select>
-                                )}
-                            />
-                            {errors.province && (
-                                <p className="text-red-600">{errors.province.message}</p>
-                            )}
-                        </div>
-
-                        <div className="w-full">
-                            <Label className="block pb-2">Municipio:</Label>
-                            <Controller
-                                control={control}
-                                name="municipality"
-                                render={({ field: { onChange, value } }) => (
-                                    <Select
-                                        onValueChange={onChange}
-                                        value={value}
-                                        disabled={!provinceId}
-                                    >
-                                        <SelectTrigger className="w-full rounded border border-gray-300 bg-white p-2 disabled:bg-slate-300">
-                                            <SelectValue placeholder="Seleccionar Municipio" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectGroup>
-                                                {municipalityOptions.map((opt) => (
-                                                    <SelectItem key={opt.id} value={opt.id}>
-                                                        {opt.name}
-                                                    </SelectItem>
-                                                ))}
-                                            </SelectGroup>
-                                        </SelectContent>
-                                    </Select>
-                                )}
-                            />
-                            {errors.municipality && (
-                                <p className="text-red-600">{errors.municipality.message}</p>
-                            )}
-                        </div>
-                    </div>
-
-                    <div className="flex gap-4 pb-2">
-                        <div className="w-full">
-                            <Label className="block pb-2">Teléfono Personal:</Label>
-                            <Input
-                                type="text"
-                                {...register("personalPhone")}
-                                className="w-full rounded border border-gray-300 bg-white p-2"
-                            />
-                            {errors.personalPhone && (
-                                <p className="text-red-600">{errors.personalPhone.message}</p>
-                            )}
-                        </div>
-                        <div className="w-full">
-                            <Label className="block pb-2">Teléfono Estatal:</Label>
-                            <Input
-                                type="text"
-                                {...register("statePhone")}
-                                className="w-full rounded border border-gray-300 bg-white p-2"
-                            />
-                            {errors.statePhone && (
-                                <p className="text-red-600">{errors.statePhone.message}</p>
-                            )}
-                        </div>
-                    </div>
-
-                    <div className="flex gap-4 pb-2">
-                        <div className="w-full">
-                            <Label className="block pb-2">Cargo:</Label>
-                            <Input
-                                type="text"
-                                {...register("jobTitle")}
-                                className="w-full rounded border border-gray-300 bg-white p-2"
-                            />
-                            {errors.jobTitle && (
-                                <p className="text-red-600">{errors.jobTitle.message}</p>
-                            )}
-                        </div>
-                        <div className="w-full">
-                            <Label className="block pb-2">Lugar de Trabajo:</Label>
-                            <Input
-                                type="text"
-                                {...register("workplace")}
-                                className="w-full rounded border border-gray-300 bg-white p-2"
-                            />
-                            {errors.workplace && (
-                                <p className="text-red-600">{errors.workplace.message}</p>
-                            )}
-                        </div>
-                    </div>
-
-                    <div className="flex justify-center">
-                        <Button
-                            type="submit"
-                            className="w-2/4 rounded border-slate-700 bg-slate-800 py-2 text-slate-100 hover:bg-slate-950"
-                        >
-                            Crear Contacto
-                        </Button>
-                    </div>
-                </form>
 
                 {showSuccessModal && (
                     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
