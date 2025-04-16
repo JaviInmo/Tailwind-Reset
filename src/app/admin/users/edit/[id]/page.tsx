@@ -1,6 +1,6 @@
 import { getAuth } from "@/libs/auth";
 import prisma from "@/libs/db";
-import RegisterPage from "../../create/page"; // Asegúrate de que la ruta sea la correcta
+import RegisterPage from "../../create/register-form"; // Asegúrate de que la ruta sea la correcta
 
 export default async function FormPage({ params }: { params: { id: string } }) {
   await getAuth();
