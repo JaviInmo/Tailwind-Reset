@@ -3,7 +3,8 @@ import prisma from "@/libs/db";
 
 import { CatForm } from "../../create/cat-form";
 
-export default async function CatPage({ params }: { params: { id: string } }) {
+export default async function CatPage(props: { params: Promise<{ id: string }> }) {
+    const params = await props.params;
     await getAuth();
 
     const id = Number(params.id);

@@ -2,7 +2,8 @@ import { getAuth } from "@/libs/auth";
 import prisma from "@/libs/db";
 import RegisterPage from "../../create/register-form"; // Asegúrate de que la ruta sea la correcta
 
-export default async function FormPage({ params }: { params: { id: string } }) {
+export default async function FormPage(props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   await getAuth();
 
   return <EditUserPage params={params} />;

@@ -9,7 +9,8 @@ type TableSearchParams = Partial<{
   limit: string;
 }>;
 
-export default async function Page({ searchParams }: { searchParams: TableSearchParams }) {
+export default async function Page(props: { searchParams: Promise<TableSearchParams> }) {
+  const searchParams = await props.searchParams;
   // Parámetros por defecto provenientes de la URL
   const itemsPerPage = searchParams.limit ? Number(searchParams.limit) : 10;
   const page = searchParams.page ? Number(searchParams.page) : 1;

@@ -9,14 +9,15 @@ type TableSearchParams = Partial<{
   limit: string;          // Cantidad de elementos por página
 }>;
 
-export default async function Page({ searchParams }: { searchParams: TableSearchParams }) {
+export default async function Page(props: { searchParams: Promise<TableSearchParams> }) {
+  const searchParams = await props.searchParams;
   // Leer el parámetro "limit" y asignar un valor por defecto de 10 si no existe
   const itemsPerPage = searchParams.limit ? Number(searchParams.limit) : 10;
   const page = searchParams.page ? Number(searchParams.page) : 1;
   const search = searchParams.search ?? null;
 
   // Parámetros de ordenamiento
-  const sortField = searchParams.sort ?? "name"; 
+  const sortField = searchParams.sort ?? "name";
   const sortOrder = searchParams.order ?? "asc";
   const skip = (page - 1) * itemsPerPage;
 
@@ -31,7 +32,7 @@ export default async function Page({ searchParams }: { searchParams: TableSearch
     jobTitle: { jobTitle: sortOrder },
     workplace: { workplace: sortOrder },
   };
-  
+
 
   const orderBy = sortMapping[sortField] || { name: "asc" };
 

@@ -8,11 +8,12 @@ import {
   DialogDescription,
 } from "@/components/ui/app-dialog";
 
-export default function ModalEditVar({
-  params,
-}: {
-  params: { id: string };
-}) {
+export default async function ModalEditVar(
+  props: {
+    params: Promise<{ id: string }>;
+  }
+) {
+  const params = await props.params;
   return (
     <Dialog open={true}>
       <DialogContent>
