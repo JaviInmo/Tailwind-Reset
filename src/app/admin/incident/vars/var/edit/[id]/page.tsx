@@ -2,11 +2,12 @@ import { getAuth } from "@/libs/auth";
 import prisma from "@/libs/db";
 import { VariableForm } from "../../create/var-form";
 
-export default async function EditVarPage({
-  params,
-}: {
-  params: { id: string };
-}) {
+export default async function EditVarPage(
+  props: {
+    params: Promise<{ id: string }>;
+  }
+) {
+  const params = await props.params;
   await getAuth();
 
   const id = Number(params.id);

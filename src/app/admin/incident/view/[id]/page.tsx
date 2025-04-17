@@ -2,7 +2,8 @@ import { ReportForm } from "@/app/admin/incident/create/report-form";
 import { getAuth } from "@/libs/auth";
 import prisma from "@/libs/db";
 
-export default async function FormPage({ params }: { params: { id: string } }) {
+export default async function FormPage(props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   await getAuth();
   return <ViewPage params={params} />;
 }

@@ -7,7 +7,8 @@ import {
   DialogDescription,
 } from "@/components/ui/app-dialog";
 
-export default async function ModalViewPage({ params }: { params: { id: string } }) {
+export default async function ModalViewPage(props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   return (
     <Dialog open={true}>
       <DialogContent>
