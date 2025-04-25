@@ -1,28 +1,31 @@
+import EditVarPage from "@/app/admin/incident/vars/var/edit/[id]/page"
+import { Dialog, DialogContent } from "@/components/ui/app-dialog"
+import prisma from "@/libs/db"
 
-import EditVarPage from "@/app/admin/incident/vars/var/edit/[id]/page";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-} from "@/components/ui/app-dialog";
+export default async function ModalEditVar(props: {
+  params: Promise<{ id: string }>
+}) {
+  const params = await props.params
 
-export default async function ModalEditVar(
-  props: {
-    params: Promise<{ id: string }>;
-  }
-) {
-  const params = await props.params;
+  // Check if the variable exists before rendering the EditVarPage
+  const id = Number(params.id)
+  const variableData = await prisma.variable.findUnique({
+    where: { id },
+    include: { categories: { include: { subcategories: true } } },
+  })
+
   return (
     <Dialog open={true}>
       <DialogContent>
-        
-        <DialogDescription>
-          {/* Reutilizamos la página “plana” de edición dentro del modal */}
+        {variableData ? (
           <EditVarPage params={params} />
-        </DialogDescription>
+        ) : (
+          <div className="p-6 text-center">
+            <h2 className="text-xl font-semibold text-red-600">Variable not found</h2>
+            <p className="mt-2 text-gray-600">The variable with ID {params.id} does not exist.</p>
+          </div>
+        )}
       </DialogContent>
     </Dialog>
-  );
+  )
 }

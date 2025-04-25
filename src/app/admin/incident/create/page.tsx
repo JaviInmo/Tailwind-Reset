@@ -1,28 +1,28 @@
-import { getAuth } from "@/libs/auth";
-import prisma from "@/libs/db";
+import { getAuth } from "@/libs/auth"
+import prisma from "@/libs/db"
 
-import { ReportForm } from "./report-form";
+import { ReportForm } from "../create/report-form"
 
 export default async function FormPage() {
-    await getAuth();
+  await getAuth()
 
-    const variableData = await prisma.variable.findMany({
+  const variableData = await prisma.variable.findMany({
+    include: {
+      categories: {
         include: {
-            categories: {
-                include: {
-                    subcategories: {
-                        include: { secondSubcategories: true }, // Incluir segundas subcategorías
-                    },
-                },
-            },
+          subcategories: {
+            include: { secondSubcategories: true }, // Incluir segundas subcategorías
+          },
         },
-    });
+      },
+    },
+  })
 
-    const provinceData = await prisma.province.findMany({
-        include: { municipalities: true },
-    });
+  const provinceData = await prisma.province.findMany({
+    include: { municipalities: true },
+  })
 
-    // const unit = await prisma.unitMeasure.findMany({});
+  // const unit = await prisma.unitMeasure.findMany({});
 
-    return <ReportForm provinceData={provinceData} variableData={variableData} />;
+  return <ReportForm provinceData={provinceData} variableData={variableData} />
 }
