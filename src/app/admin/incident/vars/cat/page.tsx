@@ -8,6 +8,8 @@ export default async function CatPage(props: { searchParams: { [key: string]: st
 
   // Get search parameters
   const search = typeof props.searchParams.search === "string" ? props.searchParams.search : undefined
+  const limit = typeof props.searchParams.limit === "string" ? Number.parseInt(props.searchParams.limit) : 10
+  const page = typeof props.searchParams.page === "string" ? Number.parseInt(props.searchParams.page) : 1
 
   // Fetch categories with search filter if provided
   const categorias = await prisma.category.findMany({
@@ -40,8 +42,8 @@ export default async function CatPage(props: { searchParams: { [key: string]: st
   }))
 
   return (
-    <div className="container">
+    <div className="w-full">
       <TablePage data={categoriasConVariable} />
     </div>
   )
-}
+} 
