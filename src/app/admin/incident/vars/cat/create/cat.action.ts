@@ -1,82 +1,81 @@
-"use server"
+"use server";
 
-import { revalidatePath } from "next/cache"
-import prisma from "@/libs/db"
+import { revalidatePath } from "next/cache";
+import prisma from "@/libs/db";
 
 type FormSchemaData = {
-  variableId: number
-  name: string
-}
+    variableId: number;
+    name: string;
+};
 
 // Registra una nueva categoría
 export async function registerAction(data: FormSchemaData) {
-  try {
-    console.log("Registering category with data:", data)
+    try {
+        console.log("Registering category with data:", data);
 
-    // Verificar si ya existe una categoría con el mismo nombre para la misma variable
-    const existingCategory = await prisma.category.findFirst({
-      where: {
-        name: data.name,
-        variableId: data.variableId,
-      },
-    })
+        const existingCategory = await prisma.category.findFirst({
+            where: {
+                name: data.name,
+                variableId: data.variableId,
+            },
+        });
 
-    if (existingCategory) {
-      return { success: false, error: "La categoría ya existe para esta variable." }
+        if (existingCategory) {
+            console.log("Category already exists:", existingCategory);
+            return { success: false, error: "La categoría ya existe para esta variable." };
+        }
+
+        const category = await prisma.category.create({
+            data: {
+                name: data.name,
+                variableId: data.variableId,
+            },
+        });
+
+        console.log("Category created successfully:", category);
+
+        revalidatePath("/admin/incident/vars/cat");
+
+        return { success: true, category };
+    } catch (error) {
+        let errorMessage = "An unexpected error occurred";
+
+        if (error instanceof Error) {
+            errorMessage = error.message;
+        }
+
+        console.error("Error al registrar la categoría:", error);
+        return { success: false, error: errorMessage };
     }
-
-    // Crear la categoría si no existe
-    const category = await prisma.category.create({
-      data: {
-        name: data.name,
-        variableId: data.variableId,
-      },
-    })
-
-    // Revalidate both the create page and the main listing page
-    revalidatePath("/admin/incident/vars/cat/create")
-    revalidatePath("/admin/incident/vars/cat")
-
-    return { success: true, category }
-  } catch (error) {
-    let errorMessage = "An unexpected error occurred"
-
-    if (error instanceof Error) {
-      errorMessage = error.message
-    }
-
-    console.error("Error al registrar la categoría:", error)
-    return { success: false, error: errorMessage }
-  }
 }
 
 // Obtiene todas las variables disponibles
 export async function fetchVariables() {
-  try {
-    const variables = await prisma.variable.findMany({
-      select: {
-        id: true,
-        name: true,
-      },
-    })
+    try {
+        const variables = await prisma.variable.findMany({
+            select: {
+                id: true,
+                name: true,
+            },
+        });
 
-    console.log("Variables from database:", variables)
-    return variables
-  } catch (error) {
-    console.error("Error fetching variables:", error)
-    return []
-  }
+        console.log("Variables from database:", variables);
+        return variables;
+    } catch (error) {
+        console.error("Error fetching variables:", error);
+        return [];
+    }
 }
 
 // Obtiene las categorías asociadas a una variable específica
 export async function fetchCategoriesByVariable(variableId: number) {
-  return await prisma.category.findMany({
-    where: {
-      variableId: variableId,
-    },
-    select: {
-      id: true,
-      name: true,
-    },
-  })
+    return await prisma.category.findMany({
+        where: {
+            variableId: variableId,
+        },
+        select: {
+            id: true,
+            name: true,
+        },
+    });
 }
