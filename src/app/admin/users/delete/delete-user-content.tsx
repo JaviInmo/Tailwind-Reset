@@ -44,8 +44,7 @@ export function DeleteUserContent({ id, userName }: DeleteUserContentProps) {
         <div className="rounded-lg bg-white p-6 shadow">
           <div className="mb-6 text-center">
             <p className="text-black">
-              ¿Estás seguro de que deseas eliminar el usuario {userName ? <strong>"{userName}"</strong> : ""} con ID:{" "}
-              <strong>{id}</strong>?
+              ¿Estás seguro de que deseas eliminar el usuario {userName ? <strong>"{userName}"</strong> : null}
             </p>
           </div>
           <div className="flex justify-center space-x-4">

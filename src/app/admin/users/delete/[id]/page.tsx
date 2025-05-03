@@ -23,7 +23,7 @@ export default async function DeleteUserPage({ params }: PageProps) {
         <div className="w-full max-w-md">
           <div className="rounded-lg bg-white p-6 shadow">
             <h2 className="text-xl font-semibold text-red-600">Usuario no encontrado</h2>
-            <p className="mt-2 text-gray-600">El usuario con ID {params.id} no existe.</p>
+           
           </div>
         </div>
       </div>
