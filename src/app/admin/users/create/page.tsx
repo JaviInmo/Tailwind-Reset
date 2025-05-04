@@ -1,6 +1,6 @@
 import { getAuth } from "@/libs/auth";
 
-import  RegisterPage from "./register-form"
+import RegisterPage from "./register-form";
 
 export default async function FormPage() {
     await getAuth();
