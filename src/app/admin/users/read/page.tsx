@@ -8,12 +8,15 @@ import {
     GenericTableContent,
     GenericTableFooter,
     GenericTableHeader,
+    GenericTableRoot,
+} from "@/components/generic/generic-table";
+import { UserActions } from "./actions";
+import {
     GenericTablePageSize,
     GenericTablePagination,
-    GenericTableRoot,
     GenericTableSearch,
     GenericTableVisibility,
-} from "@/components/generic/generic-table";
+} from "@/components/generic/generic-table-filters";
 
 type TableSearchParams = Partial<{
     page: string;
@@ -102,12 +105,15 @@ export default async function Page(props: Readonly<{ searchParams: Promise<Table
                 data={data}
                 columns={columns}
                 defaultHiddenColumns={defaultHiddenColumns}
-                editUrl={"/admin/users/edit/"}
-                deleteUrl={"/admin/users/delete/"}
+                extraColumns={[
+                    {
+                        head: "Actions",
+                        cell: <UserActions />,
+                    },
+                ]}
             />
             <GenericTableFooter>
                 <GenericTablePageSize />
-
                 <GenericTablePagination pageCount={pageCount} />
             </GenericTableFooter>
         </GenericTableRoot>
