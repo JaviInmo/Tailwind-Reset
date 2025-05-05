@@ -11,7 +11,7 @@ type UpdateData = {
 
 export async function updateCategoryAction(data: UpdateData) {
   try {
-    // Asegurar que existe
+    // Ensure the category exists
     const existing = await prisma.category.findUnique({
       where: { id: data.id },
     })
@@ -20,12 +20,12 @@ export async function updateCategoryAction(data: UpdateData) {
       return { success: false, error: "Categoría no encontrada" }
     }
 
-    // Verificar si ya existe una categoría con el mismo nombre para la misma variable
+    // Check if another category with the same name exists for this variable
     const existingCategory = await prisma.category.findFirst({
       where: {
         name: data.name,
         variableId: data.variableId,
-        id: { not: data.id }, // Excluir la categoría actual
+        id: { not: data.id }, // Exclude the current category
       },
     })
 
@@ -33,7 +33,7 @@ export async function updateCategoryAction(data: UpdateData) {
       return { success: false, error: "Ya existe una categoría con este nombre para esta variable" }
     }
 
-    // Actualizar
+    // Update the category
     const category = await prisma.category.update({
       where: { id: data.id },
       data: {
@@ -42,7 +42,7 @@ export async function updateCategoryAction(data: UpdateData) {
       },
     })
 
-    // Revalida las rutas
+    // Revalidate paths
     revalidatePath("/admin/incident/vars/cat")
     revalidatePath("/admin/incident/vars/cat/update/[id]")
 
@@ -54,12 +54,15 @@ export async function updateCategoryAction(data: UpdateData) {
   }
 }
 
-// Obtiene todas las variables disponibles
+// Fetch all variables for the dropdown
 export async function fetchVariables() {
   return await prisma.variable.findMany({
     select: {
       id: true,
       name: true,
+    },
+    orderBy: {
+      name: "asc",
     },
   })
 }

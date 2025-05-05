@@ -1,18 +1,19 @@
-import { EditVarPage } from "@/app/admin/incident/vars/var/edit/[id]/page"
 import { Dialog, DialogContent } from "@/components/ui/app-dialog"
 import prisma from "@/libs/db"
+import { DeleteVarContent } from "@/app/admin/incident/vars/var/delete/delete-var-content"
 import { notFound } from "next/navigation"
 
-export default async function ModalEditVar(props: {
-  params: Promise<{ id: string }>
-}) {
-  const params = await props.params
+interface PageProps {
+  params: {
+    id: string
+  }
+}
 
-  // Check if the variable exists before rendering the EditVarPage
+export default async function ModalDeleteVar({ params }: PageProps) {
+  // Check if the variable exists before rendering the DeleteVarContent
   const id = Number(params.id)
   const variableData = await prisma.variable.findUnique({
     where: { id },
-    include: { categories: { include: { subcategories: true } } },
   })
 
   if (!variableData) {
@@ -22,7 +23,7 @@ export default async function ModalEditVar(props: {
   return (
     <Dialog open={true}>
       <DialogContent>
-        <EditVarPage params={params} />
+        <DeleteVarContent id={id} varName={variableData.name} />
       </DialogContent>
     </Dialog>
   )

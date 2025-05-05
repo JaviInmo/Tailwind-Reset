@@ -1,22 +1,64 @@
 import { getAuth } from "@/libs/auth"
 import prisma from "@/libs/db"
 
-import TablePage from "./catTable"
+import {
+  GenericTableContent,
+  GenericTableFooter,
+  GenericTableHeader,
+  GenericTableRoot,
+} from "@/components/generic/generic-table"
+import { CatActions } from "./actions"
+import {
+  GenericTablePageSize,
+  GenericTablePagination,
+  GenericTableSearch,
+} from "@/components/generic/generic-table-filters"
+import Link from "next/link"
+import { Button } from "@/components/ui/button"
 
-export default async function CatPage(props: { searchParams: { [key: string]: string | string[] | undefined } }) {
+type TableSearchParams = Partial<{
+  page: string
+  search: string
+  sort: string
+  order: "asc" | "desc"
+  limit: string
+}>
+
+export default async function Page(props: { searchParams: Promise<TableSearchParams> }) {
   await getAuth()
 
-  // Get search parameters
-  const search = typeof props.searchParams.search === "string" ? props.searchParams.search : undefined
-  const limit = typeof props.searchParams.limit === "string" ? Number.parseInt(props.searchParams.limit) : 10
-  const page = typeof props.searchParams.page === "string" ? Number.parseInt(props.searchParams.page) : 1
+  const searchParams = await props.searchParams
+  // Default parameters from URL
+  const itemsPerPage = searchParams.limit ? Number(searchParams.limit) : 10
+  const page = searchParams.page ? Number(searchParams.page) : 1
+  const search = searchParams.search ?? null
+  const sortField = searchParams.sort ?? "name"
+  const sortOrder = searchParams.order ?? "asc"
+  const skip = (page - 1) * itemsPerPage
 
-  // Fetch categories with search filter if provided
-  const categorias = await prisma.category.findMany({
-    select: {
-      id: true,
-      name: true,
-      variableId: true,
+  // Sort mapping
+  const sortMapping: { [key: string]: any } = {
+    name: { name: sortOrder },
+    variable: { variable: { name: sortOrder } },
+  }
+
+  const orderBy = sortMapping[sortField] || { name: "asc" }
+
+  // Database query with Prisma, applying search if provided
+  const categoryCount = await prisma.category.count({
+    where: search
+      ? {
+          OR: [
+            { name: { contains: search, mode: "insensitive" } },
+            { variable: { name: { contains: search, mode: "insensitive" } } },
+          ],
+        }
+      : undefined,
+  })
+
+  const categories = await prisma.category.findMany({
+    orderBy,
+    include: {
       variable: {
         select: {
           id: true,
@@ -32,18 +74,46 @@ export default async function CatPage(props: { searchParams: { [key: string]: st
           ],
         }
       : undefined,
+    take: itemsPerPage,
+    skip: skip,
   })
 
-  const categoriasConVariable = categorias.map((categoria) => ({
-    id: categoria.id,
-    name: categoria.name,
-    variable: categoria.variable.name,
-    variableId: categoria.variableId,
+  const pageCount = Math.ceil(categoryCount / itemsPerPage)
+
+  const columns = { id: "Id", name: "Nombre", variable: "Variable" }
+
+  // Map data to the expected format
+  const data = categories.map((category) => ({
+    id: category.id.toString(),
+    name: category.name,
+    variable: category.variable.name,
   }))
 
+  const defaultHiddenColumns: (keyof typeof columns)[] = ["id"]
+
   return (
-    <div className="w-full">
-      <TablePage data={categoriasConVariable} />
-    </div>
+    <GenericTableRoot>
+      <GenericTableHeader title="Tabla de Categorías">
+        <GenericTableSearch />
+        <Link href="/admin/incident/vars/cat/create">
+          <Button variant="default">Agregar Categoría</Button>
+        </Link>
+      </GenericTableHeader>
+      <GenericTableContent
+        data={data}
+        columns={columns}
+        defaultHiddenColumns={defaultHiddenColumns}
+        extraColumns={[
+          {
+            head: "Acciones",
+            cell: <CatActions />,
+          },
+        ]}
+      />
+      <GenericTableFooter>
+        <GenericTablePageSize />
+        <GenericTablePagination pageCount={pageCount} />
+      </GenericTableFooter>
+    </GenericTableRoot>
   )
-} 
+}

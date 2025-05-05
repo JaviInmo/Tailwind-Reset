@@ -1,23 +1,22 @@
 import { Dialog, DialogContent } from "@/components/ui/app-dialog"
 import prisma from "@/libs/db"
+import { DeleteCatContent } from "@/app/admin/incident/vars/cat/delete/delete-cat-content"
 import { notFound } from "next/navigation"
-import { CategoryUpdateForm } from "../../../update/cat-form"
 
-export default async function ModalEditCat(props: {
-  params: { id: string }
-}) {
-  const params = props.params
+interface PageProps {
+  params: {
+    id: string
+  }
+}
 
-  // Check if the category exists before rendering the CategoryUpdateForm
+export default async function ModalDeleteCat({ params }: PageProps) {
+  // Check if the category exists before rendering the DeleteCatContent
   const id = Number(params.id)
   const categoryData = await prisma.category.findUnique({
     where: { id },
     include: {
       variable: {
-        select: {
-          id: true,
-          name: true,
-        },
+        select: { name: true },
       },
     },
   })
@@ -29,7 +28,7 @@ export default async function ModalEditCat(props: {
   return (
     <Dialog open={true}>
       <DialogContent>
-        <CategoryUpdateForm categoryData={categoryData} />
+        <DeleteCatContent id={id} catName={categoryData.name} variableName={categoryData.variable.name} />
       </DialogContent>
     </Dialog>
   )

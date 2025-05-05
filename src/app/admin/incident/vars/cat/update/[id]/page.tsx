@@ -1,13 +1,14 @@
-import { getAuth } from "@/libs/auth"
+import { Dialog, DialogContent } from "@/components/ui/app-dialog"
 import prisma from "@/libs/db"
-import { CategoryUpdateForm } from "../cat-form"
+import { notFound } from "next/navigation"
+import { CategoryUpdateForm } from "../../../cat/update/cat-form"
 
-export default async function EditCatPage(props: {
+export default async function ModalEditCat(props: {
   params: { id: string }
 }) {
   const params = props.params
-  await getAuth()
 
+  // Check if the category exists before rendering the CategoryUpdateForm
   const id = Number(params.id)
   const categoryData = await prisma.category.findUnique({
     where: { id },
@@ -22,8 +23,14 @@ export default async function EditCatPage(props: {
   })
 
   if (!categoryData) {
-    return <div>Categoría no encontrada</div>
+    return notFound()
   }
 
-  return <CategoryUpdateForm categoryData={categoryData} />
+  return (
+    <Dialog open={true}>
+      <DialogContent>
+        <CategoryUpdateForm categoryData={categoryData} />
+      </DialogContent>
+    </Dialog>
+  )
 }

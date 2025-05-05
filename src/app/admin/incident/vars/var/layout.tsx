@@ -1,12 +1,21 @@
-import { PropsWithChildren, ReactNode } from "react";
+import type { PropsWithChildren, ReactNode } from "react"
 
-export default function Layout({ children, create, edit}: PropsWithChildren<{ create: ReactNode ; edit: ReactNode }>) {
-    return (
-        <>
-            {children}
-            {create}
-            {edit}
-            
-        </>
-    );
+export default function Layout({
+  children,
+  create,
+  edit,
+  delete: deleteSlot,
+}: PropsWithChildren<{
+  create: ReactNode
+  edit: ReactNode
+  delete: ReactNode
+}>) {
+  return (
+    <>
+      {children}
+      {create}
+      {edit}
+      {deleteSlot}
+    </>
+  )
 }

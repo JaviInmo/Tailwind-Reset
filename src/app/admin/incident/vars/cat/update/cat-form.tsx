@@ -7,17 +7,9 @@ import { useForm } from "react-hook-form"
 import { z } from "zod"
 
 import { Button } from "@/components/ui/button"
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogFooter,
-  DialogTitle,
-  DialogDescription,
-} from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
-import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form"
 
 import { fetchVariables, updateCategoryAction } from "./update.action"
 
@@ -78,37 +70,32 @@ export function CategoryUpdateForm({ categoryData }: CategoryFormProps) {
         return
       }
 
-      setShowSuccessModal(true)
+      router.back()
+      router.refresh()
     } catch (error) {
       setGlobalError(`Error al actualizar: ${error}`)
     }
   }
 
-  const handleCloseSuccessModal = () => {
-    setShowSuccessModal(false)
-    router.push("/admin/incident/vars/cat")
-    router.refresh()
-  }
-
   return (
-    <div className="flex justify-center py-2 text-black">
-      <div className="w-7/12 bg-white space-y-7 py-8 rounded-sm">
-        <div className="text-center">
-          <h1 className="text-2xl font-semibold">Editar Categoría</h1>
-          <p className="text-sm text-gray-500">Modifique los datos de la categoría y guarde los cambios.</p>
+    <div className="flex min-h-52 items-center justify-center bg-slate-100 px-4 py-12 text-black sm:px-6 lg:px-8">
+      <div className="w-full max-w-md">
+        <div className="mb-4 text-center">
+          <h1 className="mb-3 text-2xl font-semibold">Editar Categoría</h1>
+          <p className="text-black">Modifique los datos de la categoría y guarde los cambios.</p>
         </div>
 
-        <div className="flex justify-center">
+        <div className="rounded-lg bg-white p-6 shadow">
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="w-full max-w-lg space-y-6">
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
               <FormField
                 control={form.control}
                 name="name"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Nombre de la Categoría:</FormLabel>
+                    <FormLabel>Nombre de la Categoría</FormLabel>
                     <FormControl>
-                      <Input placeholder="Introduzca el nombre de la categoría" {...field} />
+                      <Input placeholder="Nombre de la categoría" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -120,7 +107,7 @@ export function CategoryUpdateForm({ categoryData }: CategoryFormProps) {
                 name="variableId"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Variable:</FormLabel>
+                    <FormLabel>Variable</FormLabel>
                     <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
                         <SelectTrigger>
@@ -149,18 +136,6 @@ export function CategoryUpdateForm({ categoryData }: CategoryFormProps) {
           </Form>
         </div>
       </div>
-
-      <Dialog open={showSuccessModal} onOpenChange={handleCloseSuccessModal}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Categoría Actualizada</DialogTitle>
-            <DialogDescription>La categoría se ha actualizado con éxito.</DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button onClick={handleCloseSuccessModal}>Aceptar</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   )
 }

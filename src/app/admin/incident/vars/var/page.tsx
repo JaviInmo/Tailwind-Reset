@@ -86,8 +86,8 @@ export default async function Page(props: { searchParams: Promise<TableSearchPar
         <GenericTableRoot>
             <GenericTableHeader title="Tabla de Variables">
                 <GenericTableSearch />
-                <Link href="/admin/users/create">
-                    <Button variant={"immo"}>Agregar Usuario</Button>
+                <Link href="/admin/incident/vars/var/create">
+                    <Button variant={"immo"}>Agregar Variable</Button>
                 </Link>
             </GenericTableHeader>
             <GenericTableContent
