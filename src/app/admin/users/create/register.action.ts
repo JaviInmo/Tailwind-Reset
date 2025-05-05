@@ -2,7 +2,7 @@
 import { revalidatePath } from "next/cache";
 
 import prisma from "@/libs/db";
-import { redirect } from "next/navigation";
+
 
 type FormSchemaData = {
 	id?: string;
