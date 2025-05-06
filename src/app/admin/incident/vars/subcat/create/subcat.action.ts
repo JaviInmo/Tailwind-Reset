@@ -1,71 +1,102 @@
-"use server";
+"use server"
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath } from "next/cache"
+import prisma from "@/libs/db"
 
-import prisma from "@/libs/db";
+type RegisterData = {
+  id?: number
+  name: string
+  categoryId: number
+}
 
-type FormSchemaData = {
-    categoryId: number;
-    name: string;
-};
+export async function registerAction(data: RegisterData) {
+  try {
+    // If we have an ID, we're updating an existing subcategory
+    if (data.id) {
+      const subcategory = await prisma.subcategory.findUnique({
+        where: { id: data.id },
+      })
 
-// Registra una nueva categoría
-export async function registerAction(data: FormSchemaData) {
-    try {
-        const existingSubcategory = await prisma.subcategory.findFirst({
-            where: {
-                name: data.name,
-                categoryId: data.categoryId,
-            },
-        });
+      if (!subcategory) {
+        return { success: false, error: "Subcategoría no encontrada" }
+      }
 
-        if(existingSubcategory){
-            return {success:false, error:"La subcategoría ya existe para esta categoría."};
+      // Check if another subcategory with the same name exists for this category
+      if (data.name !== subcategory.name || data.categoryId !== subcategory.categoryId) {
+        const exists = await prisma.subcategory.findFirst({
+          where: {
+            name: data.name,
+            categoryId: data.categoryId,
+            id: { not: data.id }, // Exclude the current subcategory
+          },
+        })
 
+        if (exists) {
+          return { success: false, error: "Ya existe una subcategoría con este nombre para esta categoría" }
         }
+      }
 
-       // Crear la subcategoría si no existe 
-        const subcategory = await prisma.subcategory.create({
-            data: {
-                name: data.name,
-                categoryId: data.categoryId,
-            },
-        });
+      // Update the subcategory
+      await prisma.subcategory.update({
+        where: { id: data.id },
+        data: {
+          name: data.name,
+          categoryId: data.categoryId,
+        },
+      })
 
-        revalidatePath("/admin/incident/vars/subcat/create");
-
-        return { success: true, subcategory };
-    } catch (error) {
-        let errorMessage = "An unexpected error occurred";
-
-        if (error instanceof Error) {
-            errorMessage = error.message;
-        }
-
-        console.error("Error al registrar la subcategoría:", error);
-        return { success: false, error: errorMessage };
+      revalidatePath("/admin/incident/vars/subcat")
+      return { success: true }
     }
+
+    // Creating a new subcategory
+    // Check if a subcategory with the same name already exists for this category
+    const exists = await prisma.subcategory.findFirst({
+      where: {
+        name: data.name,
+        categoryId: data.categoryId,
+      },
+    })
+
+    if (exists) {
+      return { success: false, error: "Ya existe una subcategoría con este nombre para esta categoría" }
+    }
+
+    // Create the new subcategory
+    await prisma.subcategory.create({
+      data: {
+        name: data.name,
+        categoryId: data.categoryId,
+      },
+    })
+
+    revalidatePath("/admin/incident/vars/subcat")
+    return { success: true }
+  } catch (error) {
+    console.error("Error processing subcategory:", error)
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Error inesperado",
+    }
+  }
 }
 
-// Obtiene todas las categorias disponibles
-export async function fetchCategory() {
-    return await prisma.category.findMany({
-        select: {
-            id: true,
-            name: true,
-        },
-    });
-}
+// Fetch all categories for the dropdown
+export async function fetchCategories() {
+  try {
+    const categories = await prisma.category.findMany({
+      select: {
+        id: true,
+        name: true,
+      },
+      orderBy: {
+        name: "asc",
+      },
+    })
 
-// Obtiene las subcategorías asociadas a una variable específica
-export async function fetchSubCategoriesByCategory(categoryId: number) {
-    return await prisma.subcategory.findMany({
-        where: {
-            categoryId: categoryId,
-        },
-        select: {
-            id: true,
-            name: true,
-        },
-    });
+    return categories
+  } catch (error) {
+    console.error("Error fetching categories:", error)
+    return []
+  }
 }

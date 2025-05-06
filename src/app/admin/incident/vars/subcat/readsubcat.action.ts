@@ -1,8 +1,8 @@
-"use server";
+"use server"
 
-import prisma from "@/libs/db";
+import prisma from "@/libs/db"
 
 export async function countSubCats() {
-    const count = await prisma.subcategory.count();
-    return count;
+  const count = await prisma.subcategory.count()
+  return count
 }

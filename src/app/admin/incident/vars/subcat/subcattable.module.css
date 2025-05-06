@@ -2,14 +2,15 @@
     color: var(--bs-secondary) !important;
     background-color: transparent;
     border: 1px solid var(--bs-secondary);
-}
-
-.pageItemSecondaryActive a {
+  }
+  
+  .pageItemSecondaryActive a {
     background-color: var(--bs-secondary) !important;
     border-color: var(--bs-secondary) !important;
-}
-
-.align-bottom {
+  }
+  
+  .align-bottom {
     display: flex;
     align-items: flex-end;
-}
+  }
+  

@@ -1,38 +1,33 @@
-"use server";
+"use server"
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath } from "next/cache"
+import prisma from "@/libs/db"
 
-import prisma from "@/libs/db";
+export async function handleDeleteSubcategoryAction(id: number) {
+  try {
+    // Check if the subcategory exists before attempting to delete it
+    const subcategory = await prisma.subcategory.findUnique({
+      where: { id },
+    })
 
-// delete.action.ts
-
-export async function handleDeleteSubCategoryAction(id: number) {
-    try {
-        // Verifica si la subcategoria existe antes de intentar eliminarla
-        const subcategoria = await prisma.subcategory.findUnique({
-            where: { id },
-        });
-
-        if (!subcategoria) {
-            return { success: false, error: "Subcategoría no encontrada" };
-        }
-
-        // Elimina la subcategoria
-        await prisma.subcategory.delete({
-            where: { id },
-        });
-
-        revalidatePath("/admin/variables/createSubCat");
-
-        return { success: true };
-    } catch (error) {
-        let errorMessage = "An unexpected error occurred";
-
-        if (error instanceof Error) {
-            errorMessage = error.message;
-        }
-
-        console.error("Error al eliminar la subcategoría:", error);
-        return { success: false, error: errorMessage };
+    if (!subcategory) {
+      return { success: false, error: "Subcategoría no encontrada" }
     }
+
+    // Delete the subcategory
+    await prisma.subcategory.delete({
+      where: { id },
+    })
+
+    // Revalidate paths
+    revalidatePath("/admin/incident/vars/subcat")
+
+    return { success: true }
+  } catch (error) {
+    console.error("Error al eliminar la subcategoría:", error)
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Error inesperado",
+    }
+  }
 }

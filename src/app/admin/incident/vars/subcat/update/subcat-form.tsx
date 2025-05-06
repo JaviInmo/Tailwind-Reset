@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form"
 
-import { fetchCategories, registerAction } from "./subcat.action"
+import { fetchCategories, updateSubcategoryAction } from "./update.action"
 
 const formSchema = z.object({
   name: z
@@ -23,7 +23,7 @@ const formSchema = z.object({
 type FormSchemaData = z.infer<typeof formSchema>
 
 interface SubCategoryFormProps {
-  subcategoryData?: {
+  subcategoryData: {
     id: number
     name: string
     categoryId: number
@@ -34,16 +34,18 @@ interface SubCategoryFormProps {
   }
 }
 
-export function SubCatForm({ subcategoryData }: SubCategoryFormProps) {
-  const router = useRouter()
+export function SubCategoryUpdateForm({ subcategoryData }: SubCategoryFormProps) {
+  const [showSuccessModal, setShowSuccessModal] = useState(false)
   const [categories, setCategories] = useState<{ id: number; name: string }[]>([])
   const [globalError, setGlobalError] = useState<string | null>(null)
+  const router = useRouter()
 
   const form = useForm<FormSchemaData>({
     resolver: zodResolver(formSchema),
+    mode: "onTouched",
     defaultValues: {
-      name: subcategoryData?.name || "",
-      categoryId: subcategoryData?.categoryId.toString() || "",
+      name: subcategoryData.name,
+      categoryId: subcategoryData.categoryId.toString(),
     },
   })
 
@@ -55,25 +57,25 @@ export function SubCatForm({ subcategoryData }: SubCategoryFormProps) {
     fetchData()
   }, [])
 
-  const onSubmit = async (data: FormSchemaData) => {
+  async function onSubmit(data: FormSchemaData) {
     setGlobalError(null)
 
     try {
-      const payload = subcategoryData
-        ? { id: subcategoryData.id, name: data.name, categoryId: Number(data.categoryId) }
-        : { name: data.name, categoryId: Number(data.categoryId) }
+      const resp = await updateSubcategoryAction({
+        id: subcategoryData.id,
+        name: data.name,
+        categoryId: Number.parseInt(data.categoryId),
+      })
 
-      const response = await registerAction(payload)
-
-      if (!response.success) {
-        setGlobalError(response.error || "Error al procesar la subcategoría")
+      if (!resp.success) {
+        setGlobalError(resp.error || "Error al actualizar la subcategoría")
         return
       }
 
       router.back()
       router.refresh()
     } catch (error) {
-      setGlobalError(`Error: ${error instanceof Error ? error.message : String(error)}`)
+      setGlobalError(`Error al actualizar: ${error}`)
     }
   }
 
@@ -81,14 +83,8 @@ export function SubCatForm({ subcategoryData }: SubCategoryFormProps) {
     <div className="flex min-h-52 items-center justify-center bg-slate-100 px-4 py-12 text-black sm:px-6 lg:px-8">
       <div className="w-full max-w-md">
         <div className="mb-4 text-center">
-          <h1 className="mb-3 text-2xl font-semibold">
-            {subcategoryData ? "Editar Subcategoría" : "Registro de Subcategoría"}
-          </h1>
-          <p className="text-black">
-            {subcategoryData
-              ? "Modifica los datos de la subcategoría"
-              : "Inserte el nombre de la subcategoría y seleccione una categoría."}
-          </p>
+          <h1 className="mb-3 text-2xl font-semibold">Editar Subcategoría</h1>
+          <p className="text-black">Modifique los datos de la subcategoría y guarde los cambios.</p>
         </div>
 
         <div className="rounded-lg bg-white p-6 shadow">
@@ -136,7 +132,7 @@ export function SubCatForm({ subcategoryData }: SubCategoryFormProps) {
               {globalError && <div className="text-red-500 text-sm text-center">{globalError}</div>}
 
               <Button type="submit" className="w-full">
-                {subcategoryData ? "Actualizar" : "Registrar"}
+                Actualizar Subcategoría
               </Button>
             </form>
           </Form>
