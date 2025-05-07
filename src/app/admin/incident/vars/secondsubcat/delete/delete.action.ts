@@ -27,13 +27,10 @@ export async function handleDeleteSecondSubCategoryAction(id: number) {
 
         return { success: true };
     } catch (error) {
-        let errorMessage = "Ha ocurrido un error inesperado";
-
-        if (error instanceof Error) {
-            errorMessage = error.message;
-        }
-
         console.error("Error al eliminar la segunda subcategoría:", error);
-        return { success: false, error: errorMessage };
+        return {
+            success: false,
+            error: error instanceof Error ? error.message : "Error inesperado",
+        };
     }
 }

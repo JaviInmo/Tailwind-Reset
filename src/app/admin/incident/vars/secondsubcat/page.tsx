@@ -1,38 +1,112 @@
 import { getAuth } from "@/libs/auth";
 import prisma from "@/libs/db";
 
-import TablePage from "./secondsubcatTable";
+import {
+  GenericTableContent,
+  GenericTableFooter,
+  GenericTableHeader,
+  GenericTableRoot,
+} from "@/components/generic/generic-table"
+import { SecondSubCatActions } from "./actions"
+import {
+  GenericTablePageSize,
+  GenericTablePagination,
+  GenericTableSearch,
+} from "@/components/generic/generic-table-filters"
+import Link from "next/link"
+import { Button } from "@/components/ui/button"
 
-export default async function SecondSubCatPage() {
-    await getAuth();
+type TableSearchParams = Partial<{
+  page: string
+  search: string
+  sort: string
+  order: "asc" | "desc"
+  limit: string
+}>
 
-    // Obtener las subcategorías junto con sus segundas subcategorías
-    const subcategorias = await prisma.subcategory.findMany({
-        select: {
-            id: true,
-            name: true,
-            secondSubcategories: {
-                select: {
-                    id: true,
-                    name: true,
-                },
-            },
+
+
+
+export default async function Page(props: { searchParams: Promise<TableSearchParams> }) {
+  await getAuth()
+
+  const searchParams = await props.searchParams
+  // Default parameters from URL
+  const itemsPerPage = searchParams.limit ? Number(searchParams.limit) : 10
+  const page = searchParams.page ? Number(searchParams.page) : 1
+  const search = searchParams.search ?? null
+  const sortField = searchParams.sort ?? "name"
+  const sortOrder = searchParams.order ?? "asc"
+  const skip = (page - 1) * itemsPerPage
+
+  // Sort mapping
+  const sortMapping: { [key: string]: any } = {
+    name: { name: sortOrder },
+    category: { category: { name: sortOrder } },
+  } 
+
+  const orderBy = sortMapping[sortField] || { name: "asc" }
+
+  // Database query with Prisma, applying search if provided
+  const secondsubcategoryCount = await prisma.secondSubcategory.count({
+    where: search
+      ? {
+          OR: [
+            { name: { contains: search, mode: "insensitive" } },
+            { subcategory: { name: { contains: search, mode: "insensitive" } } },
+          ],
+        }
+      : undefined,
+  })
+
+  const secondsubcategories = await prisma.secondSubcategory.findMany({
+    orderBy,
+    include: {
+      subcategory: {
+        include: {
+          category: true,
         },
-    });
+      },
+    },
+    take: itemsPerPage,
+    skip,
+  })
 
-    // Mapear las subcategorías a un formato que incluya la segunda subcategoría como un string
-    const subCategoriasConSegundaSubcategoria = subcategorias.flatMap((subcategoria) =>
-        subcategoria.secondSubcategories.map((ssc) => ({
-            id: ssc.id, // ID de la segunda subcategoría
-            name: ssc.name, // Nombre de la segunda subcategoría
-            subcategoria: subcategoria.name, // Nombre de la subcategoría padre
-        })),
-    );
+  const pageCount = Math.ceil(secondsubcategoryCount / itemsPerPage)
 
-    return (
-        <div className="container">
-            {/* <VariableForm /> */}
-            <TablePage data={subCategoriasConSegundaSubcategoria} />
-        </div>
-    );
+  const columns = {id: "ID", name: "Name", subcategory: "Subcategory"}
+
+  const data = secondsubcategories.map((secondsubcategory) => ({
+    id: secondsubcategory.id.toString(),
+    name: secondsubcategory.name,
+    subcategory: secondsubcategory.subcategory.name,
+  }))
+
+  const defaultHiddenColumns: (keyof typeof columns)[] = ["id"]
+
+  return (
+    <GenericTableRoot>
+    <GenericTableHeader title="Tabla de Segunda Subcategoría">
+      <GenericTableSearch />
+      <Link href="/admin/incident/vars/secondsubcat/create">
+        <Button variant="default">Agregar Subcategoría</Button>
+      </Link>
+    </GenericTableHeader>
+    <GenericTableContent
+      data={data}
+      columns={columns}
+      defaultHiddenColumns={defaultHiddenColumns}
+      extraColumns={[
+        {
+          head: "Acciones",
+          cell: <SecondSubCatActions />,
+        },
+      ]}
+    />
+    <GenericTableFooter>
+      <GenericTablePageSize />
+      <GenericTablePagination pageCount={pageCount} />
+    </GenericTableFooter>
+  </GenericTableRoot>
+  )
 }

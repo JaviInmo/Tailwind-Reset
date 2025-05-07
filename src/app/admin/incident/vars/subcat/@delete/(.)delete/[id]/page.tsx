@@ -28,7 +28,10 @@ export default async function ModalDeleteSubCat({ params }: PageProps) {
   return (
     <Dialog open={true}>
       <DialogContent>
-        <DeleteSubCatContent id={id} subcatName={subcategoryData.name} categoryName={subcategoryData.category.name} />
+        <DeleteSubCatContent 
+        id={id}
+         subcatName={subcategoryData.name} 
+         categoryName={subcategoryData.category.name} />
       </DialogContent>
     </Dialog>
   )

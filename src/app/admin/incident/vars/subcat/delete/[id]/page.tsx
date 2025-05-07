@@ -28,5 +28,8 @@ export default async function DeleteSubCatPage({ params }: PageProps) {
   }
 
   // Pass subcategory data to client component
-  return <DeleteSubCatContent id={id} subcatName={subcategoryData.name} categoryName={subcategoryData.category.name} />
+  return <DeleteSubCatContent 
+  id={id} 
+  subcatName={subcategoryData.name} 
+  categoryName={subcategoryData.category.name} />
 }

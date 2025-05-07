@@ -1,22 +1,30 @@
 import { getAuth } from "@/libs/auth";
+import { notFound } from "next/navigation"
 import prisma from "@/libs/db";
 
-import { CatForm } from "../../create/cat-form";
+import { SecondSubcategoryUpdateForm } from "../../update/cat-form";
 
-export default async function CatPage(props: { params: Promise<{ id: string }> }) {
-    const params = await props.params;
+export default async function UpdateSecondSubCatPage(props: { params: { id: string } }) {
     await getAuth();
 
-    const id = Number(params.id);
-
-    const variableData = await prisma.variable.findUnique({
-        where: { id: id },
-        include: { categories: { include: { subcategories: true } } },
+    // Check if the second subcategory exists before rendering the form
+    const id = Number(props.params.id);
+    const secondSubcategoryData = await prisma.secondSubcategory.findUnique({
+        where: { id },
+        include: {
+            subcategory: {
+                select: {
+                    id: true,
+                    name: true,
+                },
+            },
+        },
     });
 
-    if (!variableData) {
-        return { notFound: true };
+    if (!secondSubcategoryData) {
+        return notFound();
     }
 
-    return <CatForm variableData={variableData} />;
+    return <SecondSubcategoryUpdateForm secondSubcategoryData={secondSubcategoryData} />;
+
 }
