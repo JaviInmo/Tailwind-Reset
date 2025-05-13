@@ -1,4 +1,4 @@
-export default function Page(){
-    // This have to be null
-    return null
+export default function Page() {
+  // This have to be null
+  return null
 }

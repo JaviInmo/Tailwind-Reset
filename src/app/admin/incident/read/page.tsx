@@ -1,26 +1,26 @@
 // page.tsx
-import prisma from "@/libs/db";
-import Table from "./Table";
+import prisma from "@/libs/db"
+import Table from "./Table"
 
 type TableSearchParams = Partial<{
-  page: string;
-  search: string;
-  sort: string;           // Campo por el que ordenar (ej: "provincia", "numeroPeople", etc.)
-  order: "asc" | "desc";  // Orden: ascendente o descendente
-  limit: string;          // Cantidad de elementos por página
-}>;
+  page: string
+  search: string
+  sort: string // Campo por el que ordenar (ej: "provincia", "numeroPeople", etc.)
+  order: "asc" | "desc" // Orden: ascendente o descendente
+  limit: string // Cantidad de elementos por página
+}>
 
 export default async function Page(props: { searchParams: Promise<TableSearchParams> }) {
-  const searchParams = await props.searchParams;
+  const searchParams = await props.searchParams
   // Leer el parámetro "limit" y asignar un valor por defecto de 10 si no existe
-  const itemsPerPage = searchParams.limit ? Number(searchParams.limit) : 10;
-  const page = searchParams.page ? Number(searchParams.page) : 1;
-  const search = searchParams.search ?? null;
+  const itemsPerPage = searchParams.limit ? Number(searchParams.limit) : 10
+  const page = searchParams.page ? Number(searchParams.page) : 1
+  const search = searchParams.search ?? null
 
   // Parámetros de ordenamiento
-  const sortField = searchParams.sort ?? "date";
-  const sortOrder = searchParams.order ?? "desc";
-  const skip = (page - 1) * itemsPerPage;
+  const sortField = searchParams.sort ?? "date"
+  const sortOrder = searchParams.order ?? "desc"
+  const skip = (page - 1) * itemsPerPage
 
   const sortMapping: { [key: string]: any } = {
     provincia: { province: { name: sortOrder } },
@@ -34,11 +34,11 @@ export default async function Page(props: { searchParams: Promise<TableSearchPar
     descripcion: { description: sortOrder },
     fecha: { date: sortOrder },
     titulo: { title: sortOrder },
-  };
+  }
 
-  const orderBy = sortMapping[sortField] || { date: "desc" };
-  const searchNumber = Number(search);
-  const hasNumericSearch = !isNaN(searchNumber);
+  const orderBy = sortMapping[sortField] || { date: "desc" }
+  const searchNumber = Number(search)
+  const hasNumericSearch = !isNaN(searchNumber)
 
   const incidentCount = await prisma.incident.count({
     where: search
@@ -52,16 +52,11 @@ export default async function Page(props: { searchParams: Promise<TableSearchPar
             { secondSubcategory: { name: { contains: search, mode: "insensitive" } } },
             { province: { name: { contains: search, mode: "insensitive" } } },
             { municipality: { name: { contains: search, mode: "insensitive" } } },
-            ...(hasNumericSearch
-              ? [
-                  { numberOfPeople: searchNumber },
-                  { amount: searchNumber }
-                ]
-              : []),
+            ...(hasNumericSearch ? [{ numberOfPeople: searchNumber }, { amount: searchNumber }] : []),
           ],
         }
       : undefined,
-  });
+  })
 
   const incidents = await prisma.incident.findMany({
     orderBy,
@@ -85,20 +80,15 @@ export default async function Page(props: { searchParams: Promise<TableSearchPar
             { secondSubcategory: { name: { contains: search, mode: "insensitive" } } },
             { province: { name: { contains: search, mode: "insensitive" } } },
             { municipality: { name: { contains: search, mode: "insensitive" } } },
-            ...(hasNumericSearch
-              ? [
-                  { numberOfPeople: searchNumber },
-                  { amount: searchNumber }
-                ]
-              : []),
+            ...(hasNumericSearch ? [{ numberOfPeople: searchNumber }, { amount: searchNumber }] : []),
           ],
         }
       : undefined,
     take: itemsPerPage,
     skip: skip,
-  });
+  })
 
-  const pageCount = Math.ceil(incidentCount / itemsPerPage);
+  const pageCount = Math.ceil(incidentCount / itemsPerPage)
 
   const data = incidents.map((incident) => ({
     id: incident.id,
@@ -113,7 +103,7 @@ export default async function Page(props: { searchParams: Promise<TableSearchPar
     municipio: incident.municipality.name,
     fecha: incident.date.toISOString().split("T")[0],
     titulo: incident.title,
-  }));
+  }))
 
-  return <Table data={data} pageCount={pageCount} currentPage={page} />;
+  return <Table data={data} pageCount={pageCount} currentPage={page} />
 }

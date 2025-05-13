@@ -1,3 +1,6 @@
+// Remove the Province and Municipality models from this file
+// Only keep the Contact model with references to those models
+
 model Contact {
   id             Int          @id @default(autoincrement())
   name           String
@@ -5,10 +8,14 @@ model Contact {
   province       Province     @relation(fields: [provinceId], references: [id])
   municipalityId String
   municipality   Municipality @relation(fields: [municipalityId], references: [id])
-  personalPhone  String // Número de teléfono particular
-  statePhone     String // Número de teléfono estatal
-  landlinePhone  String // Número de teléfono fijo
-  jobTitle       String // Cargo
-  workplace      String// lugar de trabajo
+  personalPhone  String       // Personal phone number
+  statePhone     String       // State phone number
+  landlinePhone  String       // Landline number
+  jobTitle       String       // Job title
+  workplace      String       // Workplace
+  
   @@map("contacts")
 }
+
+// Province and Municipality models are removed from this file
+// They are now only defined in incidence.prisma

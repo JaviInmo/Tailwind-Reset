@@ -1,13 +1,12 @@
-import { ViewPage } from "@/app/admin/incident/view/[id]/page"
+import { ItemForm } from "../../create/item-form"
 import { Dialog, DialogContent, DialogDescription } from "@/components/ui/app-dialog"
 
-export default async function ModalViewPage(props: { params: Promise<{ id: string }> }) {
-  const params = await props.params
+export default async function ModalCreatePage() {
   return (
     <Dialog open={true}>
       <DialogContent>
         <DialogDescription>
-          <ViewPage params={params} />
+          <ItemForm />
         </DialogDescription>
       </DialogContent>
     </Dialog>

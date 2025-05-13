@@ -3,7 +3,7 @@
 import { zodResolver } from "@hookform/resolvers/zod"
 import type { Prisma } from "@prisma/client"
 import { useEffect, useState } from "react"
-import { Controller, useForm } from "react-hook-form"
+import { Controller, useFieldArray, useForm } from "react-hook-form"
 import { z } from "zod"
 import { registerAction } from "./form.action"
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -11,6 +11,8 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Button } from "@/components/ui/button"
+import { PlusCircle, Trash2 } from "lucide-react"
+import { fetchUnitMeasures } from "../items/create/item.action"
 
 const formSchema = z.object({
   fecha: z.string().date("Fecha es requerido"),
@@ -24,11 +26,28 @@ const formSchema = z.object({
   numberOfPeople: z.coerce.number().min(0, { message: "El número de personas no puede ser negativo" }),
   description: z.string({ required_error: "Descripción es requerido" }).min(1, { message: "Descripción es requerido" }),
   titulo: z.string({ required_error: "Título es requerido" }).min(1, { message: "Título es requerido" }),
+  items: z
+    .array(
+      z.object({
+        productName: z.string().min(1, { message: "Nombre del producto es requerido" }),
+        quantity: z.coerce.number().min(0.01, { message: "La cantidad debe ser mayor a 0" }),
+        unitMeasureId: z.string().optional(),
+      }),
+    )
+    .optional(),
 })
 type FormSchemaData = z.infer<typeof formSchema>
 
 type ReportFormProps = {
-  incidentData?: Prisma.IncidentGetPayload<true> & { numberOfPeople?: number }
+  incidentData?: Prisma.IncidentGetPayload<{
+    include: {
+      items: {
+        include: {
+          unitMeasure: true
+        }
+      }
+    }
+  }> & { numberOfPeople?: number }
   provinceData: Array<Prisma.ProvinceGetPayload<{ include: { municipalities: true } }>>
   variableData: Array<
     Prisma.VariableGetPayload<{
@@ -49,6 +68,7 @@ type ReportFormProps = {
 export function ReportForm({ incidentData, variableData, provinceData, readOnly = false }: ReportFormProps) {
   const [showSuccessModal, setShowSuccessModal] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [unitMeasures, setUnitMeasures] = useState<{ id: number; name: string }[]>([])
 
   const {
     register,
@@ -64,7 +84,7 @@ export function ReportForm({ incidentData, variableData, provinceData, readOnly 
     mode: "onTouched",
     defaultValues: {
       fecha: incidentData ? new Date(incidentData.date).toISOString().split("T")[0] : undefined,
-      amount: incidentData?.amount ?? undefined,
+     
       numberOfPeople: incidentData?.numberOfPeople ?? 0,
       categoria: incidentData?.categoryId ?? undefined,
       subcategoria: incidentData?.subcategoryId ?? undefined,
@@ -74,8 +94,29 @@ export function ReportForm({ incidentData, variableData, provinceData, readOnly 
       municipio: incidentData?.municipalityId,
       description: incidentData?.description,
       titulo: incidentData?.title,
+      items:
+        incidentData?.items?.map((item) => ({
+          productName: item.productName,
+          quantity: item.quantity,
+          unitMeasureId: item.unitMeasureId?.toString() || undefined,
+        })) || [],
     },
   })
+
+  // Setup field array for items
+  const { fields, append, remove } = useFieldArray({
+    control,
+    name: "items",
+  })
+
+  // Fetch unit measures for the dropdown
+  useEffect(() => {
+    const getUnitMeasures = async () => {
+      const measures = await fetchUnitMeasures()
+      setUnitMeasures(measures)
+    }
+    getUnitMeasures()
+  }, [])
 
   async function onSubmit(data: FormSchemaData) {
     if (readOnly) return // En modo solo lectura no se procesa el envío
@@ -93,6 +134,12 @@ export function ReportForm({ incidentData, variableData, provinceData, readOnly 
         title: data.titulo,
         municipalityId: data.municipio,
         provinceId: data.provincia,
+        items:
+          data.items?.map((item) => ({
+            productName: item.productName,
+            quantity: item.quantity,
+            unitMeasureId: item.unitMeasureId ? Number(item.unitMeasureId) : null,
+          })) || [],
       })
       if (!response.success) {
         setError("root", { message: "Incidencia ya registrada" })
@@ -462,6 +509,100 @@ export function ReportForm({ incidentData, variableData, provinceData, readOnly 
               disabled={readOnly}
             ></Textarea>
             {errors.description && <p className="text-red-600">{errors.description.message}</p>}
+          </div>
+
+          {/* Items Section */}
+          <div className="border rounded-md p-4 mb-4">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-medium">Ítems del Incidente</h3>
+              {!readOnly && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => append({ productName: "", quantity: 0, unitMeasureId: undefined })}
+                  className="flex items-center gap-1"
+                >
+                  <PlusCircle size={16} /> Agregar Ítem
+                </Button>
+              )}
+            </div>
+
+            {fields.length === 0 ? (
+              <div className="text-center py-4 text-gray-500">
+                {readOnly ? "No hay ítems registrados para este incidente." : "Agregue ítems para este incidente."}
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {fields.map((field, index) => (
+                  <div key={field.id} className="border rounded-md p-3 bg-gray-50">
+                    <div className="flex justify-between items-center mb-2">
+                      <h4 className="font-medium">Ítem #{index + 1}</h4>
+                      {!readOnly && (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => remove(index)}
+                          className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                        >
+                          <Trash2 size={16} />
+                        </Button>
+                      )}
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                      <div>
+                        <Label className="block pb-1">Producto:</Label>
+                        <Input
+                          {...register(`items.${index}.productName` as const)}
+                          placeholder="Nombre del producto"
+                          className="w-full"
+                          disabled={readOnly}
+                        />
+                        {errors.items?.[index]?.productName && (
+                          <p className="text-red-600 text-sm">{errors.items[index]?.productName?.message}</p>
+                        )}
+                      </div>
+                      <div>
+                        <Label className="block pb-1">Cantidad:</Label>
+                        <Input
+                          type="number"
+                          step="0.01"
+                          {...register(`items.${index}.quantity` as const, { valueAsNumber: true })}
+                          placeholder="Cantidad"
+                          className="w-full"
+                          disabled={readOnly}
+                        />
+                        {errors.items?.[index]?.quantity && (
+                          <p className="text-red-600 text-sm">{errors.items[index]?.quantity?.message}</p>
+                        )}
+                      </div>
+                      <div>
+                        <Label className="block pb-1">Unidad de Medida:</Label>
+                        <Controller
+                          control={control}
+                          name={`items.${index}.unitMeasureId` as const}
+                          render={({ field }) => (
+                            <Select onValueChange={field.onChange} value={field.value} disabled={readOnly}>
+                              <SelectTrigger className="w-full">
+                                <SelectValue placeholder="Seleccionar unidad" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {unitMeasures.map((measure) => (
+                                  <SelectItem key={measure.id} value={measure.id.toString()}>
+                                    {measure.name}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          )}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           {!readOnly && (

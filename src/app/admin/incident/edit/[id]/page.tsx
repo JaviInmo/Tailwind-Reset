@@ -1,40 +1,39 @@
-import { ReportForm } from "@/app/admin/incident/create/report-form";
-import { getAuth } from "@/libs/auth";
-import prisma from "@/libs/db";
+import { ReportForm } from "@/app/admin/incident/create/report-form"
+import { getAuth } from "@/libs/auth"
+import prisma from "@/libs/db"
 
 export default async function FormPage(props: { params: Promise<{ id: string }> }) {
-    const params = await props.params;
-    await getAuth();
+  const params = await props.params
+  await getAuth()
 
-    return (
-        <EditReportPage params={params} />
-    );
+  return <EditReportPage params={params} />
 }
 
-export async function EditReportPage({ params }: { params: { id: string } }){
-    const id = Number(params.id); 
+export async function EditReportPage({ params }: { params: { id: string } }) {
+  const id = Number(params.id)
 
-    const incidentData = await prisma.incident.findUnique({
-        where: { id: id },
-    });
+  const incidentData = await prisma.incident.findUnique({
+    where: { id: id },
+    include: {
+      items: {
+        include: {
+          unitMeasure: true,
+        },
+      },
+    },
+  })
 
-    if (!incidentData) {
-        return { notFound: true };
-    }
+  if (!incidentData) {
+    return { notFound: true }
+  }
 
-    const variableData = await prisma.variable.findMany({
-        include: { categories: { include: { subcategories: {include:{secondSubcategories:true}} } } },
-    });
+  const variableData = await prisma.variable.findMany({
+    include: { categories: { include: { subcategories: { include: { secondSubcategories: true } } } } },
+  })
 
-    const provinceData = await prisma.province.findMany({
-        include: { municipalities: true },
-    });
+  const provinceData = await prisma.province.findMany({
+    include: { municipalities: true },
+  })
 
-    return (
-        <ReportForm
-            incidentData={incidentData}
-            provinceData={provinceData}
-            variableData={variableData}
-        />
-    );
+  return <ReportForm incidentData={incidentData} provinceData={provinceData} variableData={variableData} />
 }

@@ -13,14 +13,25 @@ model Incident {
   subcategory         Subcategory?       @relation(fields: [subcategoryId], references: [id])
   secondSubcategoryId Int?
   secondSubcategory   SecondSubcategory? @relation(fields: [secondSubcategoryId], references: [id])
-  unitMeasureId       Int?
-  unitMeasure         UnitMeasure?       @relation(fields: [unitMeasureId], references: [id])
-  amount              Float?
-  numberOfPeople      Int? // Nuevo campo para el número de personas
+  numberOfPeople      Int?               // Number of people
   description         String
-  title              String
+  title               String
+  items               IncidentItem[]     // New relation to incident items
 
   @@map("incidencias")
+}
+
+// New model for incident items
+model IncidentItem {
+  id           Int          @id @default(autoincrement())
+  productName  String       // Name of the product (e.g., "Sugar", "Chairs")
+  quantity     Float        // Quantity (e.g., 20, 1)
+  unitMeasureId Int?        // Optional unit of measure
+  unitMeasure  UnitMeasure? @relation(fields: [unitMeasureId], references: [id])
+  incidentId   Int          // Relation to the parent incident
+  incident     Incident     @relation(fields: [incidentId], references: [id], onDelete: Cascade)
+
+  @@map("incident_items")
 }
 
 model Variable {
@@ -65,19 +76,20 @@ model SecondSubcategory {
 }
 
 model UnitMeasure {
-  id        Int        @id @default(autoincrement())
-  name      String     @unique
-  incidents Incident[]
-
+  id            Int            @id @default(autoincrement())
+  name          String         @unique
+  incidents     IncidentItem[] // Updated relation to IncidentItem instead of Incident
+  
   @@map("unidades_medida")
 }
 
+// Keep Province and Municipality models only in this file
 model Province {
   id             String         @id @default(cuid())
   name           String         @unique
   municipalities Municipality[]
-  incidents      Incident[] // Relación inversa con Incident
-  Contact        Contact[]
+  incidents      Incident[]     // Relation with Incident
+  contacts       Contact[]      // Relation with Contact (renamed from Contact to contacts)
 
   @@map("provincias")
 }
@@ -87,8 +99,8 @@ model Municipality {
   name       String
   provinceId String
   province   Province   @relation(fields: [provinceId], references: [id])
-  incidents  Incident[] // Relación inversa con Incident
-  Contact    Contact[]
+  incidents  Incident[] // Relation with Incident
+  contacts   Contact[]  // Relation with Contact (renamed from Contact to contacts)
 
   @@map("municipios")
 }
