@@ -4,51 +4,52 @@ import { revalidatePath } from "next/cache"
 import prisma from "@/libs/db"
 
 type RegisterData = {
-  id?: number
   productName: string
   quantity: number
   unitMeasureId: number | null
-  incidentId: number
+  variableId: number
+  categoryId: number
+  subcategoryId?: number
+  secondSubcategoryId?: number
 }
 
 export async function registerAction(data: RegisterData) {
   try {
-    // If we have an ID, we're updating an existing item
-    if (data.id) {
-      const item = await prisma.incidentItem.findUnique({
-        where: { id: data.id },
-      })
+    // Find all incidents that match the categorization
+    const matchingIncidents = await prisma.incident.findMany({
+      where: {
+        variableId: data.variableId,
+        categoryId: data.categoryId,
+        subcategoryId: data.subcategoryId || null,
+        secondSubcategoryId: data.secondSubcategoryId || null,
+      },
+      orderBy: {
+        date: "desc",
+      },
+    })
 
-      if (!item) {
-        return { success: false, error: "Ítem no encontrado" }
+    if (matchingIncidents.length === 0) {
+      return {
+        success: false,
+        error: "No se encontraron incidentes con esta categorización. Por favor, cree un incidente primero.",
       }
-
-      // Update the item
-      await prisma.incidentItem.update({
-        where: { id: data.id },
-        data: {
-          productName: data.productName,
-          quantity: data.quantity,
-          unitMeasureId: data.unitMeasureId,
-          incidentId: data.incidentId,
-        },
-      })
-
-      revalidatePath("/admin/incident/items")
-      return { success: true }
     }
 
-    // Creating a new item
+    // Use the most recent incident
+    const incidentId = matchingIncidents[0].id
+
+    // Create the item associated with the incident
     await prisma.incidentItem.create({
       data: {
         productName: data.productName,
         quantity: data.quantity,
         unitMeasureId: data.unitMeasureId,
-        incidentId: data.incidentId,
+        incidentId: incidentId,
       },
     })
 
     revalidatePath("/admin/incident/items")
+    revalidatePath("/admin/incident")
     return { success: true }
   } catch (error) {
     console.error("Error processing item:", error)
@@ -59,7 +60,44 @@ export async function registerAction(data: RegisterData) {
   }
 }
 
-// Fetch all incidents for the dropdown
+// Fetch all variables and unit measures for the form
+export async function fetchVariables() {
+  try {
+    const variables = await prisma.variable.findMany({
+      include: {
+        categories: {
+          include: {
+            subcategories: {
+              include: {
+                secondSubcategories: true,
+              },
+            },
+          },
+        },
+      },
+      orderBy: {
+        name: "asc",
+      },
+    })
+
+    const unitMeasures = await prisma.unitMeasure.findMany({
+      select: {
+        id: true,
+        name: true,
+      },
+      orderBy: {
+        name: "asc",
+      },
+    })
+
+    return { variables, unitMeasures }
+  } catch (error) {
+    console.error("Error fetching data:", error)
+    return { variables: [], unitMeasures: [] }
+  }
+}
+
+// Keep these functions for backward compatibility
 export async function fetchIncidents() {
   try {
     const incidents = await prisma.incident.findMany({
@@ -79,7 +117,6 @@ export async function fetchIncidents() {
   }
 }
 
-// Fetch all unit measures for the dropdown
 export async function fetchUnitMeasures() {
   try {
     const unitMeasures = await prisma.unitMeasure.findMany({

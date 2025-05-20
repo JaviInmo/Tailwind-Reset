@@ -19,6 +19,7 @@ import {
     Variable,
     Phone,
     UserRoundPlus,
+    Leaf,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation"; // Para Next.js 13
@@ -87,10 +88,12 @@ const extra = [
         icon: FolderTree,
     },
     {
-        title: "Medidas",
-        url: "/admin/incident/medidas",
-        icon: Ruler,
+         
+        title: "Ojetos de Incidencia",
+        url: "/admin/incident/items",
+        icon: Leaf,
     },
+    
 ];
 
 const phonebook = [
@@ -108,6 +111,7 @@ const admin = [
         icon: UserRoundPlus,
     },
 ];
+
 
 export function AppSidebar() {
     const { state } = useSidebar();

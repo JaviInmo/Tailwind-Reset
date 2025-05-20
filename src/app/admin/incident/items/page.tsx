@@ -42,6 +42,10 @@ export default async function Page(props: { searchParams: Promise<TableSearchPar
     quantity: { quantity: sortOrder },
     unitMeasure: { unitMeasure: { name: sortOrder } },
     incident: { incident: { title: sortOrder } },
+    variable: { incident: { variable: { name: sortOrder } } },
+    category: { incident: { category: { name: sortOrder } } },
+    subcategory: { incident: { subcategory: { name: sortOrder } } },
+    secondSubcategory: { incident: { secondSubcategory: { name: sortOrder } } },
   }
 
   const orderBy = sortMapping[sortField] || { productName: "asc" }
@@ -66,6 +70,10 @@ export default async function Page(props: { searchParams: Promise<TableSearchPar
         select: {
           id: true,
           title: true,
+          variable: { select: { name: true } },
+          category: { select: { name: true } },
+          subcategory: { select: { name: true } },
+          secondSubcategory: { select: { name: true } },
         },
       },
       unitMeasure: {
@@ -81,6 +89,10 @@ export default async function Page(props: { searchParams: Promise<TableSearchPar
             { productName: { contains: search, mode: "insensitive" } },
             { incident: { title: { contains: search, mode: "insensitive" } } },
             { unitMeasure: { name: { contains: search, mode: "insensitive" } } },
+            { incident: { variable: { name: { contains: search, mode: "insensitive" } } } },
+            { incident: { category: { name: { contains: search, mode: "insensitive" } } } },
+            { incident: { subcategory: { name: { contains: search, mode: "insensitive" } } } },
+            { incident: { secondSubcategory: { name: { contains: search, mode: "insensitive" } } } },
           ],
         }
       : undefined,
@@ -96,6 +108,10 @@ export default async function Page(props: { searchParams: Promise<TableSearchPar
     quantity: "Cantidad",
     unitMeasure: "Unidad de Medida",
     incident: "Incidente",
+    variable: "Variable",
+    category: "Categoría",
+    subcategory: "Subcategoría",
+    secondSubcategory: "Segunda Subcategoría",
   }
 
   // Map data to the expected format
@@ -105,6 +121,10 @@ export default async function Page(props: { searchParams: Promise<TableSearchPar
     quantity: item.quantity.toString(),
     unitMeasure: item.unitMeasure?.name || "-",
     incident: item.incident.title,
+    variable: item.incident.variable?.name || "-",
+    category: item.incident.category?.name || "-",
+    subcategory: item.incident.subcategory?.name || "-",
+    secondSubcategory: item.incident.secondSubcategory?.name || "-",
   }))
 
   const defaultHiddenColumns: (keyof typeof columns)[] = ["id"]

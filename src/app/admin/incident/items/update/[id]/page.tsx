@@ -15,6 +15,30 @@ export default async function UpdateItemPage({ params }: { params: { id: string 
         select: {
           id: true,
           title: true,
+          variable: {
+            select: {
+              id: true,
+              name: true,
+            },
+          },
+          category: {
+            select: {
+              id: true,
+              name: true,
+            },
+          },
+          subcategory: {
+            select: {
+              id: true,
+              name: true,
+            },
+          },
+          secondSubcategory: {
+            select: {
+              id: true,
+              name: true,
+            },
+          },
         },
       },
       unitMeasure: {
