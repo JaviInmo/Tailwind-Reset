@@ -16,12 +16,25 @@ model Incident {
   numberOfPeople      Int?               // Number of people
   description         String
   title               String
-  items               IncidentItem[]     // New relation to incident items
+  unitMeasures        IncidentUnitMeasure[] // New relation to unit measures
+  items               IncidentItem[]     // Keep relation to incident items for backward compatibility
 
   @@map("incidencias")
 }
 
-// New model for incident items
+// New model for incident-unit measure relationship
+model IncidentUnitMeasure {
+  id            Int         @id @default(autoincrement())
+  incidentId    Int
+  incident      Incident    @relation(fields: [incidentId], references: [id], onDelete: Cascade)
+  unitMeasureId Int
+  unitMeasure   UnitMeasure @relation(fields: [unitMeasureId], references: [id])
+
+  @@unique([incidentId, unitMeasureId])
+  @@map("incident_unit_measures")
+}
+
+// Keep the existing IncidentItem model for backward compatibility
 model IncidentItem {
   id           Int          @id @default(autoincrement())
   productName  String       // Name of the product (e.g., "Sugar", "Chairs")
@@ -76,9 +89,10 @@ model SecondSubcategory {
 }
 
 model UnitMeasure {
-  id            Int            @id @default(autoincrement())
-  name          String         @unique
-  incidents     IncidentItem[] // Updated relation to IncidentItem instead of Incident
+  id                 Int                  @id @default(autoincrement())
+  name               String               @unique
+  incidentItems      IncidentItem[]       // Keep relation to IncidentItem for backward compatibility
+  incidentUnitMeasures IncidentUnitMeasure[] // New relation to incidents
   
   @@map("unidades_medida")
 }

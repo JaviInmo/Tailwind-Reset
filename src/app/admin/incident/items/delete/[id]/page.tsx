@@ -12,15 +12,15 @@ interface PageProps {
 export default async function DeleteItemPage({ params }: PageProps) {
   await getAuth()
 
-  // Check if item exists on the server
+  // Check if incident exists on the server
   const id = Number(params.id)
-  const itemData = await prisma.incidentItem.findUnique({
+  const itemData = await prisma.incident.findUnique({
     where: { id },
     include: {
-      incident: {
-        select: { title: true },
+      variable: {
+        select: { name: true },
       },
-      unitMeasure: {
+      category: {
         select: { name: true },
       },
     },
@@ -30,14 +30,13 @@ export default async function DeleteItemPage({ params }: PageProps) {
     return notFound()
   }
 
-  // Pass item data to client component
+  // Pass incident data to client component
   return (
     <DeleteItemContent
       id={id}
-      itemName={itemData.productName}
-      incidentTitle={itemData.incident.title}
-      unitMeasure={itemData.unitMeasure?.name}
-      quantity={itemData.quantity}
+      title={itemData.title}
+      variableName={itemData.variable?.name}
+      categoryName={itemData.category?.name}
     />
   )
 }

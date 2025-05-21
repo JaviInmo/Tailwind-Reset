@@ -1,5 +1,5 @@
-// Remove the Province and Municipality models from this file
-// Only keep the Contact model with references to those models
+// This file should only contain the Contact model
+// The Province and Municipality models should only be in incidence.prisma
 
 model Contact {
   id             Int          @id @default(autoincrement())
@@ -16,6 +16,3 @@ model Contact {
   
   @@map("contacts")
 }
-
-// Province and Municipality models are removed from this file
-// They are now only defined in incidence.prisma

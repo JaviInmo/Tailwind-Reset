@@ -4,55 +4,53 @@ import { revalidatePath } from "next/cache"
 import prisma from "@/libs/db"
 
 type RegisterData = {
-  productName: string
-  quantity: number
-  unitMeasureId: number | null
+  title: string
+  description: string
   variableId: number
   categoryId: number
   subcategoryId?: number
   secondSubcategoryId?: number
+  unitMeasureIds: number[]
+  provinceId: string
+  municipalityId: string
+  numberOfPeople?: number
+  date: Date
 }
 
 export async function registerAction(data: RegisterData) {
   try {
-    // Find all incidents that match the categorization
-    const matchingIncidents = await prisma.incident.findMany({
-      where: {
+    // Create the incident
+    const incident = await prisma.incident.create({
+      data: {
+        title: data.title,
+        description: data.description,
         variableId: data.variableId,
         categoryId: data.categoryId,
         subcategoryId: data.subcategoryId || null,
         secondSubcategoryId: data.secondSubcategoryId || null,
-      },
-      orderBy: {
-        date: "desc",
+        provinceId: data.provinceId,
+        municipalityId: data.municipalityId,
+        numberOfPeople: data.numberOfPeople || null,
+        date: data.date,
       },
     })
 
-    if (matchingIncidents.length === 0) {
-      return {
-        success: false,
-        error: "No se encontraron incidentes con esta categorización. Por favor, cree un incidente primero.",
+    // Create the incident-unit measure relationships if any unit measures are selected
+    if (data.unitMeasureIds.length > 0) {
+      // Create each relationship individually instead of using createMany
+      for (const unitMeasureId of data.unitMeasureIds) {
+        await prisma.$executeRaw`
+          INSERT INTO incident_unit_measures (incident_id, unit_measure_id)
+          VALUES (${incident.id}, ${unitMeasureId})
+        `
       }
     }
-
-    // Use the most recent incident
-    const incidentId = matchingIncidents[0].id
-
-    // Create the item associated with the incident
-    await prisma.incidentItem.create({
-      data: {
-        productName: data.productName,
-        quantity: data.quantity,
-        unitMeasureId: data.unitMeasureId,
-        incidentId: incidentId,
-      },
-    })
 
     revalidatePath("/admin/incident/items")
     revalidatePath("/admin/incident")
     return { success: true }
   } catch (error) {
-    console.error("Error processing item:", error)
+    console.error("Error processing incident:", error)
     return {
       success: false,
       error: error instanceof Error ? error.message : "Error inesperado",
@@ -60,7 +58,7 @@ export async function registerAction(data: RegisterData) {
   }
 }
 
-// Fetch all variables and unit measures for the form
+// Fetch all variables, unit measures, and provinces for the form
 export async function fetchVariables() {
   try {
     const variables = await prisma.variable.findMany({
@@ -90,48 +88,18 @@ export async function fetchVariables() {
       },
     })
 
-    return { variables, unitMeasures }
-  } catch (error) {
-    console.error("Error fetching data:", error)
-    return { variables: [], unitMeasures: [] }
-  }
-}
-
-// Keep these functions for backward compatibility
-export async function fetchIncidents() {
-  try {
-    const incidents = await prisma.incident.findMany({
-      select: {
-        id: true,
-        title: true,
-      },
-      orderBy: {
-        date: "desc",
-      },
-    })
-
-    return incidents
-  } catch (error) {
-    console.error("Error fetching incidents:", error)
-    return []
-  }
-}
-
-export async function fetchUnitMeasures() {
-  try {
-    const unitMeasures = await prisma.unitMeasure.findMany({
-      select: {
-        id: true,
-        name: true,
+    const provinces = await prisma.province.findMany({
+      include: {
+        municipalities: true,
       },
       orderBy: {
         name: "asc",
       },
     })
 
-    return unitMeasures
+    return { variables, unitMeasures, provinces }
   } catch (error) {
-    console.error("Error fetching unit measures:", error)
-    return []
+    console.error("Error fetching data:", error)
+    return { variables: [], unitMeasures: [], provinces: [] }
   }
 }

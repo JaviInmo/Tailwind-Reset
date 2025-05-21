@@ -3,31 +3,36 @@
 import { useRouter } from "next/navigation"
 import { useState } from "react"
 import { handleDeleteItemAction } from "./delete.action"
+import { Button } from "@/components/ui/button"
 
 interface DeleteItemContentProps {
   id: number
-  itemName?: string
-  incidentTitle?: string
-  unitMeasure?: string
-  quantity?: number
+  title: string
+  variableName?: string
+  categoryName?: string
 }
 
-export function DeleteItemContent({ id, itemName, incidentTitle, unitMeasure, quantity }: DeleteItemContentProps) {
+export function DeleteItemContent({ id, title, variableName, categoryName }: DeleteItemContentProps) {
   const router = useRouter()
   const [isDeleting, setIsDeleting] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   const handleConfirm = async () => {
     try {
       setIsDeleting(true)
+      setError(null)
+
       const result = await handleDeleteItemAction(id)
+
       if (result.success) {
         router.back()
         router.refresh()
       } else {
-        console.error(`Error al eliminar el ítem con ID: ${id}`, result.error)
+        setError(result.error || "Error al eliminar el incidente")
       }
     } catch (error) {
-      console.error("Error al eliminar el ítem:", error)
+      setError("Error al eliminar el incidente")
+      console.error("Error al eliminar el incidente:", error)
     } finally {
       setIsDeleting(false)
     }
@@ -46,39 +51,34 @@ export function DeleteItemContent({ id, itemName, incidentTitle, unitMeasure, qu
         <div className="rounded-lg bg-white p-6 shadow">
           <div className="mb-6 text-center">
             <p className="text-black">
-              ¿Estás seguro de que deseas eliminar el ítem {itemName ? <strong>"{itemName}"</strong> : null}
-              {quantity && unitMeasure ? (
+              ¿Estás seguro de que deseas eliminar el incidente <strong>"{title}"</strong>
+              {variableName && categoryName ? (
                 <span>
                   {" "}
-                  ({quantity} {unitMeasure})
+                  de la variable <strong>"{variableName}"</strong> y categoría <strong>"{categoryName}"</strong>
                 </span>
-              ) : quantity ? (
-                <span> ({quantity})</span>
-              ) : null}
-              {incidentTitle ? (
+              ) : variableName ? (
                 <span>
                   {" "}
-                  del incidente <strong>"{incidentTitle}"</strong>
+                  de la variable <strong>"{variableName}"</strong>
                 </span>
               ) : null}
               ?
             </p>
+
+            {error && (
+              <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-md">
+                <p className="text-red-700">{error}</p>
+              </div>
+            )}
           </div>
           <div className="flex justify-center space-x-4">
-            <button
-              onClick={handleCancel}
-              className="rounded bg-slate-600 px-4 py-2 text-white hover:bg-gray-400"
-              disabled={isDeleting}
-            >
+            <Button onClick={handleCancel} variant="outline" disabled={isDeleting}>
               Cancelar
-            </button>
-            <button
-              onClick={handleConfirm}
-              className="rounded bg-red-600 px-4 py-2 text-white hover:bg-red-700"
-              disabled={isDeleting}
-            >
+            </Button>
+            <Button onClick={handleConfirm} variant="destructive" disabled={isDeleting}>
               {isDeleting ? "Eliminando..." : "Eliminar"}
-            </button>
+            </Button>
           </div>
         </div>
       </div>

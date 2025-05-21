@@ -5,17 +5,23 @@ import prisma from "@/libs/db"
 
 export async function handleDeleteItemAction(id: number) {
   try {
-    // Check if the item exists before attempting to delete it
-    const item = await prisma.incidentItem.findUnique({
+    // Check if the incident exists before attempting to delete it
+    const incident = await prisma.incident.findUnique({
       where: { id },
     })
 
-    if (!item) {
-      return { success: false, error: "Ítem no encontrado" }
+    if (!incident) {
+      return { success: false, error: "Incidente no encontrado" }
     }
 
-    // Delete the item
-    await prisma.incidentItem.delete({
+    // Delete all unit measure relationships first
+    await prisma.$executeRaw`
+  DELETE FROM incident_unit_measures
+  WHERE incident_id = ${id}
+`
+
+    // Delete the incident
+    await prisma.incident.delete({
       where: { id },
     })
 
@@ -24,7 +30,7 @@ export async function handleDeleteItemAction(id: number) {
 
     return { success: true }
   } catch (error) {
-    console.error("Error al eliminar el ítem:", error)
+    console.error("Error al eliminar el incidente:", error)
     return {
       success: false,
       error: error instanceof Error ? error.message : "Error inesperado",

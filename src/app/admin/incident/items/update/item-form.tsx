@@ -10,56 +10,59 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form"
+import { Checkbox } from "@/components/ui/checkbox"
 
 import { fetchVariables, updateItemAction } from "./update.action"
 
 const formSchema = z.object({
-  productName: z
-    .string({ required_error: "Nombre del producto es requerido" })
-    .min(1, { message: "Nombre es requerido" }),
-  quantity: z.coerce
-    .number({ required_error: "Cantidad es requerida" })
-    .min(0.01, { message: "La cantidad debe ser mayor a 0" }),
-  unitMeasureId: z.string().optional(),
+  title: z.string({ required_error: "Nombre del incidente es requerido" }).min(1, { message: "Nombre es requerido" }),
+  description: z.string({ required_error: "Descripción es requerida" }).min(1, { message: "Descripción es requerida" }),
   variableId: z.string({ required_error: "Variable es requerida" }).min(1, { message: "Variable es requerida" }),
   categoryId: z.string({ required_error: "Categoría es requerida" }).min(1, { message: "Categoría es requerida" }),
   subcategoryId: z.string().optional(),
   secondSubcategoryId: z.string().optional(),
+  unitMeasureIds: z.array(z.string()).optional(),
+  provinceId: z.string({ required_error: "Provincia es requerida" }).min(1, { message: "Provincia es requerida" }),
+  municipalityId: z.string({ required_error: "Municipio es requerido" }).min(1, { message: "Municipio es requerido" }),
+  numberOfPeople: z.coerce.number().optional(),
+  date: z.string().min(1, { message: "Fecha es requerida" }),
 })
 
 type FormSchemaData = z.infer<typeof formSchema>
 
+// Define a type for the itemData prop that matches what we're passing from the page
 interface ItemFormProps {
   itemData: {
     id: number
-    productName: string
-    quantity: number
-    unitMeasureId: number | null
-    incidentId: number
-    unitMeasure?: {
+    title: string
+    description: string
+    date: Date
+    provinceId: string
+    municipalityId: string
+    numberOfPeople?: number | null
+    variable: {
+      id: number
+      name: string
+    }
+    category: {
+      id: number
+      name: string
+    }
+    subcategory?: {
       id: number
       name: string
     } | null
-    incident: {
+    secondSubcategory?: {
       id: number
-      title: string
-      variable?: {
+      name: string
+    } | null
+    unitMeasures: {
+      unitMeasureId: number
+      unitMeasure: {
         id: number
         name: string
       }
-      category?: {
-        id: number
-        name: string
-      }
-      subcategory?: {
-        id: number
-        name: string
-      } | null
-      secondSubcategory?: {
-        id: number
-        name: string
-      } | null
-    }
+    }[]
   }
 }
 
@@ -70,31 +73,41 @@ export function ItemUpdateForm({ itemData }: ItemFormProps) {
   const [subcategories, setSubcategories] = useState<any[]>([])
   const [secondSubcategories, setSecondSubcategories] = useState<any[]>([])
   const [unitMeasures, setUnitMeasures] = useState<{ id: number; name: string }[]>([])
+  const [provinces, setProvinces] = useState<any[]>([])
+  const [municipalities, setMunicipalities] = useState<any[]>([])
   const [globalError, setGlobalError] = useState<string | null>(null)
+
+  // Extract unit measure IDs from the item data
+  const selectedUnitMeasureIds = itemData.unitMeasures.map((um) => um.unitMeasureId.toString())
 
   const form = useForm<FormSchemaData>({
     resolver: zodResolver(formSchema),
-    mode: "onTouched",
     defaultValues: {
-      productName: itemData.productName,
-      quantity: itemData.quantity,
-      unitMeasureId: itemData.unitMeasureId?.toString() || undefined,
-      variableId: itemData.incident.variable?.id.toString() || "",
-      categoryId: itemData.incident.category?.id.toString() || "",
-      subcategoryId: itemData.incident.subcategory?.id.toString() || undefined,
-      secondSubcategoryId: itemData.incident.secondSubcategory?.id.toString() || undefined,
+      title: itemData.title,
+      description: itemData.description,
+      variableId: itemData.variable.id.toString(),
+      categoryId: itemData.category.id.toString(),
+      subcategoryId: itemData.subcategory?.id.toString() || undefined,
+      secondSubcategoryId: itemData.secondSubcategory?.id.toString() || undefined,
+      unitMeasureIds: selectedUnitMeasureIds,
+      provinceId: itemData.provinceId,
+      municipalityId: itemData.municipalityId,
+      numberOfPeople: itemData.numberOfPeople || undefined,
+      date: new Date(itemData.date).toISOString().split("T")[0],
     },
   })
 
   const watchVariableId = form.watch("variableId")
   const watchCategoryId = form.watch("categoryId")
   const watchSubcategoryId = form.watch("subcategoryId")
+  const watchProvinceId = form.watch("provinceId")
 
   useEffect(() => {
     const fetchData = async () => {
-      const { variables, unitMeasures } = await fetchVariables()
+      const { variables, unitMeasures, provinces } = await fetchVariables()
       setVariables(variables)
       setUnitMeasures(unitMeasures)
+      setProvinces(provinces)
 
       // Initialize categories if variable is already selected
       if (watchVariableId) {
@@ -103,9 +116,17 @@ export function ItemUpdateForm({ itemData }: ItemFormProps) {
           setCategories(variable.categories)
         }
       }
+
+      // Initialize municipalities if province is already selected
+      if (watchProvinceId) {
+        const province = provinces.find((p) => p.id === watchProvinceId)
+        if (province && province.municipalities) {
+          setMunicipalities(province.municipalities)
+        }
+      }
     }
     fetchData()
-  }, [watchVariableId])
+  }, [watchVariableId, watchProvinceId])
 
   // Update categories when variable changes
   useEffect(() => {
@@ -149,23 +170,41 @@ export function ItemUpdateForm({ itemData }: ItemFormProps) {
     }
   }, [watchSubcategoryId, subcategories])
 
+  // Update municipalities when province changes
+  useEffect(() => {
+    if (watchProvinceId) {
+      const province = provinces.find((p) => p.id === watchProvinceId)
+      if (province && province.municipalities) {
+        setMunicipalities(province.municipalities)
+      } else {
+        setMunicipalities([])
+      }
+    } else {
+      setMunicipalities([])
+    }
+  }, [watchProvinceId, provinces])
+
   async function onSubmit(data: FormSchemaData) {
     setGlobalError(null)
 
     try {
       const resp = await updateItemAction({
         id: itemData.id,
-        productName: data.productName,
-        quantity: data.quantity,
-        unitMeasureId: data.unitMeasureId ? Number.parseInt(data.unitMeasureId) : null,
-        variableId: Number.parseInt(data.variableId),
-        categoryId: Number.parseInt(data.categoryId),
-        subcategoryId: data.subcategoryId ? Number.parseInt(data.subcategoryId) : undefined,
-        secondSubcategoryId: data.secondSubcategoryId ? Number.parseInt(data.secondSubcategoryId) : undefined,
+        title: data.title,
+        description: data.description,
+        variableId: Number(data.variableId),
+        categoryId: Number(data.categoryId),
+        subcategoryId: data.subcategoryId ? Number(data.subcategoryId) : undefined,
+        secondSubcategoryId: data.secondSubcategoryId ? Number(data.secondSubcategoryId) : undefined,
+        unitMeasureIds: data.unitMeasureIds ? data.unitMeasureIds.map((id) => Number(id)) : [],
+        provinceId: data.provinceId,
+        municipalityId: data.municipalityId,
+        numberOfPeople: data.numberOfPeople,
+        date: new Date(data.date),
       })
 
       if (!resp.success) {
-        setGlobalError(resp.error || "Error al actualizar el ítem")
+        setGlobalError(resp.error || "Error al actualizar el incidente")
         return
       }
 
@@ -179,40 +218,30 @@ export function ItemUpdateForm({ itemData }: ItemFormProps) {
   return (
     <div className="flex w-full items-center justify-center overflow-y-auto bg-slate-100 py-0 text-black">
       <div className="flex h-full w-full flex-col items-center justify-center rounded bg-white py-2 shadow-sm text-black">
-        <div className="w-full max-w-md">
+        <div className="w-full max-w-4xl">
           <div className="mb-4 text-center">
-            <h1 className="mb-3 text-2xl font-semibold">Editar Ítem</h1>
-            <p className="text-black">Modifique los datos del ítem y guarde los cambios.</p>
+            <h1 className="mb-3 text-2xl font-semibold">Editar Incidente</h1>
+            <p className="text-black">Modifique los datos del incidente y guarde los cambios.</p>
           </div>
 
           <div className="rounded-lg bg-white p-6 shadow">
             <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="max-h-[calc(100vh-150px)] space-y-4 pt-2">
+              <form
+                onSubmit={form.handleSubmit(onSubmit)}
+                className="max-h-[calc(100vh-150px)] space-y-4 pt-2 overflow-y-auto"
+              >
                 <div className="space-y-4">
-                  <h2 className="border-b pb-2 text-lg font-medium">Datos del Ítem</h2>
+                  <h2 className="border-b pb-2 text-lg font-medium">Datos del Incidente</h2>
 
-                  <FormField
-                    control={form.control}
-                    name="productName"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Nombre del Producto</FormLabel>
-                        <FormControl>
-                          <Input placeholder="Nombre del producto" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <div className="flex gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <FormField
                       control={form.control}
-                      name="quantity"
+                      name="title"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Cantidad</FormLabel>
+                          <FormLabel>Nombre del Incidente</FormLabel>
                           <FormControl>
-                            <Input type="number" step="0.01" placeholder="Cantidad" {...field} />
+                            <Input placeholder="Nombre del incidente" {...field} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -221,20 +250,79 @@ export function ItemUpdateForm({ itemData }: ItemFormProps) {
 
                     <FormField
                       control={form.control}
-                      name="unitMeasureId"
+                      name="date"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Unidad de Medida (Opcional)</FormLabel>
+                          <FormLabel>Fecha</FormLabel>
+                          <FormControl>
+                            <Input type="date" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+
+                  <FormField
+                    control={form.control}
+                    name="description"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Descripción</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Descripción del incidente" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="provinceId"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Provincia</FormLabel>
                           <Select onValueChange={field.onChange} value={field.value}>
                             <FormControl>
                               <SelectTrigger>
-                                <SelectValue placeholder="Seleccione una unidad de medida" />
+                                <SelectValue placeholder="Seleccione una provincia" />
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                              {unitMeasures.map((unitMeasure) => (
-                                <SelectItem key={unitMeasure.id} value={unitMeasure.id.toString()}>
-                                  {unitMeasure.name}
+                              {provinces.map((province) => (
+                                <SelectItem key={province.id} value={province.id}>
+                                  {province.name}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="municipalityId"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Municipio</FormLabel>
+                          <Select
+                            onValueChange={field.onChange}
+                            value={field.value}
+                            disabled={municipalities.length === 0}
+                          >
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Seleccione un municipio" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {municipalities.map((municipality) => (
+                                <SelectItem key={municipality.id} value={municipality.id}>
+                                  {municipality.name}
                                 </SelectItem>
                               ))}
                             </SelectContent>
@@ -244,11 +332,34 @@ export function ItemUpdateForm({ itemData }: ItemFormProps) {
                       )}
                     />
                   </div>
+
+                  <FormField
+                    control={form.control}
+                    name="numberOfPeople"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Número de Personas (Opcional)</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="number"
+                            placeholder="Número de personas afectadas"
+                            {...field}
+                            value={field.value || ""}
+                            onChange={(e) => {
+                              const value = e.target.value
+                              field.onChange(value === "" ? undefined : Number.parseInt(value, 10))
+                            }}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
                 </div>
 
                 <div className="mt-4 space-y-4">
                   <h2 className="border-b pb-2 text-lg font-medium">Categorización</h2>
-                  <div className="flex gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <FormField
                       control={form.control}
                       name="variableId"
@@ -300,59 +411,109 @@ export function ItemUpdateForm({ itemData }: ItemFormProps) {
                     />
                   </div>
 
-                  <FormField
-                    control={form.control}
-                    name="subcategoryId"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Subcategoría (Opcional)</FormLabel>
-                        <Select
-                          onValueChange={field.onChange}
-                          value={field.value || ""}
-                          disabled={subcategories.length === 0}
-                        >
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Seleccione una subcategoría" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {subcategories.map((subcategory) => (
-                              <SelectItem key={subcategory.id} value={subcategory.id.toString()}>
-                                {subcategory.name}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="subcategoryId"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Subcategoría (Opcional)</FormLabel>
+                          <Select
+                            onValueChange={field.onChange}
+                            value={field.value || ""}
+                            disabled={subcategories.length === 0}
+                          >
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Seleccione una subcategoría" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {subcategories.map((subcategory) => (
+                                <SelectItem key={subcategory.id} value={subcategory.id.toString()}>
+                                  {subcategory.name}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
 
+                    <FormField
+                      control={form.control}
+                      name="secondSubcategoryId"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Segunda Subcategoría (Opcional)</FormLabel>
+                          <Select
+                            onValueChange={field.onChange}
+                            value={field.value || ""}
+                            disabled={secondSubcategories.length === 0}
+                          >
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Seleccione una segunda subcategoría" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {secondSubcategories.map((secondSubcategory) => (
+                                <SelectItem key={secondSubcategory.id} value={secondSubcategory.id.toString()}>
+                                  {secondSubcategory.name}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                </div>
+
+                <div className="mt-4 space-y-4">
+                  <h2 className="border-b pb-2 text-lg font-medium">Unidades de Medida</h2>
                   <FormField
                     control={form.control}
-                    name="secondSubcategoryId"
-                    render={({ field }) => (
+                    name="unitMeasureIds"
+                    render={() => (
                       <FormItem>
-                        <FormLabel>Segunda Subcategoría (Opcional)</FormLabel>
-                        <Select
-                          onValueChange={field.onChange}
-                          value={field.value || ""}
-                          disabled={secondSubcategories.length === 0}
-                        >
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Seleccione una segunda subcategoría" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {secondSubcategories.map((secondSubcategory) => (
-                              <SelectItem key={secondSubcategory.id} value={secondSubcategory.id.toString()}>
-                                {secondSubcategory.name}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                        <div className="mb-4">
+                          <FormLabel className="text-base">
+                            Seleccione las unidades de medida aplicables (Opcional)
+                          </FormLabel>
+                        </div>
+                        <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                          {unitMeasures.map((unitMeasure) => (
+                            <FormField
+                              key={unitMeasure.id}
+                              control={form.control}
+                              name="unitMeasureIds"
+                              render={({ field }) => {
+                                return (
+                                  <FormItem
+                                    key={unitMeasure.id}
+                                    className="flex flex-row items-start space-x-3 space-y-0"
+                                  >
+                                    <FormControl>
+                                      <Checkbox
+                                        checked={field.value?.includes(unitMeasure.id.toString())}
+                                        onCheckedChange={(checked) => {
+                                          const value = unitMeasure.id.toString()
+                                          return checked
+                                            ? field.onChange([...(field.value || []), value])
+                                            : field.onChange(field.value?.filter((val) => val !== value))
+                                        }}
+                                      />
+                                    </FormControl>
+                                    <FormLabel className="font-normal">{unitMeasure.name}</FormLabel>
+                                  </FormItem>
+                                )
+                              }}
+                            />
+                          ))}
+                        </div>
                         <FormMessage />
                       </FormItem>
                     )}
@@ -362,7 +523,7 @@ export function ItemUpdateForm({ itemData }: ItemFormProps) {
                 {globalError && <div className="text-red-500 text-sm text-center">{globalError}</div>}
 
                 <Button type="submit" className="w-full">
-                  Actualizar Ítem
+                  Actualizar Incidente
                 </Button>
               </form>
             </Form>
