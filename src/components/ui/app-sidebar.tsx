@@ -20,6 +20,8 @@ import {
     Phone,
     UserRoundPlus,
     Leaf,
+    RulerIcon,
+    
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation"; // Para Next.js 13
@@ -94,6 +96,12 @@ const extra = [
         icon: Leaf,
     },
     
+        {
+         
+        title: "Medidas",
+        url: "/admin/incident/measures",
+        icon: RulerIcon,
+    },
 ];
 
 const phonebook = [

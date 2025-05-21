@@ -8,10 +8,9 @@ import { Button } from "@/components/ui/button"
 interface DeleteUnitContentProps {
   id: number
   name: string
-  itemCount: number
 }
 
-export function DeleteUnitContent({ id, name, itemCount }: DeleteUnitContentProps) {
+export function DeleteUnitContent({ id, name }: DeleteUnitContentProps) {
   const router = useRouter()
   const [isDeleting, setIsDeleting] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -52,16 +51,6 @@ export function DeleteUnitContent({ id, name, itemCount }: DeleteUnitContentProp
             <p className="text-black">
               ¿Estás seguro de que deseas eliminar la unidad de medida <strong>"{name}"</strong>?
             </p>
-
-            {itemCount > 0 && (
-              <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-md">
-                <p className="text-yellow-700">
-                  <strong>Advertencia:</strong> Esta unidad de medida está siendo utilizada en {itemCount}{" "}
-                  {itemCount === 1 ? "ítem" : "ítems"}. Si la elimina, esos ítems ya no tendrán una unidad de medida
-                  asignada.
-                </p>
-              </div>
-            )}
 
             {error && (
               <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-md">

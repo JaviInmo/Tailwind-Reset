@@ -8,11 +8,6 @@ export async function deleteUnitAction(id: number) {
     // Check if the unit exists
     const unit = await prisma.unitMeasure.findUnique({
       where: { id },
-      include: {
-        _count: {
-          select: { incidents: true },
-        },
-      },
     })
 
     if (!unit) {

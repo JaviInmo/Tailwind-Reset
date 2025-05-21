@@ -1,5 +1,5 @@
 import { getAuth } from "@/libs/auth"
-import { DeleteUnitContent } from "../delete-unit-content"
+import { DeleteUnitContent } from "@/app/admin/incident/measures/delete/delete-unit-content"
 import prisma from "@/libs/db"
 import { notFound } from "next/navigation"
 
@@ -16,11 +16,6 @@ export default async function DeleteUnitPage({ params }: PageProps) {
   const id = Number(params.id)
   const unitData = await prisma.unitMeasure.findUnique({
     where: { id },
-    include: {
-      _count: {
-        select: { incidents: true },
-      },
-    },
   })
 
   if (!unitData) {
@@ -28,5 +23,5 @@ export default async function DeleteUnitPage({ params }: PageProps) {
   }
 
   // Pass unit data to client component
-  return <DeleteUnitContent id={id} name={unitData.name} itemCount={unitData._count.incidents} />
+  return <DeleteUnitContent id={id} name={unitData.name} />
 }

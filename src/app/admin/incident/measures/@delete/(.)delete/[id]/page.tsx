@@ -1,6 +1,6 @@
 import { Dialog, DialogContent } from "@/components/ui/app-dialog"
 import prisma from "@/libs/db"
-import { DeleteUnitContent } from "../../../delete/delete-unit-content"
+import { DeleteUnitContent } from "@/app/admin/incident/measures/delete/delete-unit-content"
 import { notFound } from "next/navigation"
 
 interface PageProps {
@@ -14,11 +14,6 @@ export default async function ModalDeleteUnit({ params }: PageProps) {
   const id = Number(params.id)
   const unitData = await prisma.unitMeasure.findUnique({
     where: { id },
-    include: {
-      _count: {
-        select: { incidents: true },
-      },
-    },
   })
 
   if (!unitData) {
@@ -28,7 +23,7 @@ export default async function ModalDeleteUnit({ params }: PageProps) {
   return (
     <Dialog open={true}>
       <DialogContent>
-        <DeleteUnitContent id={id} name={unitData.name} itemCount={unitData._count.incidents} />
+        <DeleteUnitContent id={id} name={unitData.name} />
       </DialogContent>
     </Dialog>
   )

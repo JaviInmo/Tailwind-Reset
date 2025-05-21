@@ -10,12 +10,12 @@ export function UnitActions() {
 
   return (
     <div className="flex items-center justify-start gap-2 px-1">
-      <Link href={`/admin/unit-measures/update/${id}`}>
+      <Link href={`/admin/incident/measures/update${id}`}>
         <button type={"button"} className="flex w-full items-center justify-center">
           <FaRegEdit className="text-lg transition-transform hover:scale-110" />
         </button>
       </Link>
-      <Link href={`/admin/unit-measures/delete/${id}`}>
+      <Link href={`/admin/incident/measures/delete/${id}`}>
         <button type={"button"} className="flex w-full items-center justify-center">
           <RiDeleteBin7Line className="text-lg transition-transform hover:scale-110" />
         </button>

@@ -40,7 +40,6 @@ export default async function Page(props: { searchParams: Promise<TableSearchPar
   const sortMapping: { [key: string]: any } = {
     id: { id: sortOrder },
     name: { name: sortOrder },
-    itemCount: { _count: { incidents: sortOrder } },
   }
 
   const orderBy = sortMapping[sortField] || { name: "asc" }
@@ -56,11 +55,6 @@ export default async function Page(props: { searchParams: Promise<TableSearchPar
 
   const units = await prisma.unitMeasure.findMany({
     orderBy,
-    include: {
-      _count: {
-        select: { incidents: true },
-      },
-    },
     where: search
       ? {
           name: { contains: search, mode: "insensitive" },
@@ -75,14 +69,12 @@ export default async function Page(props: { searchParams: Promise<TableSearchPar
   const columns = {
     id: "ID",
     name: "Nombre",
-    itemCount: "Cantidad de Ítems",
   }
 
   // Map data to the expected format
   const data = units.map((unit) => ({
     id: unit.id.toString(),
     name: unit.name,
-    itemCount: unit._count.incidents.toString(),
   }))
 
   const defaultHiddenColumns: (keyof typeof columns)[] = ["id"]
@@ -91,7 +83,7 @@ export default async function Page(props: { searchParams: Promise<TableSearchPar
     <GenericTableRoot>
       <GenericTableHeader title="Unidades de Medida">
         <GenericTableSearch />
-        <Link href="/admin/unit-measures/create">
+        <Link href="/admin/incident/measures/create">
           <Button variant="default">Agregar Unidad</Button>
         </Link>
       </GenericTableHeader>
