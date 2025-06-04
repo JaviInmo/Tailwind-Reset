@@ -53,7 +53,7 @@ interface Data {
   categoria: string
   subcategoria: string
   segundasubcategoria: string
-  amount: number
+  
   numberOfPeople: number
   descripcion: string
   provincia: string
@@ -74,7 +74,7 @@ const columns: { label: string; key: keyof Data }[] = [
   { label: "Cat", key: "categoria" },
   { label: "Subcat", key: "subcategoria" },
   { label: "2° subcat", key: "segundasubcategoria" },
-  { label: "Cant.", key: "amount" },
+  
   { label: "Pers", key: "numberOfPeople" },
   { label: "Titulo", key: "titulo" },
   { label: "Prov.", key: "provincia" },
@@ -197,7 +197,7 @@ export default function TablePage({ data, pageCount, currentPage }: TableProps) 
                         "w-[150px]",
                         key === "id"
                           ? "w-[15px] min-w-[15px]"
-                          : key === "numberOfPeople" || key === "amount"
+                          : key === "numberOfPeople" 
                             ? "w-[60px] min-w-[60px]"
                             : "w-[60px]",
                         label === "2° subcat" && "whitespace-nowrap",

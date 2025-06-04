@@ -25,7 +25,7 @@ interface IncidentData {
   categoryId: number
   subcategoryId: number
   secondSubcategoryId: number
-  amount: number
+ 
   numberOfPeople: number
   items?: {
     id: number
@@ -186,15 +186,7 @@ export function IncidentViewDialog({
             />
           </div>
           {/* Toneladas */}
-          <div>
-            <Label>Toneladas:</Label>
-            <Input
-              type="number"
-              value={incidentData?.amount || 0}
-              disabled
-              className="w-full rounded border border-gray-300 bg-gray-100 p-2"
-            />
-          </div>
+         
           {/* Número de Personas */}
           <div>
             <Label>Número de Personas:</Label>

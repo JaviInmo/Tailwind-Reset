@@ -12,7 +12,7 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Button } from "@/components/ui/button"
 import { PlusCircle, Trash2 } from "lucide-react"
-import { fetchUnitMeasures } from "../items/create/item.action"
+
 
 const formSchema = z.object({
   fecha: z.string().date("Fecha es requerido"),
@@ -22,7 +22,7 @@ const formSchema = z.object({
   categoria: z.coerce.number({ required_error: "Categoría es requerido" }),
   subcategoria: z.coerce.number({ required_error: "Subcategoría es requerido" }),
   segundasubcategoria: z.coerce.number().optional(),
-  amount: z.coerce.number().min(0.01, { message: "Cantidad debe ser mayor a 0.01" }),
+ 
   numberOfPeople: z.coerce.number().min(0, { message: "El número de personas no puede ser negativo" }),
   description: z.string({ required_error: "Descripción es requerido" }).min(1, { message: "Descripción es requerido" }),
   titulo: z.string({ required_error: "Título es requerido" }).min(1, { message: "Título es requerido" }),
@@ -110,13 +110,7 @@ export function ReportForm({ incidentData, variableData, provinceData, readOnly 
   })
 
   // Fetch unit measures for the dropdown
-  useEffect(() => {
-    const getUnitMeasures = async () => {
-      const measures = await fetchUnitMeasures()
-      setUnitMeasures(measures)
-    }
-    getUnitMeasures()
-  }, [])
+
 
   async function onSubmit(data: FormSchemaData) {
     if (readOnly) return // En modo solo lectura no se procesa el envío
@@ -127,7 +121,7 @@ export function ReportForm({ incidentData, variableData, provinceData, readOnly 
         subcategoryId: data.subcategoria,
         secondSubcategoryId: data.segundasubcategoria,
         variableId: data.variable,
-        amount: data.amount,
+     
         date: new Date(data.fecha),
         numberOfPeople: data.numberOfPeople,
         description: data.description,
@@ -476,17 +470,7 @@ export function ReportForm({ incidentData, variableData, provinceData, readOnly 
           </div>
 
           <div className="flex gap-4 pb-2">
-            <div className="w-full">
-              <Label className="block pb-2">Cantidad:</Label>
-              <Input
-                type="number"
-                step="0.01"
-                {...register("amount")}
-                className="w-full rounded border border-gray-300 bg-white p-2"
-                disabled={readOnly}
-              />
-              {errors.amount && <p className="text-red-600">{errors.amount.message}</p>}
-            </div>
+            
 
             <div className="w-full">
               <Label className="block pb-2">No de Personas:</Label>

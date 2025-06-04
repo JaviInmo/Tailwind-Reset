@@ -11,7 +11,7 @@ type FormSchemaData = {
   categoryId: number
   subcategoryId?: number
   secondSubcategoryId?: number
-  amount: number
+  
   numberOfPeople: number
   description: string
   title: string

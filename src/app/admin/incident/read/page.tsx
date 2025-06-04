@@ -29,7 +29,7 @@ export default async function Page(props: { searchParams: Promise<TableSearchPar
     categoria: { category: { name: sortOrder } },
     subcategoria: { subcategory: { name: sortOrder } },
     segundasubcategoria: { secondSubcategory: { name: sortOrder } },
-    amount: { amount: sortOrder },
+    
     numberOfPeople: { numberOfPeople: sortOrder },
     descripcion: { description: sortOrder },
     fecha: { date: sortOrder },
@@ -52,7 +52,7 @@ export default async function Page(props: { searchParams: Promise<TableSearchPar
             { secondSubcategory: { name: { contains: search, mode: "insensitive" } } },
             { province: { name: { contains: search, mode: "insensitive" } } },
             { municipality: { name: { contains: search, mode: "insensitive" } } },
-            ...(hasNumericSearch ? [{ numberOfPeople: searchNumber }, { amount: searchNumber }] : []),
+            ...(hasNumericSearch ? [{ numberOfPeople: searchNumber },] : []),
           ],
         }
       : undefined,
@@ -67,7 +67,7 @@ export default async function Page(props: { searchParams: Promise<TableSearchPar
       category: { select: { name: true } },
       subcategory: { select: { name: true } },
       secondSubcategory: { select: { name: true } },
-      unitMeasure: true,
+  
     },
     where: search
       ? {
@@ -80,7 +80,7 @@ export default async function Page(props: { searchParams: Promise<TableSearchPar
             { secondSubcategory: { name: { contains: search, mode: "insensitive" } } },
             { province: { name: { contains: search, mode: "insensitive" } } },
             { municipality: { name: { contains: search, mode: "insensitive" } } },
-            ...(hasNumericSearch ? [{ numberOfPeople: searchNumber }, { amount: searchNumber }] : []),
+            ...(hasNumericSearch ? [{ numberOfPeople: searchNumber }] : []),
           ],
         }
       : undefined,
@@ -96,7 +96,7 @@ export default async function Page(props: { searchParams: Promise<TableSearchPar
     categoria: incident.category.name,
     subcategoria: incident.subcategory?.name || "",
     segundasubcategoria: incident.secondSubcategory?.name || "",
-    amount: incident.amount || 0,
+   
     numberOfPeople: incident.numberOfPeople || 0,
     descripcion: incident.description,
     provincia: incident.province.name,
