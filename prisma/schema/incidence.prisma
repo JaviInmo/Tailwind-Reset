@@ -13,38 +13,69 @@ model Incident {
   subcategory         Subcategory?       @relation(fields: [subcategoryId], references: [id])
   secondSubcategoryId Int?
   secondSubcategory   SecondSubcategory? @relation(fields: [secondSubcategoryId], references: [id])
-  numberOfPeople      Int?               // Number of people
+  numberOfPeople      Int?
   description         String
   title               String
-  unitMeasures        IncidentUnitMeasure[] // New relation to unit measures
-  items               IncidentItem[]     // Keep relation to incident items for backward compatibility
+  unitMeasures        IncidentUnitMeasure[]
+  items               IncidentItem[]
 
   @@map("incidencias")
 }
 
-// New model for incident-unit measure relationship
 model IncidentUnitMeasure {
   id            Int         @id @default(autoincrement())
   incidentId    Int
   incident      Incident    @relation(fields: [incidentId], references: [id], onDelete: Cascade)
   unitMeasureId Int
   unitMeasure   UnitMeasure @relation(fields: [unitMeasureId], references: [id])
-
   @@unique([incidentId, unitMeasureId])
   @@map("incident_unit_measures")
 }
 
-// Keep the existing IncidentItem model for backward compatibility
 model IncidentItem {
   id           Int          @id @default(autoincrement())
-  productName  String       // Name of the product (e.g., "Sugar", "Chairs")
-  quantity     Float        // Quantity (e.g., 20, 1)
-  unitMeasureId Int?        // Optional unit of measure
-  unitMeasure  UnitMeasure? @relation(fields: [unitMeasureId], references: [id])
-  incidentId   Int          // Relation to the parent incident
+  itemId       Int
+  item         Item         @relation(fields: [itemId], references: [id])
+  incidentId   Int
   incident     Incident     @relation(fields: [incidentId], references: [id], onDelete: Cascade)
+  quantityUsed Float?
 
+  unitMeasureId Int?
+  unitMeasure   UnitMeasure? @relation(fields: [unitMeasureId], references: [id])
+
+  @@unique([incidentId, itemId])
   @@map("incident_items")
+}
+
+model Item {
+  id                  Int                @id @default(autoincrement())
+  productName         String
+  variableId          Int
+  variable            Variable           @relation(fields: [variableId], references: [id])
+  categoryId          Int
+  category            Category           @relation(fields: [categoryId], references: [id])
+  subcategoryId       Int
+  subcategory         Subcategory        @relation(fields: [subcategoryId], references: [id])
+  secondSubcategoryId Int?
+  secondSubcategory   SecondSubcategory? @relation(fields: [secondSubcategoryId], references: [id])
+
+  incidentItems       IncidentItem[]
+  availableUnitMeasures ItemUnitMeasure[] // Nueva relación de muchos a muchos
+
+  @@unique([productName, variableId, categoryId, subcategoryId, secondSubcategoryId])
+  @@map("items")
+}
+
+// Nueva tabla intermedia para la relación muchos a muchos
+model ItemUnitMeasure {
+  id            Int         @id @default(autoincrement())
+  itemId        Int
+  item          Item        @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  unitMeasureId Int
+  unitMeasure   UnitMeasure @relation(fields: [unitMeasureId], references: [id])
+
+  @@unique([itemId, unitMeasureId])
+  @@map("item_unit_measures")
 }
 
 model Variable {
@@ -52,7 +83,7 @@ model Variable {
   name       String
   categories Category[]
   incidents  Incident[]
-
+  items      Item[]
   @@map("variables")
 }
 
@@ -63,7 +94,7 @@ model Category {
   variable      Variable      @relation(fields: [variableId], references: [id])
   subcategories Subcategory[]
   incidents     Incident[]
-
+  items         Item[]
   @@map("categorias")
 }
 
@@ -74,7 +105,7 @@ model Subcategory {
   category            Category            @relation(fields: [categoryId], references: [id])
   secondSubcategories SecondSubcategory[]
   incidents           Incident[]
-
+  items               Item[]
   @@map("subcategorias")
 }
 
@@ -84,27 +115,25 @@ model SecondSubcategory {
   subcategoryId Int
   subcategory   Subcategory @relation(fields: [subcategoryId], references: [id])
   incidents     Incident[]
-
+  items         Item[]
   @@map("secondsubcategorias")
 }
 
 model UnitMeasure {
-  id                 Int                  @id @default(autoincrement())
-  name               String               @unique
-  incidentItems      IncidentItem[]       // Keep relation to IncidentItem for backward compatibility
-  incidentUnitMeasures IncidentUnitMeasure[] // New relation to incidents
-  
+  id                   Int                   @id @default(autoincrement())
+  name                 String                @unique
+  incidentItems        IncidentItem[]
+  incidentUnitMeasures IncidentUnitMeasure[]
+  items                ItemUnitMeasure[] // Actualizada la relación para la nueva tabla intermedia
   @@map("unidades_medida")
 }
 
-// Keep Province and Municipality models only in this file
 model Province {
   id             String         @id @default(cuid())
   name           String         @unique
   municipalities Municipality[]
-  incidents      Incident[]     // Relation with Incident
-  contacts       Contact[]      // Relation with Contact (renamed from Contact to contacts)
-
+  incidents      Incident[]
+  contacts       Contact[]
   @@map("provincias")
 }
 
@@ -113,8 +142,9 @@ model Municipality {
   name       String
   provinceId String
   province   Province   @relation(fields: [provinceId], references: [id])
-  incidents  Incident[] // Relation with Incident
-  contacts   Contact[]  // Relation with Contact (renamed from Contact to contacts)
-
+  incidents  Incident[]
+  contacts   Contact[]
   @@map("municipios")
 }
+
+

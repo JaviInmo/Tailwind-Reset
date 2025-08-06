@@ -22,24 +22,39 @@ import {
   SelectContent,
   SelectItem,
 } from "@/components/ui/select"
-import { Checkbox } from "@/components/ui/checkbox" // Nuevo import para Checkbox
-import { Label } from "@/components/ui/label" // Nuevo import para Label
-import { createItemAction } from "./item.action"
+import { Checkbox } from "@/components/ui/checkbox"
+import { Label } from "@/components/ui/label"
+import { updateItemAction } from "./update.action" // Ruta corregida
 
+// Definir el esquema de Zod para la validación del formulario
 const formSchema = z.object({
   productName: z.string().min(1, "El nombre es requerido"),
   variableId: z.coerce.number().min(1, "Variable es requerida"),
   categoryId: z.coerce.number().min(1, "Categoría es requerida"),
   subcategoryId: z.coerce.number().min(1, "Subcategoría es requerida"),
-  secondSubcategoryId: z.coerce.number().optional(),
-  // Nuevo campo para un array de IDs de unidades de medida
+  secondSubcategoryId: z.coerce.number().optional().nullable(), // Puede ser opcional y nulo
   unitMeasureIds: z.array(z.coerce.number()).min(1, "Debe seleccionar al menos una unidad de medida"),
 })
 
 type FormSchemaData = z.infer<typeof formSchema>
 
+// Tipos de datos para las props del componente
 type Props = {
-  unitMeasures: { id: number; name: string }[] // Se vuelve a incluir unitMeasures
+  itemData: {
+    id: number
+    productName: string
+    variableId: number
+    categoryId: number
+    subcategoryId: number
+    secondSubcategoryId: number | null
+    availableUnitMeasures: Array<{
+      unitMeasure: {
+        id: number
+        name: string
+      }
+    }>
+  }
+  unitMeasures: { id: number; name: string }[]
   variableData: Array<{
       id: number
       name: string
@@ -58,19 +73,19 @@ type Props = {
   }>
 }
 
-export function ItemForm({ unitMeasures, variableData }: Props) {
+export function ItemEditForm({ itemData, unitMeasures, variableData }: Props) {
   const router = useRouter()
   const [globalError, setGlobalError] = useState<string | null>(null)
 
   const form = useForm<FormSchemaData>({
       resolver: zodResolver(formSchema),
       defaultValues: {
-          productName: "",
-          variableId: 0,
-          categoryId: 0,
-          subcategoryId: 0,
-          secondSubcategoryId: 0,
-          unitMeasureIds: [], // Valor por defecto para el array de IDs
+          productName: itemData.productName,
+          variableId: itemData.variableId,
+          categoryId: itemData.categoryId,
+          subcategoryId: itemData.subcategoryId,
+          secondSubcategoryId: itemData.secondSubcategoryId,
+          unitMeasureIds: itemData.availableUnitMeasures.map(ium => ium.unitMeasure.id),
       },
   })
 
@@ -78,6 +93,7 @@ export function ItemForm({ unitMeasures, variableData }: Props) {
   const watchedCategory = useWatch({ control: form.control, name: "categoryId" })
   const watchedSubcategory = useWatch({ control: form.control, name: "subcategoryId" })
 
+  // Efectos para resetear los campos de profundidad si la selección superior cambia
   useEffect(() => {
       if (watchedVariable) {
           const categoryExists = variableData
@@ -117,6 +133,7 @@ export function ItemForm({ unitMeasures, variableData }: Props) {
       }
   }, [watchedSubcategory, watchedCategory, watchedVariable, variableData, form])
 
+  // Opciones para los selects de profundidad
   const categoryOptions = watchedVariable
       ? variableData.find((v) => v.id === Number(watchedVariable))?.categories || []
       : []
@@ -135,24 +152,26 @@ export function ItemForm({ unitMeasures, variableData }: Props) {
       : []
 
   const onSubmit = async (data: FormSchemaData) => {
-      const result = await createItemAction({
+      setGlobalError(null)
+      const result = await updateItemAction({
+          id: itemData.id, // Pasa el ID del ítem a actualizar
           ...data,
           secondSubcategoryId: data.secondSubcategoryId || null,
-          unitMeasureIds: data.unitMeasureIds, // Pasar el array de IDs de unidades de medida
+          unitMeasureIds: data.unitMeasureIds,
       })
 
       if (!result.success) {
-          setGlobalError(result.error || "Error al registrar el ítem")
+          setGlobalError(result.error || "Error al actualizar el ítem")
           return
       }
 
-      router.push("/admin/incident/items")
-      router.refresh()
+      router.push("/admin/inncident/items") // Redirige a la lista de ítems
+      router.refresh() // Recarga los datos de la lista
   }
 
   return (
       <div className="max-w-2xl mx-auto p-6">
-          <h1 className="text-2xl font-bold mb-6">Crear Ítem</h1>
+          <h1 className="text-2xl font-bold mb-6">Editar Ítem</h1>
           
           <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -281,7 +300,7 @@ export function ItemForm({ unitMeasures, variableData }: Props) {
                   <div className="border rounded-lg p-4">
                       <h3 className="text-lg font-medium mb-4">Datos del ítem</h3>
                       
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4"> {/* Ajustado a 2 columnas */}
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           <FormField
                               control={form.control}
                               name="productName"
@@ -296,14 +315,13 @@ export function ItemForm({ unitMeasures, variableData }: Props) {
                               )}
                           />
 
-                          {/* Nuevo campo para seleccionar múltiples unidades de medida */}
                           <FormField
                               control={form.control}
                               name="unitMeasureIds"
                               render={({ field }) => (
                                   <FormItem>
                                       <FormLabel>Unidades de medida disponibles</FormLabel>
-                                      <div className="grid grid-cols-2 gap-2"> {/* Grid para los checkboxes */}
+                                      <div className="grid grid-cols-2 gap-2">
                                           {unitMeasures.map((unit) => (
                                               <div key={unit.id} className="flex items-center space-x-2">
                                                   <Checkbox
@@ -333,7 +351,7 @@ export function ItemForm({ unitMeasures, variableData }: Props) {
                   {globalError && <p className="text-red-500">{globalError}</p>}
 
                   <Button type="submit" className="w-full">
-                      Registrar Ítem
+                      Actualizar Ítem
                   </Button>
               </form>
           </Form>
