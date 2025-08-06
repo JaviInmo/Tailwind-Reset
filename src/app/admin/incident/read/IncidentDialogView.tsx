@@ -1,3 +1,6 @@
+"use client" // Asegúrate de que sea un componente de cliente
+
+import { useState } from "react" // Importar useState
 import {
   Dialog,
   DialogTrigger,
@@ -14,25 +17,27 @@ import { Button } from "@/components/ui/button"
 import { GrStatusInfo } from "react-icons/gr"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 
+// Actualizar la interfaz IncidentData para reflejar la estructura de Prisma
 interface IncidentData {
   date: string
-  title: string
-  titulo: string
+  title: string // Estandarizado a 'title'
   description: string
-  provinceId: number
-  municipalityId: number
+  provinceId: string // Corregido a string
+  municipalityId: string // Corregido a string
   variableId: number
   categoryId: number
-  subcategoryId: number
-  secondSubcategoryId: number
- 
-  numberOfPeople: number
+  subcategoryId: number | null // Puede ser nulo
+  secondSubcategoryId: number | null // Puede ser nulo
+  numberOfPeople: number | null // Puede ser nulo
   items?: {
-    id: number
-    productName: string
-    quantity: number
+    id: number // ID de IncidentItem
+    itemId: number // ID del Item real
+    quantityUsed: number | null // Corregido de 'quantity' a 'quantityUsed'
     unitMeasureId: number | null
-    unitMeasure?: {
+    item: { // Detalles del Item anidado
+      productName: string
+    }
+    unitMeasure: { // Detalles de UnitMeasure anidado
       id: number
       name: string
     } | null
@@ -40,13 +45,13 @@ interface IncidentData {
 }
 
 interface Province {
-  id: number
+  id: string // Corregido a string
   name: string
   municipalities: Municipality[]
 }
 
 interface Municipality {
-  id: number
+  id: string // Corregido a string
   name: string
 }
 
@@ -82,6 +87,8 @@ export function IncidentViewDialog({
   provinceData: Province[]
   variableData: Variable[]
 }) {
+  const [open, setOpen] = useState(false) // Estado para controlar la apertura/cierre del diálogo
+
   // Obtener los datos de las relaciones para mostrar nombres en lugar de IDs
   const province = provinceData.find((p) => p.id === incidentData.provinceId)
   const municipality = province?.municipalities.find((m) => m.id === incidentData.municipalityId)
@@ -91,7 +98,7 @@ export function IncidentViewDialog({
   const secondSubcategory = subcategory?.secondSubcategories.find((sec) => sec.id === incidentData.secondSubcategoryId)
 
   return (
-    <Dialog>
+    <Dialog open={open} onOpenChange={setOpen}> {/* Controlar el diálogo con el estado 'open' */}
       <DialogTrigger asChild>
         <button className="flex w-full items-center justify-center">
           <GrStatusInfo className="text-lg transition-transform hover:scale-110" />
@@ -117,7 +124,7 @@ export function IncidentViewDialog({
           <div>
             <Label>Título:</Label>
             <Input
-              value={incidentData?.title || incidentData?.titulo || ""}
+              value={incidentData?.title || ""}
               disabled
               className="w-full rounded border border-gray-300 bg-gray-100 p-2"
             />
@@ -185,8 +192,6 @@ export function IncidentViewDialog({
               className="w-full rounded border border-gray-300 bg-gray-100 p-2"
             />
           </div>
-          {/* Toneladas */}
-         
           {/* Número de Personas */}
           <div>
             <Label>Número de Personas:</Label>
@@ -197,7 +202,6 @@ export function IncidentViewDialog({
               className="w-full rounded border border-gray-300 bg-gray-100 p-2"
             />
           </div>
-
           {/* Items Section */}
           {incidentData.items && incidentData.items.length > 0 && (
             <div className="mt-6">
@@ -213,8 +217,8 @@ export function IncidentViewDialog({
                 <TableBody>
                   {incidentData.items.map((item) => (
                     <TableRow key={item.id}>
-                      <TableCell>{item.productName}</TableCell>
-                      <TableCell>{item.quantity}</TableCell>
+                      <TableCell>{item.item.productName}</TableCell>
+                      <TableCell>{item.quantityUsed}</TableCell>
                       <TableCell>{item.unitMeasure?.name || "-"}</TableCell>
                     </TableRow>
                   ))}
@@ -224,7 +228,9 @@ export function IncidentViewDialog({
           )}
         </div>
         <DialogFooter>
-          <Button variant="outline">Cerrar</Button>
+          <Button variant="outline" onClick={() => setOpen(false)}> {/* Añadir onClick para cerrar */}
+            Cerrar
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

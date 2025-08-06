@@ -1,5 +1,8 @@
 "use client"
 
+import { Checkbox } from "@/components/ui/checkbox"
+import { Label } from "@/components/ui/label"
+
 interface Column {
   label: string
   key: string
@@ -22,13 +25,13 @@ export default function ColumnVisibilityFilter({
       <ul className="space-y-1">
         {columns.map(({ label, key }) => (
           <li key={key} className="flex items-center gap-2">
-            <input
-              type="checkbox"
+            <Checkbox
+              id={`column-${key}`}
               checked={visibleColumns[key]}
-              onChange={() => toggleColumnVisibility(key)}
+              onCheckedChange={() => toggleColumnVisibility(key)}
               className="cursor-pointer"
             />
-            <span>{label}</span>
+            <Label htmlFor={`column-${key}`}>{label}</Label>
           </li>
         ))}
       </ul>

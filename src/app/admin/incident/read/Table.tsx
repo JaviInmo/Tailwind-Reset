@@ -1,11 +1,11 @@
 "use client"
 
-import { ArrowDownUp } from "lucide-react"
+import { ArrowDownUp } from 'lucide-react'
 import Link from "next/link"
 import { useEffect, useState } from "react"
 import DeleteModal from "@/app/admin/incident/delete/page"
 import { handleDeleteIncidentAction } from "@/app/admin/incident/delete/delete.action"
-import ColumnVisibilityFilter from "@/app/admin/incident/read/ColumnVisibilityFilter.tsx"
+import ColumnVisibilityFilter from "@/app/admin/incident/read/ColumnVisibilityFilter.tsx" // Ruta corregida
 import { CiSearch } from "react-icons/ci"
 import { FaRegEdit } from "react-icons/fa"
 import { RiDeleteBin7Line } from "react-icons/ri"
@@ -17,6 +17,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation"
 import { useDebounce } from "@/hooks/debounce-hook"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { GrStatusInfo } from "react-icons/gr"
+import { IncidentViewDialog } from "./IncidentDialogView" // Importar el componente de diálogo
 
 function useQueryString() {
   const searchParams = useSearchParams()
@@ -53,19 +54,22 @@ interface Data {
   categoria: string
   subcategoria: string
   segundasubcategoria: string
-  
   numberOfPeople: number
   descripcion: string
   provincia: string
   municipio: string
   fecha: string
   titulo: string
+  itemsSummary: string // Nuevo campo para el resumen de ítems
 }
 
 interface TableProps {
   data: Data[]
   pageCount: number
   currentPage: number
+  incidentsFullData: Array<any> // Datos completos de las incidencias para el diálogo
+  provinceData: Array<any> // Datos de provincias para el diálogo
+  variableData: Array<any> // Datos de variables para el diálogo
 }
 
 const columns: { label: string; key: keyof Data }[] = [
@@ -74,12 +78,12 @@ const columns: { label: string; key: keyof Data }[] = [
   { label: "Cat", key: "categoria" },
   { label: "Subcat", key: "subcategoria" },
   { label: "2° subcat", key: "segundasubcategoria" },
-  
   { label: "Pers", key: "numberOfPeople" },
   { label: "Titulo", key: "titulo" },
   { label: "Prov.", key: "provincia" },
   { label: "Munic.", key: "municipio" },
   { label: "Fecha", key: "fecha" },
+  { label: "Ítems", key: "itemsSummary" }, // Nueva columna para ítems
 ]
 
 const initialVisibleColumns = columns.reduce(
@@ -90,12 +94,11 @@ const initialVisibleColumns = columns.reduce(
   {} as Record<string, boolean>,
 )
 
-export default function TablePage({ data, pageCount, currentPage }: TableProps) {
+export default function TablePage({ data, pageCount, currentPage, incidentsFullData, provinceData, variableData }: TableProps) {
   const { updateQuery, pushQueryString, getQueryString } = useQueryString()
   const [visibleColumns, setVisibleColumns] = useState(initialVisibleColumns)
   const [filterOpen, setFilterOpen] = useState(false)
 
-  // Estado para la búsqueda (con debounce)
   const [search, setSearch] = useState(getQueryString("search") ?? "")
   const debouncedSearch = useDebounce(search, 300)
 
@@ -103,9 +106,7 @@ export default function TablePage({ data, pageCount, currentPage }: TableProps) 
     pushQueryString("search", debouncedSearch)
   }, [debouncedSearch, pushQueryString])
 
-  // Estado para mantener los IDs de las incidencias mostradas
   const [incidentIds, setIncidentIds] = useState<number[]>(data.map((item) => item.id))
-
   const [deleteModal, setDeleteModal] = useState<{ show: boolean; id: number | null }>({
     show: false,
     id: null,
@@ -129,11 +130,9 @@ export default function TablePage({ data, pageCount, currentPage }: TableProps) 
   }
 
   const confirmDelete = async (id: number) => {
-    // Se pasa el listado actual de IDs (como string separado por comas)
     const result = await handleDeleteIncidentAction(id, incidentIds.join(","))
     if (result.success) {
       console.log(`Incidencia con ID: ${id} eliminada`)
-      // Actualiza el estado eliminando el id borrado y actualiza la query string con el nuevo listado
       setIncidentIds((prev) => {
         const updated = prev.filter((itemId) => itemId !== id)
         pushQueryString("ids", updated.join(","))
@@ -182,7 +181,6 @@ export default function TablePage({ data, pageCount, currentPage }: TableProps) 
           </Link>
         </div>
       </div>
-
       <div className="relative max-h-[calc(100vh-200px)] w-full overflow-x-auto overflow-y-auto rounded-lg border border-slate-300">
         <Table className="w-full">
           <TableHeader className="sticky top-0 z-10 bg-white shadow-md">
@@ -197,7 +195,7 @@ export default function TablePage({ data, pageCount, currentPage }: TableProps) 
                         "w-[150px]",
                         key === "id"
                           ? "w-[15px] min-w-[15px]"
-                          : key === "numberOfPeople" 
+                          : key === "numberOfPeople"
                             ? "w-[60px] min-w-[60px]"
                             : "w-[60px]",
                         label === "2° subcat" && "whitespace-nowrap",
@@ -225,7 +223,6 @@ export default function TablePage({ data, pageCount, currentPage }: TableProps) 
           </TableHeader>
           <TableBody className="text-slate-700">
             {data
-              // Filtramos según el estado incidentIds
               .filter((row) => incidentIds.includes(row.id))
               .map((row, rowIndex) => (
                 <TableRow key={row.id} className={cx(rowIndex % 2 === 0 ? "bg-slate-100" : "bg-white")}>
@@ -235,9 +232,9 @@ export default function TablePage({ data, pageCount, currentPage }: TableProps) 
                         <TableCell
                           key={key}
                           className="w-[200px] max-w-[200px] overflow-hidden truncate whitespace-nowrap border-r-2 px-2 py-2 text-sm"
-                          title={String(key === "id" ? rowIndex + 1 : row[key])}
+                          title={String(row[key])}
                         >
-                          {key === "id" ? rowIndex + 1 : row[key]}
+                          {row[key]}
                         </TableCell>
                       ),
                   )}
@@ -259,11 +256,12 @@ export default function TablePage({ data, pageCount, currentPage }: TableProps) 
                       >
                         <RiDeleteBin7Line className="text-lg transition-transform hover:scale-110" />
                       </button>
-                      <Link href={`/admin/incident/view/${row.id}`}>
-                        <button className="flex w-full items-center justify-center">
-                          <GrStatusInfo className="text-lg transition-transform hover:scale-110" />
-                        </button>
-                      </Link>
+                      {/* Pasar los datos completos al IncidentViewDialog */}
+                      <IncidentViewDialog
+                        incidentData={incidentsFullData.find((inc: any) => inc.id === row.id)}
+                        provinceData={provinceData}
+                        variableData={variableData}
+                      />
                     </div>
                   </TableCell>
                 </TableRow>
