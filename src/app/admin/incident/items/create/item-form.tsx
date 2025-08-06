@@ -151,12 +151,12 @@ export function ItemForm({ unitMeasures, variableData }: Props) {
   }
 
   return (
-      <div className="max-w-2xl mx-auto p-6">
+      <div className="max-w-2xl mx-auto p-6 text-black">
           <h1 className="text-2xl font-bold mb-6">Crear Ítem</h1>
           
           <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                  <div className="border rounded-lg p-4 bg-gray-50">
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 text-black">
+                  <div className="border rounded-lg p-4 bg-gray-50 text-black">
                       <h3 className="text-lg font-medium mb-4">Asociar a profundidad</h3>
                       
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -222,8 +222,8 @@ export function ItemForm({ unitMeasures, variableData }: Props) {
                               name="subcategoryId"
                               render={({ field }) => (
                                   <FormItem>
-                                      <FormLabel>Subcategoría</FormLabel>
-                                      <Select
+                                      <FormLabel >Subcategoría</FormLabel>
+                                      <Select 
                                           onValueChange={(value) => field.onChange(Number(value))}
                                           value={field.value.toString()}
                                           disabled={!watchedCategory || subcategoryOptions.length === 0}
@@ -251,7 +251,8 @@ export function ItemForm({ unitMeasures, variableData }: Props) {
                               name="secondSubcategoryId"
                               render={({ field }) => (
                                   <FormItem>
-                                      <FormLabel>Segunda Subcategoría (Opcional)</FormLabel>
+                                      <FormLabel >Subcategoría 2</FormLabel>
+                                      
                                       <Select
                                           onValueChange={(value) => field.onChange(value === "none" ? null : Number(value))}
                                           value={field.value?.toString() || "none"}
@@ -302,7 +303,7 @@ export function ItemForm({ unitMeasures, variableData }: Props) {
                               name="unitMeasureIds"
                               render={({ field }) => (
                                   <FormItem>
-                                      <FormLabel>Unidades de medida disponibles</FormLabel>
+                                      <FormLabel>Unidades de medida </FormLabel>
                                       <div className="grid grid-cols-2 gap-2"> {/* Grid para los checkboxes */}
                                           {unitMeasures.map((unit) => (
                                               <div key={unit.id} className="flex items-center space-x-2">

@@ -9,16 +9,16 @@ type FormSchemaData = {
   municipalityId: string
   variableId: number
   categoryId: number
-  subcategoryId?: number
-  secondSubcategoryId?: number
-  
+  subcategoryId?: number | null // Puede ser nulo
+  secondSubcategoryId?: number | null // Puede ser nulo
+
   numberOfPeople: number
   description: string
   title: string
   items?: {
-    productName: string
-    quantity: number
-    unitMeasureId: number | null
+    itemId: number // Cambiado de productName a itemId
+    quantityUsed: number // Cambiado de quantity a quantityUsed
+    unitMeasureId: number // Cambiado a number
   }[]
 }
 
@@ -28,7 +28,6 @@ export async function customSubmit(data: FormSchemaData) {
 
 export async function registerAction(data: FormSchemaData) {
   try {
-    // Crea el incidente con sus ítems
     console.log("Datos a insertar:", data)
     const incident = await prisma.incident.create({
       data: {
@@ -39,34 +38,28 @@ export async function registerAction(data: FormSchemaData) {
         categoryId: data.categoryId,
         subcategoryId: data.subcategoryId,
         secondSubcategoryId: data.secondSubcategoryId,
-       
         numberOfPeople: data.numberOfPeople,
         description: data.description,
         title: data.title,
-        // Create related items if provided
         items:
           data.items && data.items.length > 0
             ? {
                 create: data.items.map((item) => ({
-                  productName: item.productName,
-                  quantity: item.quantity,
-                  unitMeasureId: item.unitMeasureId,
+                  itemId: item.itemId, // Usar itemId
+                  quantityUsed: item.quantityUsed, // Usar quantityUsed
+                  unitMeasureId: item.unitMeasureId, // Usar unitMeasureId
                 })),
               }
             : undefined,
       },
     })
-
-    revalidatePath("/admin/incident")
-
+    revalidatePath("/admin/incident") // Revalidar la ruta principal de incidentes
     return { success: true, incident }
   } catch (error) {
-    let errorMessage = "An unexpected error occurred"
-
+    let errorMessage = "Ocurrió un error inesperado"
     if (error instanceof Error) {
       errorMessage = error.message
     }
-
     console.error("Error al registrar el incidente:", error)
     return { success: false, error: errorMessage }
   }

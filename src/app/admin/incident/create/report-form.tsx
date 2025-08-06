@@ -2,19 +2,19 @@
 
 import { zodResolver } from "@hookform/resolvers/zod"
 import type { Prisma } from "@prisma/client"
-import { useEffect, useState } from "react"
-import { Controller, useFieldArray, useForm } from "react-hook-form"
+import { useEffect, useState, useCallback } from "react"
+import { Controller, useFieldArray, useForm, useWatch } from "react-hook-form"
 import { z } from "zod"
 import { registerAction } from "./form.action"
+import { getItemsByDepthAction } from "./get-items-by-depth.action"
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Button } from "@/components/ui/button"
-import { PlusCircle, Trash2 } from "lucide-react"
+import { PlusCircle, Trash2 } from 'lucide-react'
 
-
-
+// Definir el esquema de Zod para la validación del formulario
 const formSchema = z.object({
   fecha: z.string().date("Fecha es requerido"),
   provincia: z.string({ required_error: "Provincia es requerido" }).min(1, { message: "Provincia es requerido" }),
@@ -22,28 +22,39 @@ const formSchema = z.object({
   variable: z.coerce.number({ required_error: "Variable es requerido" }),
   categoria: z.coerce.number({ required_error: "Categoría es requerido" }),
   subcategoria: z.coerce.number({ required_error: "Subcategoría es requerido" }),
-  segundasubcategoria: z.coerce.number().optional(),
- 
+  segundasubcategoria: z.coerce.number().optional().nullable(),
+
   numberOfPeople: z.coerce.number().min(0, { message: "El número de personas no puede ser negativo" }),
   description: z.string({ required_error: "Descripción es requerido" }).min(1, { message: "Descripción es requerido" }),
   titulo: z.string({ required_error: "Título es requerido" }).min(1, { message: "Título es requerido" }),
   items: z
     .array(
       z.object({
-        productName: z.string().min(1, { message: "Nombre del producto es requerido" }),
+        itemId: z.coerce.number().min(1, { message: "Ítem es requerido" }),
         quantity: z.coerce.number().min(0.01, { message: "La cantidad debe ser mayor a 0" }),
-        unitMeasureId: z.string().optional(),
+        unitMeasureId: z.coerce.number().min(1, { message: "Unidad de medida es requerida" }),
       }),
     )
     .optional(),
 })
+
 type FormSchemaData = z.infer<typeof formSchema>
 
+// Tipos de datos para las props del componente
 type ReportFormProps = {
   incidentData?: Prisma.IncidentGetPayload<{
     include: {
       items: {
         include: {
+          item: {
+            include: {
+              availableUnitMeasures: {
+                include: {
+                  unitMeasure: true
+                }
+              }
+            }
+          }
           unitMeasure: true
         }
       }
@@ -69,52 +80,60 @@ type ReportFormProps = {
 export function ReportForm({ incidentData, variableData, provinceData, readOnly = false }: ReportFormProps) {
   const [showSuccessModal, setShowSuccessModal] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [unitMeasures, setUnitMeasures] = useState<{ id: number; name: string }[]>([])
+  const [availableItems, setAvailableItems] = useState<Array<Prisma.ItemGetPayload<{
+    include: {
+      availableUnitMeasures: {
+        include: {
+          unitMeasure: true
+        }
+      }
+    }
+  }>>>([])
+  const [fetchingItems, setFetchingItems] = useState(false)
 
-  const {
-    register,
-    handleSubmit,
-    watch,
-    setError,
-    reset,
-    control,
-    setValue,
-    formState: { errors },
-  } = useForm<FormSchemaData>({
+  const form = useForm<FormSchemaData>({
     resolver: zodResolver(formSchema),
     mode: "onTouched",
     defaultValues: {
       fecha: incidentData ? new Date(incidentData.date).toISOString().split("T")[0] : undefined,
-     
       numberOfPeople: incidentData?.numberOfPeople ?? 0,
       categoria: incidentData?.categoryId ?? undefined,
       subcategoria: incidentData?.subcategoryId ?? undefined,
-      segundasubcategoria: incidentData?.secondSubcategoryId ?? undefined,
+      segundasubcategoria: incidentData?.secondSubcategoryId ?? null,
       variable: incidentData?.variableId,
       provincia: incidentData?.provinceId,
       municipio: incidentData?.municipalityId,
       description: incidentData?.description,
       titulo: incidentData?.title,
       items:
-        incidentData?.items?.map((item) => ({
-          productName: item.productName,
-          quantity: item.quantity,
-          unitMeasureId: item.unitMeasureId?.toString() || undefined,
+        incidentData?.items?.map((incidentItem) => ({
+          itemId: incidentItem.itemId,
+          quantity: incidentItem.quantityUsed ?? 0,
+          unitMeasureId: incidentItem.unitMeasureId ?? 0,
         })) || [],
     },
   })
 
-  // Setup field array for items
+  const { register, handleSubmit, setError, reset, control, setValue, formState: { errors }, getValues } = form;
+
   const { fields, append, remove } = useFieldArray({
     control,
     name: "items",
   })
 
-  // Fetch unit measures for the dropdown
+  // Usar useWatch para los campos que controlan las opciones dependientes
+  const watchedProvince = useWatch({ control, name: "provincia" })
+  const watchedVariable = useWatch({ control, name: "variable" })
+  const watchedCategory = useWatch({ control, name: "categoria" })
+  const watchedSubcategory = useWatch({ control, name: "subcategoria" })
+  const watchedSecondSubcategory = useWatch({ control, name: "segundasubcategoria" })
+
+  // Watch the entire items array to get current values for each item in the field array
+  const watchedItemsArray = useWatch({ control, name: "items" });
 
 
   async function onSubmit(data: FormSchemaData) {
-    if (readOnly) return // En modo solo lectura no se procesa el envío
+    if (readOnly) return
     setIsSubmitting(true)
     try {
       const response = await registerAction({
@@ -122,7 +141,6 @@ export function ReportForm({ incidentData, variableData, provinceData, readOnly 
         subcategoryId: data.subcategoria,
         secondSubcategoryId: data.segundasubcategoria,
         variableId: data.variable,
-     
         date: new Date(data.fecha),
         numberOfPeople: data.numberOfPeople,
         description: data.description,
@@ -131,13 +149,13 @@ export function ReportForm({ incidentData, variableData, provinceData, readOnly 
         provinceId: data.provincia,
         items:
           data.items?.map((item) => ({
-            productName: item.productName,
-            quantity: item.quantity,
-            unitMeasureId: item.unitMeasureId ? Number(item.unitMeasureId) : null,
+            itemId: item.itemId,
+            quantityUsed: item.quantity,
+            unitMeasureId: item.unitMeasureId,
           })) || [],
       })
       if (!response.success) {
-        setError("root", { message: "Incidencia ya registrada" })
+        setError("root", { message: response.error || "Incidencia ya registrada" })
         return
       }
       reset()
@@ -154,98 +172,102 @@ export function ReportForm({ incidentData, variableData, provinceData, readOnly 
     setShowSuccessModal(false)
   }
 
-  // Watch form values
-  const watchedProvince = watch("provincia")
-  const watchedVariable = watch("variable")
-  const watchedCategory = watch("categoria")
-  const watchedSubcategory = watch("subcategoria")
+  // Fetch items based on selected depth
+  const fetchItems = useCallback(async () => {
+    const variable = watchedVariable
+    const category = watchedCategory
+    const subcategory = watchedSubcategory
+    const secondSubcategory = watchedSecondSubcategory
 
-  // Debug logging
+    if (variable && category && subcategory) {
+      setFetchingItems(true)
+      const result = await getItemsByDepthAction({
+        variableId: Number(variable),
+        categoryId: Number(category),
+        subcategoryId: Number(subcategory),
+        secondSubcategoryId: secondSubcategory ? Number(secondSubcategory) : null,
+      })
+      if (result.success) {
+        setAvailableItems(result.items || [])
+      } else {
+        console.error("Error fetching items:", result.error)
+        setAvailableItems([])
+      }
+      setFetchingItems(false)
+    } else {
+      setAvailableItems([])
+    }
+  }, [watchedVariable, watchedCategory, watchedSubcategory, watchedSecondSubcategory])
+
   useEffect(() => {
-    console.log("Form values changed:", {
-      province: watchedProvince,
-      variable: watchedVariable,
-      category: watchedCategory,
-      subcategory: watchedSubcategory,
-    })
-  }, [watchedProvince, watchedVariable, watchedCategory, watchedSubcategory])
+    fetchItems()
+  }, [fetchItems])
 
   // Reset dependent fields when parent field changes
   useEffect(() => {
     if (watchedProvince) {
-      // If province changes, reset municipality
       const municipalityExists = provinceData
         .find((p) => p.id === watchedProvince)
-        ?.municipalities.some((m) => m.id === watch("municipio"))
-
+        ?.municipalities.some((m) => m.id === getValues("municipio"))
       if (!municipalityExists) {
         setValue("municipio", "")
       }
     }
-  }, [watchedProvince, provinceData, setValue, watch])
+  }, [watchedProvince, provinceData, setValue, getValues])
 
   useEffect(() => {
     if (watchedVariable) {
-      // If variable changes, reset category, subcategory, and second subcategory
       const categoryExists = variableData
         .find((v) => v.id === Number(watchedVariable))
-        ?.categories.some((c) => c.id === Number(watch("categoria")))
-
+        ?.categories.some((c) => c.id === getValues("categoria"))
       if (!categoryExists) {
         setValue("categoria", 0)
         setValue("subcategoria", 0)
-        setValue("segundasubcategoria", 0)
+        setValue("segundasubcategoria", null)
       }
     }
-  }, [watchedVariable, variableData, setValue, watch])
+  }, [watchedVariable, variableData, setValue, getValues])
 
   useEffect(() => {
     if (watchedCategory) {
-      // If category changes, reset subcategory and second subcategory
       const variable = variableData.find((v) => v.id === Number(watchedVariable))
       const subcategoryExists = variable?.categories
         .find((c) => c.id === Number(watchedCategory))
-        ?.subcategories.some((sc) => sc.id === Number(watch("subcategoria")))
-
+        ?.subcategories.some((sc) => sc.id === getValues("subcategoria"))
       if (!subcategoryExists) {
         setValue("subcategoria", 0)
-        setValue("subcategoria", 0)
+        setValue("segundasubcategoria", null)
       }
     }
-  }, [watchedCategory, watchedVariable, variableData, setValue, watch])
+  }, [watchedCategory, watchedVariable, variableData, setValue, getValues])
 
   useEffect(() => {
     if (watchedSubcategory) {
-      // If subcategory changes, reset second subcategory
       const variable = variableData.find((v) => v.id === Number(watchedVariable))
       const category = variable?.categories.find((c) => c.id === Number(watchedCategory))
       const secondSubcategoryExists = category?.subcategories
         .find((sc) => sc.id === Number(watchedSubcategory))
-        ?.secondSubcategories.some((ssc) => ssc.id === Number(watch("segundasubcategoria")))
-
+        ?.secondSubcategories.some((ssc) => ssc.id === getValues("segundasubcategoria"))
       if (!secondSubcategoryExists) {
-        setValue("segundasubcategoria", 0)
+        setValue("segundasubcategoria", null)
       }
     }
-  }, [watchedSubcategory, watchedCategory, watchedVariable, variableData, setValue, watch])
+  }, [watchedSubcategory, watchedCategory, watchedVariable, variableData, setValue, getValues])
 
   // Get options for select fields
   const variableOptions = variableData
   const municipalityOptions = watchedProvince
     ? provinceData.find((p) => p.id === watchedProvince)?.municipalities || []
     : []
-
   const categoryOptions = watchedVariable
     ? variableData.find((v) => v.id === Number(watchedVariable))?.categories || []
     : []
-
   const subcategoryOptions =
     watchedCategory && watchedVariable
       ? variableData
           .find((v) => v.id === Number(watchedVariable))
           ?.categories.find((c) => c.id === Number(watchedCategory))?.subcategories || []
       : []
-
   const secondSubcategoryOptions =
     watchedSubcategory && watchedCategory && watchedVariable
       ? variableData
@@ -265,13 +287,11 @@ export function ReportForm({ incidentData, variableData, provinceData, readOnly 
               : "Rellene los campos del formulario para registrar la incidencia."}
           </p>
         </div>
-
         <form
           onSubmit={handleSubmit(onSubmit)}
           className="flex max-h-[calc(100vh-150px)] w-full flex-col gap-2 overflow-y-auto px-4 pt-2 lg:w-11/12"
         >
           {errors.root && <div className="mb-4 rounded bg-red-100 p-2 text-red-600">{errors.root.message}</div>}
-
           <div className="flex gap-4 pb-2">
             <div className="w-full">
               <Label className="block pb-2">Fecha:</Label>
@@ -294,7 +314,6 @@ export function ReportForm({ incidentData, variableData, provinceData, readOnly 
               {errors.titulo && <p className="text-red-600">{errors.titulo.message}</p>}
             </div>
           </div>
-
           <div className="flex gap-4 pb-2">
             <div className="w-full">
               <Label className="block pb-2">Provincia:</Label>
@@ -349,7 +368,6 @@ export function ReportForm({ incidentData, variableData, provinceData, readOnly 
               {errors.municipio && <p className="text-red-600">{errors.municipio.message}</p>}
             </div>
           </div>
-
           <div className="flex gap-4 pb-2">
             <div className="w-full">
               <Label className="block pb-2">Variable:</Label>
@@ -379,7 +397,6 @@ export function ReportForm({ incidentData, variableData, provinceData, readOnly 
               />
               {errors.variable && <p className="text-red-600">{errors.variable.message}</p>}
             </div>
-
             <div className="w-full">
               <Label className="block pb-2">Categoría:</Label>
               <Controller
@@ -409,7 +426,6 @@ export function ReportForm({ incidentData, variableData, provinceData, readOnly 
               {errors.categoria && <p className="text-red-600">{errors.categoria.message}</p>}
             </div>
           </div>
-
           <div className="flex gap-4 pb-2">
             <div className="w-full">
               <Label className="block pb-2">Subcategoría:</Label>
@@ -439,7 +455,6 @@ export function ReportForm({ incidentData, variableData, provinceData, readOnly 
               />
               {errors.subcategoria && <p className="text-red-600">{errors.subcategoria.message}</p>}
             </div>
-
             <div className="w-full">
               <Label className="block pb-2">Segunda Subcategoría:</Label>
               <Controller
@@ -447,8 +462,8 @@ export function ReportForm({ incidentData, variableData, provinceData, readOnly 
                 name="segundasubcategoria"
                 render={({ field: { onChange, value } }) => (
                   <Select
-                    onValueChange={(val) => onChange(Number(val))}
-                    value={value ? value.toString() : ""}
+                    onValueChange={(val) => onChange(val === "none" ? null : Number(val))}
+                    value={value === null ? "none" : value?.toString() || ""}
                     disabled={readOnly || !watchedSubcategory || secondSubcategoryOptions.length === 0}
                   >
                     <SelectTrigger className="w-full rounded border border-gray-300 bg-white p-2 text-black disabled:bg-slate-300">
@@ -456,6 +471,7 @@ export function ReportForm({ incidentData, variableData, provinceData, readOnly 
                     </SelectTrigger>
                     <SelectContent>
                       <SelectGroup>
+                        <SelectItem value="none">Sin segunda subcategoría</SelectItem>
                         {secondSubcategoryOptions.map((opt) => (
                           <SelectItem key={opt.id} value={opt.id.toString()}>
                             {opt.name}
@@ -469,10 +485,7 @@ export function ReportForm({ incidentData, variableData, provinceData, readOnly 
               {errors.segundasubcategoria && <p className="text-red-600">{errors.segundasubcategoria.message}</p>}
             </div>
           </div>
-
           <div className="flex gap-4 pb-2">
-            
-
             <div className="w-full">
               <Label className="block pb-2">No de Personas:</Label>
               <Input
@@ -485,7 +498,6 @@ export function ReportForm({ incidentData, variableData, provinceData, readOnly 
               {errors.numberOfPeople && <p className="text-red-600">{errors.numberOfPeople.message}</p>}
             </div>
           </div>
-
           <div className="pb-4">
             <Label className="block pb-2">Descripción:</Label>
             <Textarea
@@ -495,101 +507,142 @@ export function ReportForm({ incidentData, variableData, provinceData, readOnly 
             ></Textarea>
             {errors.description && <p className="text-red-600">{errors.description.message}</p>}
           </div>
-
           {/* Items Section */}
-          <div className="border rounded-md p-4 mb-4">
-            <div className="flex justify-between items-center mb-4">
+          <div className="mb-4 rounded-md border p-4">
+            <div className="mb-4 flex items-center justify-between">
               <h3 className="text-lg font-medium">Ítems del Incidente</h3>
               {!readOnly && (
                 <Button
                   type="button"
                   variant="outline"
                   size="sm"
-                  onClick={() => append({ productName: "", quantity: 0, unitMeasureId: undefined })}
+                  onClick={() => append({ itemId: 0, quantity: 0, unitMeasureId: 0 })}
                   className="flex items-center gap-1"
+                  disabled={fetchingItems || availableItems.length === 0}
                 >
                   <PlusCircle size={16} /> Agregar Ítem
                 </Button>
               )}
             </div>
-
-            {fields.length === 0 ? (
-              <div className="text-center py-4 text-gray-500">
+            {fetchingItems ? (
+              <div className="py-4 text-center text-gray-500">Cargando ítems...</div>
+            ) : availableItems.length === 0 && !readOnly ? (
+              <div className="py-4 text-center text-gray-500">
+                Seleccione una profundidad válida para ver ítems disponibles.
+              </div>
+            ) : fields.length === 0 ? (
+              <div className="py-4 text-center text-gray-500">
                 {readOnly ? "No hay ítems registrados para este incidente." : "Agregue ítems para este incidente."}
               </div>
             ) : (
               <div className="space-y-4">
-                {fields.map((field, index) => (
-                  <div key={field.id} className="border rounded-md p-3 bg-gray-50">
-                    <div className="flex justify-between items-center mb-2">
-                      <h4 className="font-medium">Ítem #{index + 1}</h4>
-                      {!readOnly && (
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => remove(index)}
-                          className="text-red-500 hover:text-red-700 hover:bg-red-50"
-                        >
-                          <Trash2 size={16} />
-                        </Button>
-                      )}
-                    </div>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                      <div>
-                        <Label className="block pb-1">Producto:</Label>
-                        <Input
-                          {...register(`items.${index}.productName` as const)}
-                          placeholder="Nombre del producto"
-                          className="w-full"
-                          disabled={readOnly}
-                        />
-                        {errors.items?.[index]?.productName && (
-                          <p className="text-red-600 text-sm">{errors.items[index]?.productName?.message}</p>
+                {fields.map((field, index) => {
+                  // Acceder al itemId del array watchedItemsArray
+                  const currentItemId = watchedItemsArray?.[index]?.itemId;
+                  const selectedItem = availableItems.find(item => item.id === currentItemId);
+                  const availableUnitsForSelectedItem = selectedItem?.availableUnitMeasures.map(ium => ium.unitMeasure) || [];
+
+                  return (
+                    <div key={field.id} className="rounded-md border bg-gray-50 p-3">
+                      <div className="mb-2 flex items-center justify-between">
+                        <h4 className="font-medium">Ítem #{index + 1}</h4>
+                        {!readOnly && (
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => remove(index)}
+                            className="text-red-500 hover:bg-red-50 hover:text-red-700"
+                          >
+                            <Trash2 size={16} />
+                          </Button>
                         )}
                       </div>
-                      <div>
-                        <Label className="block pb-1">Cantidad:</Label>
-                        <Input
-                          type="number"
-                          step="0.01"
-                          {...register(`items.${index}.quantity` as const, { valueAsNumber: true })}
-                          placeholder="Cantidad"
-                          className="w-full"
-                          disabled={readOnly}
-                        />
-                        {errors.items?.[index]?.quantity && (
-                          <p className="text-red-600 text-sm">{errors.items[index]?.quantity?.message}</p>
-                        )}
-                      </div>
-                      <div>
-                        <Label className="block pb-1">Unidad de Medida:</Label>
-                        <Controller
-                          control={control}
-                          name={`items.${index}.unitMeasureId` as const}
-                          render={({ field }) => (
-                            <Select onValueChange={field.onChange} value={field.value} disabled={readOnly}>
-                              <SelectTrigger className="w-full">
-                                <SelectValue placeholder="Seleccionar unidad" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {unitMeasures.map((measure) => (
-                                  <SelectItem key={measure.id} value={measure.id.toString()}>
-                                    {measure.name}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
+                      <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
+                        <div>
+                          <Label className="block pb-1">Ítem:</Label>
+                          <Controller
+                            control={control}
+                            name={`items.${index}.itemId` as const}
+                            render={({ field: itemField }) => (
+                              <Select
+                                onValueChange={(val) => {
+                                  itemField.onChange(Number(val));
+                                  setValue(`items.${index}.unitMeasureId`, 0); // Reset unitMeasureId when item changes
+                                }}
+                                value={itemField.value ? itemField.value.toString() : ""}
+                                disabled={readOnly || availableItems.length === 0}
+                              >
+                                <SelectTrigger className="w-full">
+                                  <SelectValue placeholder="Seleccionar ítem" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectGroup>
+                                    {availableItems.map((itemOpt) => (
+                                      <SelectItem key={itemOpt.id} value={itemOpt.id.toString()}>
+                                        {itemOpt.productName}
+                                      </SelectItem>
+                                    ))}
+                                  </SelectGroup>
+                                </SelectContent>
+                              </Select>
+                            )}
+                          />
+                          {errors.items?.[index]?.itemId && (
+                            <p className="text-sm text-red-600">{errors.items[index]?.itemId?.message}</p>
                           )}
-                        />
+                        </div>
+                        <div>
+                          <Label className="block pb-1">Cantidad:</Label>
+                          <Input
+                            type="number"
+                            step="0.01"
+                            {...register(`items.${index}.quantity` as const, { valueAsNumber: true })}
+                            placeholder="Cantidad"
+                            className="w-full"
+                            disabled={readOnly || !currentItemId} // Deshabilitar si no hay ítem seleccionado
+                          />
+                          {errors.items?.[index]?.quantity && (
+                            <p className="text-sm text-red-600">{errors.items[index]?.quantity?.message}</p>
+                          )}
+                        </div>
+                        <div>
+                          <Label className="block pb-1">Unidad de Medida:</Label>
+                          <Controller
+                            control={control}
+                            name={`items.${index}.unitMeasureId` as const}
+                            render={({ field: unitField }) => (
+                              <Select
+                                onValueChange={(val) => unitField.onChange(Number(val))}
+                                value={unitField.value ? unitField.value.toString() : ""}
+                                disabled={readOnly || !selectedItem || availableUnitsForSelectedItem.length === 0}
+                              >
+                                <SelectTrigger className="w-full">
+                                  <SelectValue placeholder="Seleccionar unidad" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectGroup>
+                                    {availableUnitsForSelectedItem.map((measure) => (
+                                      <SelectItem key={measure.id} value={measure.id.toString()}>
+                                        {measure.name}
+                                      </SelectItem>
+                                    ))}
+                                  </SelectGroup>
+                                </SelectContent>
+                              </Select>
+                            )}
+                          />
+                          {errors.items?.[index]?.unitMeasureId && (
+                            <p className="text-sm text-red-600">{errors.items[index]?.unitMeasureId?.message}</p>
+                          )}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </div>
-
           {!readOnly && (
             <div className="flex justify-center">
               <Button
@@ -602,7 +655,6 @@ export function ReportForm({ incidentData, variableData, provinceData, readOnly 
             </div>
           )}
         </form>
-
         {showSuccessModal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
             <div className="mx-auto w-11/12 max-w-md rounded-lg bg-white p-4 shadow-lg">
