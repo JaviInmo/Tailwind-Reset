@@ -48,9 +48,10 @@ export function DeleteUnitContent({ id, name }: DeleteUnitContentProps) {
         </div>
         <div className="rounded-lg bg-white p-6 shadow">
           <div className="mb-6 text-center">
-            <p className="text-black">
-              ¿Estás seguro de que deseas eliminar la unidad de medida <strong>"{name}"</strong>?
-            </p>
+           <p className="text-black">
+  ¿Estás seguro de que deseas eliminar la unidad de medida <strong>{`"${name}"`}</strong>?
+</p>
+
 
             {error && (
               <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-md">

@@ -44,11 +44,12 @@ export function DeleteCatContent({ id, catName, variableName }: DeleteCatContent
         <div className="rounded-lg bg-white p-6 shadow">
           <div className="mb-6 text-center">
             <p className="text-black">
-              ¿Estás seguro de que deseas eliminar la categoría {catName ? <strong>"{catName}"</strong> : null}
+              ¿Estás seguro de que deseas eliminar la categoría{" "}
+              {catName ? <strong>&quot;{catName}&quot;</strong> : null}
               {variableName ? (
                 <span>
                   {" "}
-                  de la variable <strong>"{variableName}"</strong>
+                  de la variable <strong>&quot;{variableName}&quot;</strong>
                 </span>
               ) : null}
               ?

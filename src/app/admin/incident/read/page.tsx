@@ -1,7 +1,41 @@
 import { getAuth } from "@/libs/auth"
 import prisma from "@/libs/db"
 import Table from "./Table"
-import { Prisma } from "@prisma/client" // Importar el objeto Prisma
+import { Prisma } from "@prisma/client"
+
+// Tipos derivados de Prisma
+type IncidentWithRelations = Prisma.IncidentGetPayload<{
+  include: {
+    province: { select: { name: true; id: true } }
+    municipality: { select: { name: true; id: true } }
+    variable: { select: { name: true; id: true } }
+    category: { select: { name: true; id: true } }
+    subcategory: { select: { name: true; id: true } }
+    secondSubcategory: { select: { name: true; id: true } }
+    items: {
+      include: {
+        item: { select: { productName: true } }
+        unitMeasure: { select: { id: true; name: true } }
+      }
+    }
+  }
+}>
+
+type ProvinceWithMunicipalities = Prisma.ProvinceGetPayload<{
+  include: { municipalities: true }
+}>
+
+type VariableWithRelations = Prisma.VariableGetPayload<{
+  include: {
+    categories: {
+      include: {
+        subcategories: {
+          include: { secondSubcategories: true }
+        }
+      }
+    }
+  }
+}>
 
 type TableSearchParams = Partial<{
   page: string
@@ -22,7 +56,7 @@ export default async function Page(props: { searchParams: TableSearchParams }) {
   const sortOrder = searchParams.order ?? "desc"
   const skip = (page - 1) * itemsPerPage
 
-  const sortMapping: { [key: string]: any } = {
+  const sortMapping: Record<string, Prisma.IncidentOrderByWithRelationInput> = {
     provincia: { province: { name: sortOrder } },
     municipio: { municipality: { name: sortOrder } },
     variable: { variable: { name: sortOrder } },
@@ -35,15 +69,15 @@ export default async function Page(props: { searchParams: TableSearchParams }) {
     titulo: { title: sortOrder },
     itemsSummary: { items: { _count: sortOrder } },
   }
+
   const orderBy = sortMapping[sortField] || { date: "desc" }
   const searchNumber = Number(search)
   const hasNumericSearch = !isNaN(searchNumber)
 
-  // Función auxiliar para crear filtros de cadena con modo insensible
   const createStringFilter = (value: string): Prisma.StringFilter => ({
     contains: value,
-    mode: Prisma.QueryMode.insensitive, // Usar Prisma.QueryMode.insensitive
-  });
+    mode: Prisma.QueryMode.insensitive,
+  })
 
   const baseWhere: Prisma.IncidentWhereInput | undefined = search
     ? {
@@ -61,11 +95,9 @@ export default async function Page(props: { searchParams: TableSearchParams }) {
       }
     : undefined
 
-  const incidentCount = await prisma.incident.count({
-    where: baseWhere,
-  })
+  const incidentCount = await prisma.incident.count({ where: baseWhere })
 
-  const incidents = await prisma.incident.findMany({
+  const incidents: IncidentWithRelations[] = await prisma.incident.findMany({
     orderBy,
     include: {
       province: { select: { name: true, id: true } },
@@ -76,18 +108,14 @@ export default async function Page(props: { searchParams: TableSearchParams }) {
       secondSubcategory: { select: { name: true, id: true } },
       items: {
         include: {
-          item: {
-            select: { productName: true }
-          },
-          unitMeasure: {
-            select: { id: true, name: true }
-          }
-        }
-      }
+          item: { select: { productName: true } },
+          unitMeasure: { select: { id: true, name: true } },
+        },
+      },
     },
     where: baseWhere,
     take: itemsPerPage,
-    skip: skip,
+    skip,
   })
 
   const pageCount = Math.ceil(incidentCount / itemsPerPage)
@@ -104,23 +132,39 @@ export default async function Page(props: { searchParams: TableSearchParams }) {
     municipio: incident.municipality.name,
     fecha: incident.date.toISOString().split("T")[0],
     titulo: incident.title,
-    itemsSummary: incident.items.map(item => `${item.item.productName} (${item.quantityUsed} ${item.unitMeasure?.name || ''})`).join(", "),
+    itemsSummary: incident.items
+      .map(
+        (item) =>
+          `${item.item.productName} (${item.quantityUsed} ${
+            item.unitMeasure?.name || ""
+          })`
+      )
+      .join(", "),
   }))
 
-  const provinceData = await prisma.province.findMany({
-    include: { municipalities: true },
-  })
-  const variableData = await prisma.variable.findMany({
+  const provinceData: ProvinceWithMunicipalities[] =
+    await prisma.province.findMany({
+      include: { municipalities: true },
+    })
+
+  const variableData: VariableWithRelations[] = await prisma.variable.findMany({
     include: {
       categories: {
         include: {
-          subcategories: {
-            include: { secondSubcategories: true }
-          }
-        }
-      }
+          subcategories: { include: { secondSubcategories: true } },
+        },
+      },
     },
   })
 
-  return <Table data={data} pageCount={pageCount} currentPage={page} incidentsFullData={incidents as any} provinceData={provinceData as any} variableData={variableData as any} />
+  return (
+    <Table
+      data={data}
+      pageCount={pageCount}
+      currentPage={page}
+      incidentsFullData={incidents}
+      provinceData={provinceData}
+      variableData={variableData}
+    />
+  )
 }

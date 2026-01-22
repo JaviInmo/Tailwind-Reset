@@ -1,23 +1,70 @@
 "use client"
 
-import { ArrowDownUp } from 'lucide-react'
+import { ArrowDownUp } from "lucide-react"
 import Link from "next/link"
 import { useEffect, useState } from "react"
 import DeleteModal from "@/app/admin/incident/delete/page"
 import { handleDeleteIncidentAction } from "@/app/admin/incident/delete/delete.action"
-import ColumnVisibilityFilter from "@/app/admin/incident/read/ColumnVisibilityFilter.tsx" // Ruta corregida
+import ColumnVisibilityFilter from "@/app/admin/incident/read/ColumnVisibilityFilter.tsx"
 import { CiSearch } from "react-icons/ci"
 import { FaRegEdit } from "react-icons/fa"
 import { RiDeleteBin7Line } from "react-icons/ri"
 import { cx } from "@/util/cx"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { usePathname, useRouter, useSearchParams } from "next/navigation"
 import { useDebounce } from "@/hooks/debounce-hook"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { GrStatusInfo } from "react-icons/gr"
-import { IncidentViewDialog } from "./IncidentDialogView" // Importar el componente de diálogo
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+import { IncidentViewDialog } from "./IncidentDialogView"
+import { Prisma } from "@prisma/client"
+
+// ✅ Tipos de Prisma
+type IncidentWithRelations = Prisma.IncidentGetPayload<{
+  include: {
+    province: { select: { name: true; id: true } }
+    municipality: { select: { name: true; id: true } }
+    variable: { select: { name: true; id: true } }
+    category: { select: { name: true; id: true } }
+    subcategory: { select: { name: true; id: true } }
+    secondSubcategory: { select: { name: true; id: true } }
+    items: {
+      include: {
+        item: { select: { productName: true } }
+        unitMeasure: { select: { id: true; name: true } }
+      }
+    }
+  }
+}>
+
+type ProvinceWithMunicipalities = Prisma.ProvinceGetPayload<{
+  include: { municipalities: true }
+}>
+
+type VariableWithRelations = Prisma.VariableGetPayload<{
+  include: {
+    categories: {
+      include: {
+        subcategories: {
+          include: { secondSubcategories: true }
+        }
+      }
+    }
+  }
+}>
 
 function useQueryString() {
   const searchParams = useSearchParams()
@@ -60,16 +107,16 @@ interface Data {
   municipio: string
   fecha: string
   titulo: string
-  itemsSummary: string // Nuevo campo para el resumen de ítems
+  itemsSummary: string
 }
 
 interface TableProps {
   data: Data[]
   pageCount: number
   currentPage: number
-  incidentsFullData: Array<any> // Datos completos de las incidencias para el diálogo
-  provinceData: Array<any> // Datos de provincias para el diálogo
-  variableData: Array<any> // Datos de variables para el diálogo
+  incidentsFullData: IncidentWithRelations[]
+  provinceData: ProvinceWithMunicipalities[]
+  variableData: VariableWithRelations[]
 }
 
 const columns: { label: string; key: keyof Data }[] = [
@@ -83,7 +130,7 @@ const columns: { label: string; key: keyof Data }[] = [
   { label: "Prov.", key: "provincia" },
   { label: "Munic.", key: "municipio" },
   { label: "Fecha", key: "fecha" },
-  { label: "Ítems", key: "itemsSummary" }, // Nueva columna para ítems
+  { label: "Ítems", key: "itemsSummary" },
 ]
 
 const initialVisibleColumns = columns.reduce(
@@ -91,10 +138,17 @@ const initialVisibleColumns = columns.reduce(
     acc[key] = true
     return acc
   },
-  {} as Record<string, boolean>,
+  {} as Record<string, boolean>
 )
 
-export default function TablePage({ data, pageCount, currentPage, incidentsFullData, provinceData, variableData }: TableProps) {
+export default function TablePage({
+  data,
+  pageCount,
+  currentPage,
+  incidentsFullData,
+  provinceData,
+  variableData,
+}: TableProps) {
   const { updateQuery, pushQueryString, getQueryString } = useQueryString()
   const [visibleColumns, setVisibleColumns] = useState(initialVisibleColumns)
   const [filterOpen, setFilterOpen] = useState(false)
@@ -106,8 +160,13 @@ export default function TablePage({ data, pageCount, currentPage, incidentsFullD
     pushQueryString("search", debouncedSearch)
   }, [debouncedSearch, pushQueryString])
 
-  const [incidentIds, setIncidentIds] = useState<number[]>(data.map((item) => item.id))
-  const [deleteModal, setDeleteModal] = useState<{ show: boolean; id: number | null }>({
+  const [incidentIds, setIncidentIds] = useState<number[]>(
+    data.map((item) => item.id)
+  )
+  const [deleteModal, setDeleteModal] = useState<{
+    show: boolean
+    id: number | null
+  }>({
     show: false,
     id: null,
   })
@@ -139,15 +198,21 @@ export default function TablePage({ data, pageCount, currentPage, incidentsFullD
         return updated
       })
     } else {
-      console.error(`Error al eliminar la incidencia con ID: ${id}`, result.error)
+      console.error(
+        `Error al eliminar la incidencia con ID: ${id}`,
+        result.error
+      )
     }
     setDeleteModal({ show: false, id: null })
   }
 
   return (
     <div className="flex flex-col gap-4 rounded-lg bg-white p-4 shadow-md">
+      {/* 🔎 buscador y filtros */}
       <div className="flex items-center justify-between">
-        <h3 className="text-lg font-semibold text-slate-800">Tabla de Incidencias</h3>
+        <h3 className="text-lg font-semibold text-slate-800">
+          Tabla de Incidencias
+        </h3>
         <div className="relative flex items-center gap-4">
           <CiSearch className="absolute left-3 text-gray-500" size={20} />
           <Input
@@ -181,6 +246,8 @@ export default function TablePage({ data, pageCount, currentPage, incidentsFullD
           </Link>
         </div>
       </div>
+
+      {/* 📋 tabla */}
       <div className="relative max-h-[calc(100vh-200px)] w-full overflow-x-auto overflow-y-auto rounded-lg border border-slate-300">
         <Table className="w-full">
           <TableHeader className="sticky top-0 z-10 bg-white shadow-md">
@@ -199,7 +266,7 @@ export default function TablePage({ data, pageCount, currentPage, incidentsFullD
                             ? "w-[60px] min-w-[60px]"
                             : "w-[60px]",
                         label === "2° subcat" && "whitespace-nowrap",
-                        index === columns.length - 1 && "border-r-0",
+                        index === columns.length - 1 && "border-r-0"
                       )}
                     >
                       <div className="flex items-center justify-between">
@@ -211,7 +278,7 @@ export default function TablePage({ data, pageCount, currentPage, incidentsFullD
                         />
                       </div>
                     </TableHead>
-                  ),
+                  )
               )}
               <TableHead
                 className="sticky right-0 w-[60px] bg-white p-2.5 text-sm font-semibold text-slate-800"
@@ -225,7 +292,12 @@ export default function TablePage({ data, pageCount, currentPage, incidentsFullD
             {data
               .filter((row) => incidentIds.includes(row.id))
               .map((row, rowIndex) => (
-                <TableRow key={row.id} className={cx(rowIndex % 2 === 0 ? "bg-slate-100" : "bg-white")}>
+                <TableRow
+                  key={row.id}
+                  className={cx(
+                    rowIndex % 2 === 0 ? "bg-slate-100" : "bg-white"
+                  )}
+                >
                   {columns.map(
                     ({ key }) =>
                       visibleColumns[key] && (
@@ -236,12 +308,14 @@ export default function TablePage({ data, pageCount, currentPage, incidentsFullD
                         >
                           {row[key]}
                         </TableCell>
-                      ),
+                      )
                   )}
                   <TableCell
                     className="sticky right-0 w-[100px] truncate bg-white px-3 py-1 text-sm"
                     style={{
-                      boxShadow: `2px 0 0 ${rowIndex % 2 === 0 ? "white" : "#f1f5f9"} inset`,
+                      boxShadow: `2px 0 0 ${
+                        rowIndex % 2 === 0 ? "white" : "#f1f5f9"
+                      } inset`,
                     }}
                   >
                     <div className="flex items-center justify-start gap-2 px-1">
@@ -252,16 +326,35 @@ export default function TablePage({ data, pageCount, currentPage, incidentsFullD
                       </Link>
                       <button
                         className="flex w-full items-center justify-center"
-                        onClick={() => setDeleteModal({ show: true, id: row.id })}
+                        onClick={() =>
+                          setDeleteModal({ show: true, id: row.id })
+                        }
                       >
                         <RiDeleteBin7Line className="text-lg transition-transform hover:scale-110" />
                       </button>
-                      {/* Pasar los datos completos al IncidentViewDialog */}
-                      <IncidentViewDialog
-                        incidentData={incidentsFullData.find((inc: any) => inc.id === row.id)}
-                        provinceData={provinceData}
-                        variableData={variableData}
-                      />
+                      {(() => {
+                        const incident = incidentsFullData.find(
+                          (inc) => inc.id === row.id
+                        );
+                        if (!incident) return null;
+                        // Convert date property to string if it's a Date object
+                        const incidentData = {
+                          ...incident,
+                          date:
+                            typeof incident.date === "string"
+                              ? incident.date
+                              : incident.date instanceof Date
+                              ? incident.date.toISOString()
+                              : "",
+                        };
+                        return (
+                          <IncidentViewDialog
+                            incidentData={incidentData}
+                            provinceData={provinceData}
+                            variableData={variableData}
+                          />
+                        );
+                      })()}
                     </div>
                   </TableCell>
                 </TableRow>
@@ -269,12 +362,20 @@ export default function TablePage({ data, pageCount, currentPage, incidentsFullD
           </TableBody>
         </Table>
       </div>
+
+      {/* 📄 paginación */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <label htmlFor="itemsPerPage" className="text-sm font-medium text-slate-700">
+          <label
+            htmlFor="itemsPerPage"
+            className="text-sm font-medium text-slate-700"
+          >
             Filas:
           </label>
-          <Select value={getQueryString("limit") || "10"} onValueChange={(value) => pushQueryString("limit", value)}>
+          <Select
+            value={getQueryString("limit") || "10"}
+            onValueChange={(value) => pushQueryString("limit", value)}
+          >
             <SelectTrigger className="h-6 w-[70px] px-2 py-0 shadow-md">
               <SelectValue placeholder="Selecciona" />
             </SelectTrigger>
@@ -302,6 +403,8 @@ export default function TablePage({ data, pageCount, currentPage, incidentsFullD
           ))}
         </div>
       </div>
+
+      {/* 🗑️ modal eliminar */}
       {deleteModal.show && deleteModal.id !== null && (
         <DeleteModal
           id={deleteModal.id}

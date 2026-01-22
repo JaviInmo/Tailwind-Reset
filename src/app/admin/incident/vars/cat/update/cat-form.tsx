@@ -33,7 +33,7 @@ interface CategoryFormProps {
 }
 
 export function CategoryUpdateForm({ categoryData }: CategoryFormProps) {
-  const [showSuccessModal, setShowSuccessModal] = useState(false)
+  /* const [showSuccessModal, setShowSuccessModal] = useState(false) */
   const [variables, setVariables] = useState<{ id: number; name: string }[]>([])
   const [globalError, setGlobalError] = useState<string | null>(null)
   const router = useRouter()

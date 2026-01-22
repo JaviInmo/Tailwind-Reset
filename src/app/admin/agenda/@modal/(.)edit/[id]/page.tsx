@@ -1,6 +1,6 @@
 import { EditContactPage } from "@/app/admin/agenda/edit/[id]/page";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/app-dialog";
-import { getAuth } from "@/libs/auth";
+import { Dialog, DialogContent, DialogDescription} from "@/components/ui/app-dialog";
+
 
 export default async function FormPage(props: { params: Promise<{ id: string }> }) {
     const params = await props.params;

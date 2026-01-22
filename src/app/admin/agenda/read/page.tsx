@@ -1,5 +1,6 @@
 import prisma from "@/libs/db";
 import Table from "./Table";
+import type { Prisma } from "@prisma/client";
 
 type TableSearchParams = Partial<{
   page: string;
@@ -21,17 +22,17 @@ export default async function Page(props: { searchParams: Promise<TableSearchPar
   const sortOrder = searchParams.order ?? "asc";
   const skip = (page - 1) * itemsPerPage;
 
-  const sortMapping: { [key: string]: any } = {
-    id: { id: sortOrder }, // opcional, si deseas permitir ordenar por id
-    name: { name: sortOrder },
-    province: { province: { name: sortOrder } },
-    municipality: { municipality: { name: sortOrder } },
-    personalPhone: { personalPhone: sortOrder },
-    statePhone: { statePhone: sortOrder },
-    landlinePhone: { landlinePhone: sortOrder },
-    jobTitle: { jobTitle: sortOrder },
-    workplace: { workplace: sortOrder },
-  };
+const sortMapping: Record<string, Prisma.ContactOrderByWithRelationInput> = {
+  id: { id: sortOrder },
+  name: { name: sortOrder },
+  province: { province: { name: sortOrder } },
+  municipality: { municipality: { name: sortOrder } },
+  personalPhone: { personalPhone: sortOrder },
+  statePhone: { statePhone: sortOrder },
+  landlinePhone: { landlinePhone: sortOrder },
+  jobTitle: { jobTitle: sortOrder },
+  workplace: { workplace: sortOrder },
+};
 
 
   const orderBy = sortMapping[sortField] || { name: "asc" };

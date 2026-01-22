@@ -1,5 +1,6 @@
 import { getAuth } from "@/libs/auth"
 import prisma from "@/libs/db"
+import type { Prisma } from "@prisma/client"
 
 import {
   GenericTableContent,
@@ -28,7 +29,6 @@ export default async function Page(props: { searchParams: Promise<TableSearchPar
   await getAuth()
 
   const searchParams = await props.searchParams
-  // Default parameters from URL
   const itemsPerPage = searchParams.limit ? Number(searchParams.limit) : 10
   const page = searchParams.page ? Number(searchParams.page) : 1
   const search = searchParams.search ?? null
@@ -36,32 +36,27 @@ export default async function Page(props: { searchParams: Promise<TableSearchPar
   const sortOrder = searchParams.order ?? "asc"
   const skip = (page - 1) * itemsPerPage
 
-  // Sort mapping
-  const sortMapping: { [key: string]: any } = {
+  // Sort mapping tipado
+  const sortMapping: Record<string, Prisma.UnitMeasureOrderByWithRelationInput> = {
     id: { id: sortOrder },
     name: { name: sortOrder },
   }
 
   const orderBy = sortMapping[sortField] || { name: "asc" }
 
-  // Database query with Prisma, applying search if provided
   const unitCount = await prisma.unitMeasure.count({
     where: search
-      ? {
-          name: { contains: search, mode: "insensitive" },
-        }
+      ? { name: { contains: search, mode: "insensitive" } }
       : undefined,
   })
 
   const units = await prisma.unitMeasure.findMany({
     orderBy,
     where: search
-      ? {
-          name: { contains: search, mode: "insensitive" },
-        }
+      ? { name: { contains: search, mode: "insensitive" } }
       : undefined,
     take: itemsPerPage,
-    skip: skip,
+    skip,
   })
 
   const pageCount = Math.ceil(unitCount / itemsPerPage)
@@ -71,7 +66,6 @@ export default async function Page(props: { searchParams: Promise<TableSearchPar
     name: "Nombre",
   }
 
-  // Map data to the expected format
   const data = units.map((unit) => ({
     id: unit.id.toString(),
     name: unit.name,

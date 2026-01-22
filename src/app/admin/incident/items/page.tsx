@@ -1,5 +1,6 @@
 import prisma from "@/libs/db"
 import Table from "./Table"
+import type { Prisma } from "@prisma/client"
 
 type TableSearchParams = Partial<{
   page: string
@@ -16,11 +17,11 @@ export default async function Page(props: { searchParams: TableSearchParams }) {
   const search = searchParams.search ?? null
 
   const sortField = searchParams.sort ?? "productName"
-  const sortOrder = searchParams.order ?? "asc" // Default asc for names
+  const sortOrder = searchParams.order ?? "asc"
 
   const skip = (page - 1) * itemsPerPage
 
-  const sortMapping: { [key: string]: any } = {
+  const sortMapping: Record<string, Prisma.ItemOrderByWithRelationInput> = {
     productName: { productName: sortOrder },
     variable: { variable: { name: sortOrder } },
     categoria: { category: { name: sortOrder } },
@@ -81,9 +82,9 @@ export default async function Page(props: { searchParams: TableSearchParams }) {
     productName: item.productName,
     variable: item.variable.name,
     categoria: item.category.name,
-    subcategoria: item.subcategory.name, // subcategory es requerido en el modelo Item
+    subcategoria: item.subcategory.name,
     segundasubcategoria: item.secondSubcategory?.name || "",
-    unitMeasures: item.availableUnitMeasures.map(ium => ium.unitMeasure.name).join(", "), // Unir nombres de unidades
+    unitMeasures: item.availableUnitMeasures.map(ium => ium.unitMeasure.name).join(", "),
   }))
 
   return <Table data={data} pageCount={pageCount} currentPage={page} />

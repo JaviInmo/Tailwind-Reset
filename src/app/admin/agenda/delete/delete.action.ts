@@ -10,7 +10,7 @@ export async function handleDeleteContactAction(id: number, currentIds: string) 
     });
 
     // Procesamos el listado actual de IDs (cadena separada por comas)
-    let idsArray = currentIds ? currentIds.split(",").map(Number) : [];
+    const idsArray = currentIds ? currentIds.split(",").map(Number) : [];
     const updatedIds = idsArray.filter(itemId => itemId !== id);
     
     // Retornamos el listado actualizado para actualizar la query string en el cliente

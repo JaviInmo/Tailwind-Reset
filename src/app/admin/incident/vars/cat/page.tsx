@@ -15,6 +15,7 @@ import {
 } from "@/components/generic/generic-table-filters"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
+import type { Prisma } from "@prisma/client"
 
 type TableSearchParams = Partial<{
   page: string
@@ -37,12 +38,13 @@ export default async function Page(props: { searchParams: Promise<TableSearchPar
   const skip = (page - 1) * itemsPerPage
 
   // Sort mapping
-  const sortMapping: { [key: string]: any } = {
+  const sortMapping: Record<string, Prisma.CategoryOrderByWithRelationInput> = {
     name: { name: sortOrder },
     variable: { variable: { name: sortOrder } },
   }
 
-  const orderBy = sortMapping[sortField] || { name: "asc" }
+  const orderBy: Prisma.CategoryOrderByWithRelationInput =
+    sortMapping[sortField] || { name: "asc" }
 
   // Database query with Prisma, applying search if provided
   const categoryCount = await prisma.category.count({
